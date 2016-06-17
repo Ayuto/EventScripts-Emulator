@@ -2,6 +2,9 @@
 # >> IMPORTS
 # =============================================================================
 # Source.Python
+#   Cvars
+from cvars import cvar
+from cvars.flags import ConVarFlags
 #   Memory
 import memory
 
@@ -11,6 +14,7 @@ from events import GameEvent
 from events.manager import game_event_manager
 #   Engines
 from engines.server import global_vars
+from engines.server import engine_server
 #   Listeners
 from listeners import OnTick
 from listeners import OnLevelInit
@@ -21,12 +25,16 @@ from players.helpers import userid_from_index
 from commands import CommandReturn
 from commands.say import SayFilter
 from commands.client import ClientCommandFilter
+from commands.server import ServerCommand
 
 # EventScripts Emulator
 #   Cvars
 from .cvars import noisy_cvar
 from .cvars import currentmap_cvar
 from .cvars import autorefreshvars_cvar
+from .cvars import protectrcon_cvar
+from .cvars import sayevents_cvar
+from .cvars import nextmap_cvar
 #   Helpers
 from .helpers import _is_dead
 
@@ -149,23 +157,36 @@ currentmap_cvar.set_string(global_vars.map_name)
 
 
 # =============================================================================
-# >> LISTENERS
+# >> TICK LISTENER
 # =============================================================================
 @OnTick
 def on_tick():
     import es
     es.addons.tick()
 
+
+# =============================================================================
+# >> SAY FILTER/COMMANDS
+# =============================================================================
 @SayFilter
 def on_say(command, index, team_only):
+    if sayevents_cvar.get_int() <= 0:
+        return CommandReturn.CONTINUE
+
     import es
     # TODO: Fire es_player_chat
+    # TODO: es.regsaycmd() should be handled here and not with SP's
+    #       get_say_command()
     userid = userid_from_index(index)
     if es.addons.sayFilter(userid, command.arg_string, team_only):
         return CommandReturn.CONTINUE
 
     return CommandReturn.BLOCK
 
+
+# =============================================================================
+# >> CLIENT COMMAND FILTER
+# =============================================================================
 @ClientCommandFilter
 def on_client_command(command, index):
     import es
@@ -173,4 +194,31 @@ def on_client_command(command, index):
     if es.addons.clientCommand(userid):
         return CommandReturn.CONTINUE
 
+    return CommandReturn.BLOCK
+
+
+# =============================================================================
+# >> RCON PASSWORD PROTECTION
+# =============================================================================
+if protectrcon_cvar.get_int() > 0:
+    cvar.find_var('rcon_password').add_flags(ConVarFlags.PROTECTED)
+
+
+# =============================================================================
+# >> CHANGELEVEL HOOK
+# =============================================================================
+@ServerCommand('changelevel')
+def on_changelevel(command):
+    if mapcommands_cvar.get_int() <= 0:
+        return
+
+    new_map = nextmap_cvar.get_string()
+    if new_map in ('', '0') or len(command) <= 1:
+        return
+
+    import es
+    nextmap_cvar.set_string('')
+    engine_server.server_command('changelevel {}'.format(new_map))
+    es.dbgmsg(0, '[EventScripts] Next map changed from {} to {}.'.format(
+        command[1], new_map))
     return CommandReturn.BLOCK

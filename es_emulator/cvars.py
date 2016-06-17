@@ -88,22 +88,10 @@ cmdprefix_cvar = ConVar(
     'A list of single character prefixes which will be passed to es_client_command.cfg when fired.'
 )
 
-interface_cvar = ConVar(
-    'eventscripts_eiface',
-    '1',
-    'Internal function for helping EventScripts choose the right ImmediateExecuteCommand for command ordering.'
-)
-
 execmd_cvar = ConVar(
     'eventscripts_exec-cmd',
     'exec',
     'The name of the \'exec\' command that EventScripts uses internally.'
-)
-
-protectrcon_cvar = ConVar(
-    'eventscripts_protectrcon',
-    '1',
-    'Add FCVAR_PROTECTED flag to rcon_password so that it will resolve properly.'
 )
 
 serverdll_cvar = ConVar(
@@ -118,18 +106,6 @@ serverclients_cvar = ConVar(
     'Version of ServerGameClients interface used by EventScripts. (read only)'
 )
 
-sayevents_cvar = ConVar(
-    'eventscripts_chatevent',
-    '1',
-    'If set to 1, EventScripts will trigger the es_player_chat event, otherwise it will not.'
-)
-
-mapcommands_cvar = ConVar(
-    'eventscripts_maphandler',
-    '1',
-    'If set to 1, EventScripts will allow level change replacement. Must be set in autoexec.cfg or on command-line.'
-)
-
 maxmessages_cvar = ConVar(
     'eventscripts_maxmsg',
     '28',
@@ -140,12 +116,6 @@ quote_cvar = ConVar(
     'eventscripts_quote',
     '"',
     'A quotation mark. A tool, not a variable.'
-)
-
-nextmap_cvar = ConVar(
-    'eventscripts_nextmapoverride',
-    '',
-    'Set this to a map name that will override the next changelevel command to use this map.'
 )
 
 frametimer_cvar = ConVar(
@@ -234,4 +204,38 @@ deadflag_cvar = ConVar(
     'eventscripts_deadflag',
     '1',
     'If set to 1, uses fast but less stable method of detecting player\'s dead state. If set to 0, reverts to using Valve\'s method (delayed).'
+)
+
+protectrcon_cvar = ConVar(
+    'eventscripts_protectrcon',
+    '1',
+    'Add FCVAR_PROTECTED flag to rcon_password so that it will resolve properly.'
+)
+
+sayevents_cvar = ConVar(
+    'eventscripts_chatevent',
+    '1',
+    'If set to 1, EventScripts will trigger the es_player_chat event, otherwise it will not.'
+)
+
+nextmap_cvar = ConVar(
+    'eventscripts_nextmapoverride',
+    '',
+    'Set this to a map name that will override the next changelevel command to use this map.'
+)
+
+mapcommands_cvar = ConVar(
+    'eventscripts_maphandler',
+    '1',
+    'If set to 1, EventScripts will allow level change replacement. Must be set in autoexec.cfg or on command-line.'
+)
+
+
+# =============================================================================
+# >> UNUSED CVARS
+# =============================================================================
+interface_cvar = ConVar(
+    'eventscripts_eiface',
+    '1',
+    'Internal function for helping EventScripts choose the right ImmediateExecuteCommand for command ordering.'
 )
