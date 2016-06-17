@@ -18,6 +18,9 @@ from commands import CommandReturn
 from commands.say import SayFilter
 from commands.client import ClientCommandFilter
 
+# EventScripts Emulator
+from .cvars import noisy_cvar
+
 
 # =============================================================================
 # >> COMMAND SYSTEM
@@ -74,6 +77,14 @@ client_command_proxies = _CommandProxies()
 # =============================================================================
 # >> EVENT SYSTEM
 # =============================================================================
+NOISY_EVENTS = (
+    'weapon_reload',
+    'player_footstep',
+    'weapon_reload',
+    'weapon_fire',
+    'bullet_impact',
+)
+
 current_event_vars = {}
 
 def fill_event_vars(userid, type_str):
@@ -96,6 +107,9 @@ def fill_event_vars(userid, type_str):
 @PreHook(memory.get_virtual_function(game_event_manager, 'FireEvent'))
 def pre_fire_event(args):
     event = memory.make_object(GameEvent, args[1])
+    if noisy_cvar.get_int() != 1 and event.name in NOISY_EVENTS:
+        return
+
     current_event_vars.clear()
     current_event_vars.update(event.variables.as_dict())
 

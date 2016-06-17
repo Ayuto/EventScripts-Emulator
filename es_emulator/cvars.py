@@ -29,3 +29,9 @@ gamedir_cvar = ConVar(
     str(GAME_PATH)[:-1],
     'Full path to the Source mod you\'re playing.'
 )
+
+noisy_cvar = ConVar(
+    'eventscripts_noisy',
+    '0',
+    'Turns on script handling for noisy GameEvents (footsteps, reloads, etc).'
+)
