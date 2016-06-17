@@ -196,6 +196,12 @@ python_cvar = ConVar(
     'Enable Python support for EventScripts'
 )
 
+autocreate_cvar = ConVar(
+    'eventscripts_autocreate',
+    '0',
+    'Automatically create new console variables when EventScripts commands are used on nonexistent variables.'
+)
+
 
 # =============================================================================
 # >> IMPLEMENTED CVARS

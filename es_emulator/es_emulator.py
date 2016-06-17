@@ -38,14 +38,20 @@ def load():
     print('Initializing console variables...')
     from . import cvars
 
-    print('Initializing ES console commands...')
+    print('Initializing console commands...')
     from . import cmds
 
-    print('Initializing ES logic...')
+    print('Initializing logic...')
     from . import logic
 
     print('Initializing EventScripts...')
     import es
+
+    # TODO: There is a conflict between ES' and SP's keyvalues module
+    #import _libs.python.keyvalues as x
+    #sys.modules['keyvalues'] = x
+    #es.load('esc')
+    #es.load('corelib')
 
     print('ES Emulator has been loaded successfully!')
 
