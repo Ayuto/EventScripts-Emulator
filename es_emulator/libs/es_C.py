@@ -56,6 +56,7 @@ from es_emulator.helpers import _get_prop_info
 from es_emulator.helpers import atoi
 from es_emulator.helpers import atof
 from es_emulator.helpers import _cexec
+from es_emulator.helpers import _is_dead
 
 
 # =============================================================================
@@ -233,7 +234,7 @@ def createplayerlist(userid=None):
         temp['deaths'] = player.deaths
         temp['armor'] = player.armor
         temp['model'] = player.model_name
-        temp['isdead'] = player.dead
+        temp['isdead'] = _is_dead(player)
         temp['isbot'] = player.is_fake_client()
         temp['is_hltv'] = player.is_hltv()
         temp['isobserver'] = player.is_observer()
@@ -590,7 +591,10 @@ def getindexprop(index, prop):
 def getlivingplayercount(team=None):
     """Stores the count of living players on the server into a variable. Optionally a team can be specified. Returns -1 on error."""
     count = 0
-    for player in PlayerIter('alive'):
+    for player in PlayerIter():
+        if _is_dead(player):
+            continue
+
         if team is None:
             count += 1
         elif team == player.team:
@@ -602,7 +606,7 @@ def getmaxplayercount():
     """Stores the maximum number of player slots the server allows."""
     return global_vars.max_clients
 
-def getplayercount(*args):
+def getplayercount(team):
     """Stores the count of players on the server into a variable. Optionally a team can be specified. Returns -1 on error."""
     count = 0
     for player in PlayerIter():
@@ -866,7 +870,9 @@ def menu(*args):
 
 def msg(color, msg=None):
     """Broadcasts a message to all players. If the first word of the message is '#green', or '#lightgreen' then the message is displayed in that color, supports '#multi' also for embedded #green/#lightgreen in the message."""
-    SayText2(_prepare_msg(color, msg)).send()
+    msg = _prepare_msg(color, msg)
+    SayText2(msg).send()
+    dbgmsg(0, msg)
 
 def old_mexec(*args):
     """Runs an exec file from memory."""
@@ -937,14 +943,10 @@ def refreshpublicvars():
     """Outputs all the console commands and variables."""
     current = cvar.commands
     while current:
-        if current.is_command():
-            continue
+        if not current.is_command() and current.is_flag_set(ConVarFlags.NOTIFY):
+            cvar.call_global_change_callbacks(
+                current, current.get_string(), current.get_float())
 
-        if not current.is_flag_set(ConVarFlags.NOTIFY):
-            continue
-
-        cvar.call_global_change_callbacks(
-            current, current.get_string(), current.get_float())
         current = current.next
 
 def regclientcmd(command, block_name, description):

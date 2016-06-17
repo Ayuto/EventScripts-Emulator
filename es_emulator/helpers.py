@@ -14,6 +14,7 @@ from engines.server import server_game_dll
 
 # ES Emulator
 from .cvars import botcexec_cvar
+from .cvars import deadflag_cvar
 
 
 # =============================================================================
@@ -126,3 +127,9 @@ def _cexec(player, command_str):
         player.client_command(command_str)
     elif botcexec_cvar.get_int() > 0 and command_str == 'jointeam':
         player.client_command(command_str, True)
+        
+def _is_dead(player):
+    if deadflag_cvar.get_int() > 0:
+        return player.dead
+    
+    return player.playerinfo.is_dead()

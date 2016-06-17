@@ -82,12 +82,6 @@ lastgive_cvar = ConVar(
     'Last given entity index'
 )
 
-deadflag_cvar = ConVar(
-    'eventscripts_deadflag',
-    '1',
-    'If set to 1, uses fast but less stable method of detecting player\'s dead state. If set to 0, reverts to using Valve\'s method (delayed).'
-)
-
 cmdprefix_cvar = ConVar(
     'eventscripts_cmdprefixes',
     '!',
@@ -154,12 +148,6 @@ nextmap_cvar = ConVar(
     'Set this to a map name that will override the next changelevel command to use this map.'
 )
 
-lang_cvar = ConVar(
-    'eventscripts_language',
-    'english',
-    'Name of the default language for EventScripts scripts to use. Supports the same values as cl_language for clients.'
-)
-
 frametimer_cvar = ConVar(
     'eventscripts_frametimecheck',
     '0',
@@ -170,12 +158,6 @@ defaultevents_cvar = ConVar(
     'eventscripts_defaultevents',
     '1',
     'If set to 1, EventScripts will try to register for the default event files on each new map.'
-)
-
-autorefreshvars_cvar = ConVar(
-    'eventscripts_autorefreshvars',
-    '1',
-    'If set to 1, EventScripts will try to refresh global change callbacks for every public cvar on each new map.'
 )
 
 shellengine_cvar = ConVar(
@@ -234,4 +216,22 @@ currentmap_cvar = ConVar(
     'eventscripts_currentmap',
     '',
     'Current map.'
+)
+
+lang_cvar = ConVar(
+    'eventscripts_language',
+    'english',
+    'Name of the default language for EventScripts scripts to use. Supports the same values as cl_language for clients.'
+)
+
+autorefreshvars_cvar = ConVar(
+    'eventscripts_autorefreshvars',
+    '1',
+    'If set to 1, EventScripts will try to refresh global change callbacks for every public cvar on each new map.'
+)
+
+deadflag_cvar = ConVar(
+    'eventscripts_deadflag',
+    '1',
+    'If set to 1, uses fast but less stable method of detecting player\'s dead state. If set to 0, reverts to using Valve\'s method (delayed).'
 )

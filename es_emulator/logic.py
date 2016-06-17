@@ -23,8 +23,12 @@ from commands.say import SayFilter
 from commands.client import ClientCommandFilter
 
 # EventScripts Emulator
+#   Cvars
 from .cvars import noisy_cvar
 from .cvars import currentmap_cvar
+from .cvars import autorefreshvars_cvar
+#   Helpers
+from .helpers import _is_dead
 
 
 # =============================================================================
@@ -104,7 +108,7 @@ def fill_event_vars(userid, type_str):
     current_event_vars['es_{}team'.format(type_str)] = player.team
     current_event_vars['es_{}armor'.format(type_str)] = player.armor
     current_event_vars['es_{}health'.format(type_str)] = player.health
-    current_event_vars['es_{}deaths'.format(type_str)] = player.deaths
+    current_event_vars['es_{}deaths'.format(type_str)] = _is_dead(player)
     current_event_vars['es_{}kills'.format(type_str)] = player.kills
     current_event_vars['es_{}dead'.format(type_str)] = player.dead
     current_event_vars['es_{}index'.format(type_str)] = player.index
@@ -131,11 +135,15 @@ def pre_fire_event(args):
 
 
 # =============================================================================
-# >> CURRENT MAP
+# >> CURRENT MAP & AUTO REFRESH PUBLIC CVARS
 # =============================================================================
 @OnLevelInit
 def on_level_init(map_name):
     currentmap_cvar.set_string(map_name)
+
+    if autorefreshvars_cvar.get_int() > 0:
+        import es
+        es.refreshpublicvars()
 
 currentmap_cvar.set_string(global_vars.map_name)
 

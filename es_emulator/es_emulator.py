@@ -51,7 +51,7 @@ def load():
     #import _libs.python.keyvalues as x
     #sys.modules['keyvalues'] = x
     #es.load('esc')
-    #es.load('corelib')
+    #es.server.queuecmd('es_load corelib')
 
     print('ES Emulator has been loaded successfully!')
 
