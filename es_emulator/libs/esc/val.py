@@ -187,7 +187,7 @@ class EventVal(ServerVal):
 class Sv(object):
   
   valtype = ServerVal
-  expand =   expand = lambda self, x: getString(x)
+  expand = lambda self, x: getString(x)
   varcache = {}
   
   def __setitem__(self, var, value):
