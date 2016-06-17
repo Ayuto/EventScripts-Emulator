@@ -203,20 +203,20 @@ class Stack(object):
           ForceServerCommand('%s %s' % (command, args))
             
         else:
-          raise NameError, ('command', command)
+          raise NameError('command', command)
           
-    except SyntaxError, e: # TODO: Custom errors
+    except SyntaxError as e: # TODO: Custom errors
       if not e.msg:
         self.error(commandname, 'Syntax: %s %s' % (command.expname, self.syntax))
       else:
         self.error(commandname, e)
       
-    except NameError, e:
-      print e
-      print commandname
+    except NameError as e:
+      print(e)
+      print(commandname)
       self.error(commandname, 'The %s \'%s\' could not be found' % e.args)
       
-    except (ValueError, IOError, RuntimeError), e:
+    except (ValueError, IOError, RuntimeError) as e:
       self.error(commandname, e)
         
   def error(self, commandname, error):
@@ -225,7 +225,7 @@ class Stack(object):
 
 stack = Stack()
 
-import monkeypatch # TODO: nuke
+from . import monkeypatch # TODO: nuke
 
 from collections import deque
 from es import exists, queryregcmd, ForceServerCommand, dbgmsg

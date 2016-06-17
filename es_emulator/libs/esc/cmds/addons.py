@@ -37,7 +37,7 @@ def unload(argv):
       sv.save()
       es.unload(addonname)
     else:
-      raise RuntimeError, '%s was not loaded' % addonname
+      raise RuntimeError('%s was not loaded' % addonname)
     
 @Command(syntax='<scriptname>', types=str, desc='Reloads a script that is loaded.')
 def _reload(argv):
@@ -61,7 +61,7 @@ def enable(argv):
       sv.save()
       es.enable(addonname)
     else:
-      raise RuntimeError, '%s was not loaded' % addonname
+      raise RuntimeError('%s was not loaded' % addonname)
   
 @Command(syntax='<scriptname>', types=str, desc='Disables a script that has been loaded.')
 def disable(argv):
@@ -73,7 +73,7 @@ def disable(argv):
       sv.save()
       es.disable(addonname)
     else:
-      raise RuntimeError, '%s was not loaded' % addonname
+      raise RuntimeError('%s was not loaded' % addonname)
   
 @Command(syntax='<block>', types=str, desc='Executes a block.')
 def doblock(argv):

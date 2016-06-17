@@ -55,7 +55,7 @@ class Command(object):
     ):
       
     if syntax:
-      syntaxlol = [filter(lambda t: t[1], match.groupdict().items())[0] for match in self._syntax_regex.finditer(syntax)]
+      syntaxlol = [list(filter(lambda t: t[1], match.groupdict().items()))[0] for match in self._syntax_regex.finditer(syntax)]
       
     self.desc, self.pre, self.con, self.argsfrom, self.alt, self.expand, self.syntax, self.types, self.reg, self.remquotes = \
       desc, pre, con, argsfrom, alt, expand, syntax, types, reg, remquotes
@@ -105,7 +105,7 @@ class Command(object):
     return self
         
   def concommand(self):
-    command, argv, args, exp = escompile(getargv(0), map(getargv, xrange(1, getargc())), getargs())
+    command, argv, args, exp = escompile(getargv(0), list(map(getargv, range(1, getargc()))), getargs())
     line = (None, command, argv, args, exp)
     stack.queue([line], 'console', priority=True)
     sv.save()
@@ -122,7 +122,7 @@ class Command(object):
     if not self.AUTOCREATE:
       for varname in map(argv.__getitem__, self.vars):
         if not sv.exists(varname):
-          raise NameError, ('var', varname)
+          raise NameError('var', varname)
       
     _args = {}
       

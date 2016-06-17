@@ -21,7 +21,7 @@ class Addon(object):
       self.code = code
       
     def __call__(self):
-      self.run(priority=True, userargs={'cmdname': getargv(0), 'argv': map(getargv, xrange(1, getargc())), 'args': getargs(), 'uid': int(getcmduserid())})
+      self.run(priority=True, userargs={'cmdname': getargv(0), 'argv': list(map(getargv, range(1, getargc()))), 'args': getargs(), 'uid': int(getcmduserid())})
       sv.save()
       
     def run(self, priority=False, userargs=None):
@@ -53,20 +53,20 @@ class Addon(object):
   def load(self, priority=False):
     
     if self.scriptname in addons:
-      raise RuntimeError, '[EventScripts] %s already loaded, try to es_unload it first' % self.scriptname
+      raise RuntimeError('[EventScripts] %s already loaded, try to es_unload it first' % self.scriptname)
       
     if not self.scriptexists():
-      raise IOError, 'Could not open script for %s' % self.scriptname
+      raise IOError('Could not open script for %s' % self.scriptname)
 
     script = open(self.scriptfile)
     code = splitblocks(script.readlines())
     script.close()
     
-    for blockname, block in code['block'].iteritems():
+    for blockname, block in code['block'].items():
       newblock = self.blocks[blockname] = self.Block('%s/%s' % (self.scriptname, blockname), block)
       es.addons.registerBlock(self.scriptname, blockname, newblock)
 
-    for eventname, event in code['event'].iteritems():
+    for eventname, event in code['event'].items():
       newevent = self.events[eventname] = self.Event('%s/%s' % (self.scriptname, eventname), event)
       es.addons.registerForEvent(self, eventname, newevent)
 

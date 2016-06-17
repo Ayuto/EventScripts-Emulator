@@ -62,10 +62,10 @@ def foreachval(argv):
   if isin != 'in':
     raise SyntaxError
   if not es.exists('keygroup', keygroup):
-    raise NameError, ('keygroup', keygroup)
+    raise NameError('keygroup', keygroup)
   if not es.exists('key', keygroup, key):
-    raise NameError, ('key', '%s/%s' % (keygroup, key))
-  stack.setfor(var, getKeyGroup(keygroup)[key].keys())
+    raise NameError('key', '%s/%s' % (keygroup, key))
+  stack.setfor(var, list(getKeyGroup(keygroup)[key].keys()))
   stack.insertrawblock(commands)
 
 @Command(syntax='<var> in <groupname> <command>', desc='EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name.')
@@ -74,6 +74,6 @@ def foreachkey(argv):
   if isin != 'in':
     raise SyntaxError
   if not es.exists('keygroup', keygroup):
-    raise NameError, ('keygroup', keygroup)
-  stack.setfor(var, getKeyGroup(keygroup).keys())
+    raise NameError('keygroup', keygroup)
+  stack.setfor(var, list(getKeyGroup(keygroup).keys()))
   stack.insertrawblock(commands)

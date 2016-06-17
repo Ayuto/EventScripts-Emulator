@@ -16,7 +16,7 @@ def interface(func):
 def loadaddon(addonname):
   try:
     return Addon(addonname).load(priority=True)
-  except RuntimeError, IOError:
+  except RuntimeError as IOError:
     return False
  
 @interface
@@ -63,4 +63,4 @@ def eventexists(addonname, event):
   return addonname in addons and event in addons[addonname].events
   
 def addonlist():
-  return tuple((name, not addon.disabled) for name, addon in addons.iteritems())
+  return tuple((name, not addon.disabled) for name, addon in addons.items())

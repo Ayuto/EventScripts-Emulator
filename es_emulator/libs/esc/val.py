@@ -32,7 +32,7 @@ def VAR(value):
 def OP(value):
   if value in _operators:
     return _functions[_operators[value]]
-  print "WAKAWAKAWAKA", value
+  print("WAKAWAKAWAKA", value)
   
 @esctype
 def ANY(value):
@@ -98,7 +98,7 @@ class Val(object):
   def __getitem__(self, item):
     return self.strval[item]
   
-  def __nonzero__(self):
+  def __bool__(self):
     return self.nonzero
   
   def __int__(self):
@@ -187,7 +187,7 @@ class EventVal(ServerVal):
 class Sv(object):
   
   valtype = ServerVal
-  expand = getString
+  expand =   expand = lambda self, x: getString(x)
   varcache = {}
   
   def __setitem__(self, var, value):

@@ -30,7 +30,7 @@ def _format_rep(match, tokens, expand=False):
     return str(sv(result))
   return str(result)
 
-FORMAT_REGEX = [re.compile('%%([1-%s])' % i) for i in xrange(1, 10)]
+FORMAT_REGEX = [re.compile('%%([1-%s])' % i) for i in range(1, 10)]
 
 @Command(syntax='<variable> <format-string> [token1] [token2] [...] [tokenN]', desc='Allows you to format a string by filling in a list of strings into a format string.')
 def _format(argv):
@@ -65,7 +65,7 @@ def string(argv):
   elif op == 'section':
     sv[var] = sv[var][int(one):None if len(argv) < 4 else int(argv[3])]
   else:
-    raise SyntaxError, 'unknown fucntion "%s"' % op
+    raise SyntaxError('unknown fucntion "%s"' % op)
     
 
 @Command(syntax='<variable> <string> <token#> [tokenchar]', types=(VAR, STR, INT), desc='Set a variable to a particular token in the string.')
@@ -79,7 +79,7 @@ def token(argv):
     sv[argv[0]] = len(tokens)
   else:
     if len(tokens) < n:
-      raise ValueError, 'the specified token number does not exist'
+      raise ValueError('the specified token number does not exist')
     sv[argv[0]] = tokens[n-1]
   
 @Command(syntax='<key> <value>', desc='Forces a variable to a particular value')

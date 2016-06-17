@@ -18,7 +18,7 @@ def alias(argv, args):
     elif not es.exists('command', argv[0]):
       Alias(name).getcode(args, stack.currentline)
     else:
-      raise RuntimeError, 'Attempt to alias over an already registered command failed (current ESC limitation)'
+      raise RuntimeError('Attempt to alias over an already registered command failed (current ESC limitation)')
     
 @Command(pre=False, reg=False)
 def wait(desc='Delay code execution for one tick'):
@@ -34,4 +34,4 @@ def die():
 
 @Command(pre=False, desc='Runs unittest/unittest.cfg')
 def unittest():
-  stack.insertrawlines(map(str.strip, open('%s/unittest/unittest.cfg' % sv('eventscripts_addondir')).xreadlines()))
+  stack.insertrawlines(list(map(str.strip, open('%s/unittest/unittest.cfg' % sv('eventscripts_addondir')))))

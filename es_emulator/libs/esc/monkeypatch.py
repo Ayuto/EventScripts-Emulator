@@ -7,7 +7,8 @@ pyaddons  = lambda: ['/'.join(addon.__name__.split('.')[1:]) for addon in es.add
 
 from . import addons
 
-import es, os, interface, parse
+import es, os
+from . import interface, parse
 
 def pyscriptexists(addonname):
   return os.path.exists('%s/%s/%s.py' % (es.getString('eventscripts_addondir'), addonname, addonname.split('/')[-1]))

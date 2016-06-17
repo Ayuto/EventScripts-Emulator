@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import itertools
 from . import commands
 from .val import sv, ev, Val, STR
 
@@ -84,7 +85,7 @@ def getcommands(line, n):
   tokens = _tokenize_regex.finditer(line)
   fin = False
   while tokens:
-    command = tokens.next()
+    command = next(tokens)
     start = end = command.end()
     command = command.group()
     if command == ';':
@@ -133,7 +134,7 @@ def escompile(commandname, argv, args=None): # TODO: keep as strings until neede
   return command, tuple(argv), args, exp
   
 def coerce(tokens, types, exp):
-  for n, (token, newtype) in enumerate(map(None, tokens, types)):
+  for n, (token, newtype) in enumerate(itertools.zip_longest(tokens, types)):
     if token:
       if exp and n in exp:
         token.append(newtype or STR)

@@ -12,10 +12,10 @@ class While(object):
     coerce(self.tokens, (ANY, OP, ANY), self.exp)
     
     if len(self.tokens) < 3:
-      raise SyntaxError, 'invalid condition'
+      raise SyntaxError('invalid condition')
       
     if not self.tokens[1]:
-      raise SyntaxError, 'invalid conditional operator'
+      raise SyntaxError('invalid conditional operator')
              
   def eval(self):
     one, op, two = expand(self.tokens, self.exp)
@@ -27,7 +27,7 @@ def _if(argv, args):
   if lb != '(' or rb != ')' or qualifier not in ('then', 'do'):
     raise SyntaxError
   if not op:
-    raise SyntaxError, 'invalid conditional operator'
+    raise SyntaxError('invalid conditional operator')
   result = op(one, two)
   stack.setcond(bool(result))
   if result and qualifier == 'then':
@@ -41,7 +41,7 @@ def ifx(argv):
     raise SyntaxError
   op = op.lower()
   if not op in ('true', 'false', 'parse'):
-    raise SyntaxError, 'invalid conditional operator'
+    raise SyntaxError('invalid conditional operator')
   if op in ('true', 'false'):
     result = sv.bool(val)
     if op == 'false':
