@@ -831,7 +831,10 @@ def lightstyle(style, value):
 def load(addon=None):
     """Loads a script or lists all loaded scripts if no script is provided."""
     import es
-    es.loadModuleAddon(addon)
+    if addon is None:
+        es.printScriptList()
+    else:
+        es.loadModuleAddon(addon)
 
 def loadevents(*args):
     """Reads an event file and registers EventScripts as a handler for those events."""
