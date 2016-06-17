@@ -47,6 +47,8 @@ def load():
     print('Initializing EventScripts...')
     import es
 
+    logic.post_initialization()
+
     # TODO: There is a conflict between ES' and SP's keyvalues module
     #import _libs.python.keyvalues as x
     #sys.modules['keyvalues'] = x

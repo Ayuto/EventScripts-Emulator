@@ -1,6 +1,9 @@
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
+# Python
+import sys
+
 # Source.Python
 #   Core
 from core import GAME_PATH
@@ -136,12 +139,6 @@ shellengine_cvar = ConVar(
     'Turns on Python-based ESC script engine'
 )
 
-setipcmdline_cvar = ConVar(
-    'eventscripts_setipcmdline',
-    '1',
-    'EventScripts will set the IP for you passed from a +ip command-line.'
-)
-
 python_cvar = ConVar(
     'mattie_python',
     '1',
@@ -228,6 +225,18 @@ mapcommands_cvar = ConVar(
     'eventscripts_maphandler',
     '1',
     'If set to 1, EventScripts will allow level change replacement. Must be set in autoexec.cfg or on command-line.'
+)
+
+cmdline_cvar = ConVar(
+    'eventscripts_cmdline',
+    ' '.join(sys.argv),
+    'Server\'s command-line information.'
+)
+
+setipcmdline_cvar = ConVar(
+    'eventscripts_setipcmdline',
+    '1',
+    'EventScripts will set the IP for you passed from a +ip command-line.'
 )
 
 

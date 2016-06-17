@@ -1,6 +1,9 @@
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
+# Python
+import sys
+
 # Source.Python
 #   Cvars
 from cvars import cvar
@@ -35,8 +38,11 @@ from .cvars import autorefreshvars_cvar
 from .cvars import protectrcon_cvar
 from .cvars import sayevents_cvar
 from .cvars import nextmap_cvar
+from .cvars import setipcmdline_cvar
 #   Helpers
 from .helpers import _is_dead
+#   Paths
+from .paths import ES_EVENTS_PATH
 
 
 # =============================================================================
@@ -205,6 +211,33 @@ if protectrcon_cvar.get_int() > 0:
 
 
 # =============================================================================
+# >> mattie_eventscripts.res
+# =============================================================================
+game_event_manager.load_events_from_file(str(ES_EVENTS_PATH))
+
+
+# =============================================================================
+# >> eventscripts_setipcmdline
+# =============================================================================
+def check_ip_cmdline():
+    if setipcmdline_cvar.get_int() <= 0:
+        return
+
+    try:
+        index = sys.argv.index('+ip') + 1
+    except ValueError:
+        return
+
+    try:
+        ConVar('ip').set_string(sys.argv[index])
+    except IndexError:
+        pass
+    else:
+        import es
+        es.dbgmsg(0, '[EventScripts] Temporary: Setting the host\'s IP variable from the command-line.')
+
+
+# =============================================================================
 # >> CHANGELEVEL HOOK
 # =============================================================================
 @ServerCommand('changelevel')
@@ -222,3 +255,10 @@ def on_changelevel(command):
     es.dbgmsg(0, '[EventScripts] Next map changed from {} to {}.'.format(
         command[1], new_map))
     return CommandReturn.BLOCK
+
+
+# =============================================================================
+# >> POST INITIALIZATION
+# =============================================================================
+def post_initialization():
+    check_ip_cmdline()
