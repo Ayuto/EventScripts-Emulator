@@ -76,12 +76,6 @@ timeformat_cvar = ConVar(
     'Format for time strings retrieved by es_gettimestring.'
 )
 
-currentmap_cvar = ConVar(
-    'eventscripts_currentmap',
-    '',
-    'Current map.'
-)
-
 lastgive_cvar = ConVar(
     'eventscripts_lastgive',
     '',
@@ -91,7 +85,7 @@ lastgive_cvar = ConVar(
 deadflag_cvar = ConVar(
     'eventscripts_deadflag',
     '1',
-    'If set to 1, uses fast but less stable method of detecting player's dead state. If set to 0, reverts to using Valve's method (delayed).'
+    'If set to 1, uses fast but less stable method of detecting player\'s dead state. If set to 0, reverts to using Valve\'s method (delayed).'
 )
 
 cmdprefix_cvar = ConVar(
@@ -228,4 +222,10 @@ noisy_cvar = ConVar(
     'eventscripts_noisy',
     '0',
     'Turns on script handling for noisy GameEvents (footsteps, reloads, etc).'
+)
+
+currentmap_cvar = ConVar(
+    'eventscripts_currentmap',
+    '',
+    'Current map.'
 )

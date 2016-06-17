@@ -2,24 +2,29 @@
 # >> IMPORTS
 # =============================================================================
 # Source.Python
+#   Memory
 import memory
 
 from memory.hooks import PreHook
-
+#   Events
 from events import GameEvent
 from events.manager import game_event_manager
-
+#   Engines
+from engines.server import global_vars
+#   Listeners
 from listeners import OnTick
-
+from listeners import OnLevelInit
+#   Players
 from players.entity import Player
 from players.helpers import userid_from_index
-
+#   Commands
 from commands import CommandReturn
 from commands.say import SayFilter
 from commands.client import ClientCommandFilter
 
 # EventScripts Emulator
 from .cvars import noisy_cvar
+from .cvars import currentmap_cvar
 
 
 # =============================================================================
@@ -123,6 +128,16 @@ def pre_fire_event(args):
 
     import es
     es.addons.triggerEvent(event.name)
+
+
+# =============================================================================
+# >> CURRENT MAP
+# =============================================================================
+@OnLevelInit
+def on_level_init(map_name):
+    currentmap_cvar.set_string(map_name)
+
+currentmap_cvar.set_string(global_vars.map_name)
 
 
 # =============================================================================
