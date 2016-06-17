@@ -1,0 +1,207 @@
+// Extended aliasing
+// Written by Einlanzers at Mattie's request.
+block load
+{
+	es_xdoblock corelib/xalias/xalias_register
+}
+
+block xalias_register
+{
+  // variables used by xalias
+	es_xsetinfo _xalias_command 0
+	es_xsetinfo _xalias_name 0
+	es_xsetinfo _xalias_param 0
+	es_xsetinfo _xalias_count 0
+	es_xsetinfo _xalias_temp 0
+	es_xsetinfo _xalias_temp2 0
+  es_xsetinfo _xalias_block 0
+  es_xsetinfo _xalias_temp1 0
+  es_xsetinfo _xalias_temp2 0
+  es_xsetinfo _xalias_temp3 0
+  es_xsetinfo _xalias_temp4 0
+	// check to see if xalias exists
+	es_xexists _exists command xalias
+	if (server_var(_exists) = 0) do
+	{
+		es_xkeygroupcreate _xalias_corelib
+		es_xregcmd xalias corelib/xalias/xalias "Allows you to control delays"
+	}
+}
+
+block xalias
+{
+	es_xsetinfo _tempcore 0
+	es_xgetargc _xalias_count
+	es es_xmath _xalias_count - 1
+	es es_xif (server_var(_xalias_count) >= 1) do
+  {
+    es_xgetargv _xalias_command 1
+  }
+	es es_xif (server_var(_xalias_count) >= 2) do
+  {
+    es_xgetargv _xalias_name 2
+  }
+	es es_xif (server_var(_xalias_count) >= 3) do
+  {
+    es_xgetargv _xalias_param 3
+  }
+	es_xsetinfo _tempcore 0
+	es es_xformat xalias_block "corelib/xalias/xalias_%1" server_var(_xalias_command)
+	es es_xdoblock server_var(xalias_block)
+	es es_xif (server_var(_tempcore) = 0) do
+	{
+		es_xdbgmsg 0 Syntax: xalias <command> <name> [parameters]
+	}
+}
+
+block xalias_create
+{
+	es es_xif (server_var(_xalias_count) >= 2) do
+	{
+		es es_xexists _tempcore key _xalias_corelib server_var(_xalias_name)
+		es es_xif (server_var(_tempcore) = 0) do
+		{
+			es es_xkeycreate _xalias_corelib server_var(_xalias_name)
+			es es_xkeysetvalue _xalias_corelib server_var(_xalias_name) commands 0
+		}
+		es es_xif (server_var(_tempcore) != 0) do
+		{
+			es_xdbgmsg 0 xalias create: xalias already exists
+		}
+	}
+	es es_xif (server_var(_xalias_count) < 2) do
+	{
+		es_xdbgmsg 0 xalias create: Not enough parameters
+	}
+	es_xsetinfo _tempcore 1
+}
+
+block xalias_delete
+{
+	es es_xif (server_var(_xalias_count) >= 2) do
+	{
+		es_exists _tempcore key _xalias_corelib server_var(_xalias_name)
+		es es_xif (server_var(_tempcore) != 0) do
+		{
+			es es_xkeydelete _xalias_corelib server_var(_xalias_name)
+		}
+		es es_xif (server_var(_tempcore) = 0) do
+		{
+			es_xdbgmsg 0 xalias delete: xalias does not exist
+		}
+	}
+	es es_xif (server_var(_xalias_count) < 2) do
+	{
+		es_xdbgmsg 0 xalias delete: Not enough parameters
+	}
+	es_xsetinfo _tempcore 1
+}
+
+block xalias_addcommand
+{
+	es es_xif (server_var(_xalias_count) >= 3) do
+	{
+		es es_xexists _tempcore key _xalias_corelib server_var(_xalias_name)
+		es es_xif (server_var(_tempcore) != 0) do
+		{
+			es es_xkeygetvalue _xalias_temp _xalias_corelib server_var(_xalias_name) commands
+			es es_xmath _xalias_temp + 1
+			es es_xkeysetvalue _xalias_corelib server_var(_xalias_name) commands server_var(_xalias_temp)
+			es es_xgetargs _xalias_param
+			es es_xformat _xalias_temp2 "%1 %2 " server_var(_xalias_command) server_var(_xalias_name)
+			es es_xstring _xalias_param replace server_var(_xalias_temp2)
+			es es_xstrlen _xalias_temp1 server_var(_xalias_param)
+			es_xcopy _xalias_temp2 _xalias_temp1
+			es_xmath _xalias_temp2 - 1
+			es es_xsetinfo _xalias_temp3 server_var(_xalias_param)
+			es es_xsetinfo _xalias_temp4 server_var(_xalias_param)
+			es es_xstring _xalias_temp3 section 0 1
+			es es_xstring _xalias_temp4 section server_var(_xalias_temp2) server_var(_xalias_temp1)
+			es es_xif (server_var(_xalias_temp3) = "`") do
+      {
+        if (server_var(_xalias_temp4) = "`") do
+        {
+          es es_xstring _xalias_param section 1 server_var(_xalias_temp2)
+        }
+      }
+			es es_xkeysetvalue _xalias_corelib server_var(_xalias_name) server_var(_xalias_temp) server_var(_xalias_param)
+		}
+		es es_xif (server_var(_tempcore) = 0) do
+		{
+			es_xdbgmsg 0 xalias addcommand: xalias does not exist
+		}
+	}
+	es es_xif (server_var(_xalias_count) < 3) do
+	{
+		es_xdbgmsg 0 xalias addcommand: Not enough parameters
+	}
+	es_xsetinfo _tempcore 1
+}
+
+block xalias_delcommand
+{
+	es es_xif (server_var(_xalias_count) >= 3) do
+	{
+		es es_xexists _tempcore key _xalias_corelib server_var(_xalias_name)
+		es es_xif (server_var(_tempcore) != 0) do
+		{
+			es es_xgetargs _xalias_param
+			es es_xformat _xalias_temp2 "%1 %2 " server_var(_xalias_command) server_var(_xalias_name)
+			es es_xstring _xalias_param replace server_var(_xalias_temp2)
+			es es_xkeygetvalue _xalias_temp2 _xalias_corelib server_var(_xalias_name) commands
+			es_xsetinfo _xalias_temp 1
+			es_xdoblock corelib/xalias/xalias_delcommand2
+		}
+		es es_xif (server_var(_tempcore) = 0) do
+		{
+			es_xdbgmsg 0 xalias addcommand: xalias does not exist
+		}
+	}
+	es es_xif (server_var(_xalias_count) < 3) do
+	{
+		es_xdbgmsg 0 xalias addcommand: Not enough parameters
+	}
+	es_xsetinfo _tempcore 1
+}
+
+block xalias_delcommand2
+{
+	es es_xif (server_var(_xalias_temp) <= server_var(_xalias_temp2)) do
+	{
+		es es_xkeygetvalue _tempcore _xalias_corelib server_var(_xalias_name) server_var(_xalias_temp)
+		es es_xif (server_var(_tempcore) = server_var(_xalias_param)) do
+		{
+			es_keysetvalue _xalias_corelib server_var(_xalias_name) server_var(_xalias_temp) es_null
+		}
+		es es_xmath _xalias_temp + 1
+		es_xdoblock corelib/xalias/xalias_delcommand2
+	}
+	es_xsetinfo _tempcore 1
+}
+
+block xalias_execute
+{
+	es_exists _tempcore key _xalias_corelib server_var(_xalias_name)
+	es es_xif (server_var(_tempcore) != 0) do
+	{
+		es_xsetinfo _xalias_param 1
+		es es_xkeygetvalue _xalias_temp _xalias_corelib server_var(_xalias_name) commands
+		es_xdoblock corelib/xalias/xalias_loop
+		es es_xkeysetvalue _xalias_corelib server_var(_xalias_name) enabled 0
+	}
+	es_xsetinfo _tempcore 1
+}
+
+block xalias_loop
+{
+	es es_xif (server_var(_xalias_param) <= server_var(_xalias_temp)) do
+	{
+		es es_xkeygetvalue _xalias_temp2 _xalias_corelib server_var(_xalias_name) server_var(_xalias_param)
+		es es_xif (server_var(_xalias_temp2) != es_null) do
+		{
+			es es_xnq server_var(_xalias_temp2)
+		}
+		es es_xmath _xalias_param + 1
+		es_xdoblock corelib/xalias/xalias_loop
+	}
+}

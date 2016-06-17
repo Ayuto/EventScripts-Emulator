@@ -1,0 +1,1793 @@
+// Script with unit tests.
+
+block load
+{
+  
+	// These are macros used 
+	alias ts_init "es_xsetinfo ts_count 0;es_xsetinfo ts_passes 0"
+	alias ts_alldone "es_dbgmsg 0 Tests Passed: server_var(ts_passes) of server_var(ts_count);if (server_var(ts_passes) = server_var(ts_count)) then es_dbgmsg 0 GREEN;else es_dbgmsg 0 RED"
+	
+	alias ts_begin "es_xsetinfo ts_passed 0;es_xmath ts_count + 1"
+	alias ts_pass "es_xmath ts_passed + 1;es_xmath ts_passes + 1;es_dbgmsg 0 [Tests]: ."
+	alias ts_fail "es_dbgmsg 0 Test FAILED - server_var(ts_count) - server_var(ts_name)"
+	alias ts_end ";"
+
+	es_set testlib_output_verbose 0
+	testsuite delete es_default
+	testsuite create es_default "This is the EventScripts test suite for script addons."
+
+
+	// signify that we've loaded
+	es_setinfo ts_load 1
+	es_doblock unittest/tests
+	es_load pyunittest
+}
+
+block tests
+{
+	testcase qcreate es_default es_testifelse "Script Addon: test if and else code"
+	testcase addtest es_testifelse es_testelse unittest/testelse "Test else cases"
+	testcase addtest es_testifelse es_testif unittest/testif "Test if cases"
+
+	testcase qcreate es_default es_testnewmath "Script Addon: test trig functions"
+	testcase addtest es_testnewmath es_testtrig unittest/testnewmath "Test trig functions"
+
+	testcase qcreate es_default es_testlogv "Script Addon: Meaningless test of es_logv"
+	testcase addtest es_testlogv es_testlogv1 unittest/testlogv "Test es_logv"
+
+	testcase qcreate es_default es_testregex "Script Addon: Test regex"
+	testcase addtest es_testregex es_testregex1 unittest/test_regex "Test regex"
+
+	testcase qcreate es_default stack_test "Script Addon: Test stack"
+	testcase addtest stack_test stack_test1 unittest/stack_test "Test stack"
+
+	testcase qcreate es_default es_queryreg "Script Addon: Test queryregcmds"
+	testcase addtest es_queryreg es_queryreg1 unittest/testqueryregcmd "Test queryregcmds"
+  
+	testcase qcreate es_default es_testbugs "Script Addon: Regression test bugs"
+	testcase addtest es_testbugs es_testbugs1 unittest/test_bugs "Test early bugs"
+
+	profile begin unittest_timer
+	es_doblock unittest/testsoon
+	es_doblock unittest/testregcmd
+	es_doblock unittest/testexists
+	es_doblock unittest/test_fek
+	es_doblock unittest/test_fev
+	es_doblock unittest/test_ifx
+	es_doblock unittest/test_esset
+
+	es_doblock unittest/test_profile
+	es_doblock unittest/test_kgf
+	es_doblock unittest/test_essql
+	es_doblock unittest/test_vcommands
+
+	es_doblock unittest/test_events
+
+	// until everything is a testsuite, let's wrap
+	//  the test suites in the old-school test infrastructure
+	es_xsetinfo ts_name "Script Addon: v1.5 Test Suite"
+	ts_begin
+	es_setinfo suite_outcome 0
+	testsuite runall suite_outcome
+	if (server_var(suite_outcome) == 0) then ts_pass
+	if (server_var(suite_outcome) != 0) then ts_fail
+	ts_end
+	profile end unittest_timer
+
+	es_set nowtime 0
+	es_gettimestring nowtime
+	es_keygroupdelete unittest_timer
+	es_keygroupcreate unittest_timer
+	es_keygroupload unittest_timer |unittest
+	es_keycreate unittest_timer _metadata
+	es_set ut_lasttime 0
+	es_keygetvalue ut_lasttime unittest_timer _metadata lasttime
+	es_keysetvalue unittest_timer _metadata lasttime server_var(unittest_timer)
+	es_keycreate unittest_timer server_var(nowtime)
+	es_keysetvalue unittest_timer server_var(nowtime) unittest_time server_var(unittest_timer)
+	es_keysetvalue unittest_timer server_var(nowtime) version server_var(eventscripts_ver)
+	es_math unittest_timer - server_var(ut_lasttime)
+	es_keysetvalue unittest_timer server_var(nowtime) change server_var(unittest_timer)
+	es_keygroupsave unittest_timer |unittest
+	es_keygroupdelete unittest_timer
+}
+
+block test_profile
+{
+	es_load corelib
+	es_setinfo loop_1 0
+	while "server_var(loop_1) < 10" "es_xmath loop_1 + 1;es_xdoblock unittest/profile_loop1"
+	es_setinfo loop_2 0
+	while "server_var(loop_2) < 10" "es_xmath loop_2 + 1;es_xdoblock unittest/profile_loop2"
+	es_setinfo loop_3 0
+	while "server_var(loop_3) < 10" "es_xmath loop_3 + 1;es_xdoblock unittest/profile_loop3"
+	es_setinfo loop_4 0
+	while "server_var(loop_4) < 10" "es_xmath loop_4 + 1;es_xdoblock unittest/profile_loop4"
+	es_setinfo loop_5 0
+	while "server_var(loop_5) < 10" "es_xmath loop_5 + 1;es_xdoblock unittest/profile_loop5"
+	es_setinfo loop_6 0
+	while "server_var(loop_6) < 10" "es_xmath loop_6 + 1;es_xdoblock unittest/profile_loop6"
+
+
+
+	es_setinfo loop_5 0
+	while "server_var(loop_5) < 10" "es_xmath loop_5 + 1;es_xdoblock unittest/profile_ifdoxxxx"
+
+	es_setinfo loop_6 0
+	while "server_var(loop_6) < 10" "es_xmath loop_6 + 1;es_xdoblock unittest/profile_ifthen"
+
+	es_setinfo loop_7 0
+	while "server_var(loop_7) < 10" "es_xmath loop_7 + 1;es_xdoblock unittest/profile_ifxparse"
+
+	es_setinfo loop_8 0
+	while "server_var(loop_8) < 10" "es_xmath loop_8 + 1;es_xdoblock unittest/profile_essetinfo"
+
+	es_setinfo loop_9 0
+	while "server_var(loop_9) < 10" "es_xmath loop_9 + 1;es_xdoblock unittest/profile_esset"
+
+}
+
+block test_events
+{
+es_loadevents declare addons/eventscripts/unittest/es_unittest.res
+es_xevent initialize es_event_unittest
+es_xevent setint es_event_unittest userid 2
+es_xevent setint es_event_unittest teamonly 1
+es_xevent setstring es_event_unittest text hello
+es_xevent fire es_event_unittest
+}
+
+block profile_essetinfo
+{
+	profile begin essetinfo
+	es es_xsetinfo es_A server_var(sv_gravity)
+	profile end essetinfo
+}
+
+block profile_esset
+{
+	profile begin esset
+	es_set es_B server_var(sv_gravity)
+	profile end esset
+}
+
+
+block profile_ifxparse
+{
+//	ifx parse("(loop_7 > 1) and (sv_gravity == 800)") do
+//	{
+//		es_setinfo hellox server_var(loop_7)
+//	}
+
+	profile begin ifxparse
+	ifx parse("loop_7 > 5") do
+	{
+		es_setinfo hellox server_var(loop_7)
+	}
+	profile end ifxparse
+
+}
+
+block profile_ifdoxxxx
+{
+//	if (server_var(loop_5) > 1) do
+//	{
+//		if (server_var(sv_gravity) equalto 800) do
+//		{
+//			es_setinfo helloq server_var(loop_5)
+//		}
+//	}
+
+	profile begin ifdoxxxx
+	if (server_var(loop_5) > 5) do
+	{
+		es_setinfo helloq server_var(loop_5)
+	}
+	profile end ifdoxxxx
+}
+
+block profile_ifthen
+{
+	profile begin ifthen
+	if (server_var(loop_6) > 5) then es_xsetinfo hello server_var(loop_6)
+	profile end ifthen
+}
+
+
+block profile_loop1
+{
+	profile begin es_setinfo1
+	es_setinfo hello server_var(loop_1)
+	es_setinfo hello server_var(loop_1)
+	es_setinfo hello server_var(loop_1)
+	es_setinfo hello server_var(loop_1)
+	es_setinfo hello server_var(loop_1)
+	es_setinfo hello server_var(loop_1)
+	es_setinfo hello server_var(loop_1)
+	es_setinfo hello server_var(loop_1)
+	profile end es_setinfo1
+
+}
+
+block profile_loop2
+{
+	profile begin eses_setinfo1
+	es es_xsetinfo hello2 server_var(loop_2)
+	es es_xsetinfo hello2 server_var(loop_2)
+	es es_xsetinfo hello2 server_var(loop_2)
+	es es_xsetinfo hello2 server_var(loop_2)
+	es es_xsetinfo hello2 server_var(loop_2)
+	es es_xsetinfo hello2 server_var(loop_2)
+	es es_xsetinfo hello2 server_var(loop_2)
+	es es_xsetinfo hello2 server_var(loop_2)
+	profile end eses_setinfo1
+}
+
+block profile_loop3
+{
+	profile begin esxcopy1
+	es_xsetinfo hello3 0
+	es_xcopy hello3 loop_3
+	es_xcopy hello3 loop_3
+	es_xcopy hello3 loop_3
+	es_xcopy hello3 loop_3
+	es_xcopy hello3 loop_3
+	es_xcopy hello3 loop_3
+	es_xcopy hello3 loop_3
+	es_xcopy hello3 loop_3
+	profile end esxcopy1
+}
+
+block profile_loop4
+{
+	profile begin esxsetinfo1
+	es_xsetinfo hello2 8
+	es_xsetinfo hello2 8
+	es_xsetinfo hello2 8
+	es_xsetinfo hello2 8
+	es_xsetinfo hello2 8
+	es_xsetinfo hello2 8
+	es_xsetinfo hello2 8
+	es_xsetinfo hello2 8
+	profile end esxsetinfo1
+}
+
+
+block profile_loop5
+{
+	profile begin esset1
+	es_set hello3 8
+	es_set hello3 8
+	es_set hello3 8
+	es_set hello3 8
+	es_set hello3 8
+	es_set hello3 8
+	es_set hello3 8
+	es_set hello3 8
+	es_set hello3 8
+	es_set hello3 8
+	profile end esset1
+}
+
+block profile_loop6
+{
+	profile begin esset1
+	es_xset hello4 8
+	es_xset hello4 8
+	es_xset hello4 8
+	es_xset hello4 8
+	es_xset hello4 8
+	es_xset hello4 8
+	es_xset hello4 8
+	es_xset hello4 8
+	es_xset hello4 8
+	es_xset hello4 8
+	profile end esset1
+}
+
+
+block testsoon
+{
+	es_soon es_xsetinfo ts_name "Script Addon: soon test"
+	es_soon ts_begin
+	es_soon es_setinfo ts_tfail 0
+	// this will execute immediately
+	es_setinfo ts_tfail 1
+	es_xsoon if (server_var(ts_tfail) notequalto 0) then ts_fail
+	es_xsoon if (server_var(ts_tfail) equalto 0) then ts_pass
+	es_soon ts_end
+	
+}
+
+block testif
+{
+	testlib begin if1 "Script Addon: test if failure"
+	es_setinfo ts_tfail 1
+	if (0 == 0) do
+	{
+		es_setinfo ts_tfail 0
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end if1
+
+	testlib begin if2 "Script Addon: test if failure2"
+	es_setinfo ts_tfail 1
+	if (0 == 0) then es_setinfo ts_tfail 0
+	testlib fail_unless ts_tfail equalto 0
+	testlib end if2
+
+	testlib begin if3 "Script Addon: test if failure w/ variable"
+	es_setinfo ts_tfail 1
+	if (server_var(ts_tfail) == 1) then es_setinfo ts_tfail 0
+	testlib fail_unless ts_tfail equalto 0
+	testlib end if3
+
+}
+
+block testelse
+{
+	testlib begin else1 "Script Addon: test else with nested if failure"
+	es_setinfo ts_tfail 1
+	if (0 == 0) do
+	{
+		es_setinfo ts_tfail 0
+		if (0 == 1) do
+		{
+			es_setinfo ts_tfail 1
+			
+		}
+	}
+	else do
+	{
+		es_setinfo ts_tfail 2
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end else1
+
+
+	testlib begin else2  "Script Addon: test else with nested if success"
+	es_setinfo ts_tfail 1
+	if (0 == 0) do
+	{
+		es_setinfo ts_tfail 1
+		if (0 == 0) do
+		{
+			es_setinfo ts_tfail 0
+			
+		}
+	}
+	else do
+	{
+		es_setinfo ts_tfail 2
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end else2
+
+
+	testlib begin else3 "Script Addon: test else with initial failure"
+	es_setinfo ts_tfail 1
+	if (0 == 1) do
+	{
+		es_setinfo ts_tfail 2
+		if (0 == 0) do
+		{
+			es_setinfo ts_tfail 3
+			
+		}
+	}
+	else do
+	{
+		es_setinfo ts_tfail 0
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end else3
+
+	testlib begin elseif "Script Addon: test else with multiple else/if 1"
+	es_set ts_tfail 1
+	if (0 == 1) do
+	{
+		es_set ts_tfail 2
+	}
+	else if (1 == 1) do
+	{
+		es_set ts_tfail 0
+	}
+	else do
+	{
+		es_set ts_tfail 3
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end elseif 
+
+	testlib begin elseif2 "Script Addon: test else with multiple else/if 2"
+	es_set ts_tfail 1
+	if (0 == 1) do
+	{
+		es_set ts_tfail 2
+	}
+	else if (0 == 2) do
+	{
+		es_set ts_tfail 3
+	}
+	else do
+	{
+		es_set ts_tfail 0
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end elseif2
+
+	testlib begin elseif3 "Script Addon: test else with multiple calls of else/if"
+	es_set ts_tfail 1
+	if (0 == 1) do
+	{
+		es_set ts_tfail 2
+	}
+	else if (0 == 2) do
+	{
+		es_set ts_tfail 3
+	}
+	else if (0 == 3) do
+	{
+		es_set ts_tfail 4
+	}
+	else if (0 == 4) do
+	{
+		es_set ts_tfail 5
+	}
+	else if (0 == 5) do
+	{
+		es_set ts_tfail 6
+	}
+	else do
+	{
+		es_set ts_tfail 0
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end elseif3
+
+	testlib begin elseif4a "Script Addon: test else with multiple calls of else/if 2pre"
+	es_set ts_tfail 1
+	if (0 == 0) do
+	{
+		es_set ts_tfail 0
+	}
+	else if (0 == 1) do
+	{
+		es_set ts_tfail 3
+	}
+	//testlib fail_unless ts_tfail equalto 0
+	testprint Skipping test.
+	testlib end elseif4a
+
+	testlib begin elseif4 "Script Addon: test else with multiple calls of else/if 2"
+	es_set ts_tfail 1
+	if (0 == 0) do
+	{
+		es_set ts_tfail 0
+	}
+	else if (0 == 2) do
+	{
+		es_set ts_tfail 3
+	}
+	else if (0 == 3) do
+	{
+		es_set ts_tfail 4
+	}
+	else if (0 == 4) do
+	{
+		es_set ts_tfail 5
+	}
+	else if (0 == 5) do
+	{
+		es_set ts_tfail 6
+	}
+	else do
+	{
+		es_set ts_tfail 7
+	}
+	//testlib fail_unless ts_tfail equalto 0
+	testprint Skipping test.
+	testlib end elseif4
+
+	testlib begin elseif5a "Script Addon: test else with multiple calls of else/if 3pre"
+	es_set ts_tfail 1
+	if (0 == 0) do
+	{
+		es_set ts_tfail 0
+	}
+	else if (0 == 0) do
+	{
+		es_set ts_tfail 3
+	}
+	else if (0 == 0) do
+	{
+		es_set ts_tfail 4
+	}
+	else if (0 == 0) do
+	{
+		es_set ts_tfail 5
+	}
+	else do
+	{
+		es_set ts_tfail 7
+	}
+	//testlib fail_unless ts_tfail equalto 0
+	testprint Skipping test.
+	testlib end elseif5a
+
+	testlib begin elseif5 "Script Addon: test else with multiple calls of else/if 3"
+	es_set ts_tfail 1
+	if (0 == 0) do
+	{
+		es_set ts_tfail 0
+	}
+	else if (0 == 0) do
+	{
+		es_set ts_tfail 3
+	}
+	else if (0 == 0) do
+	{
+		es_set ts_tfail 4
+	}
+	else if (0 == 0) do
+	{
+		es_set ts_tfail 5
+	}
+	else if (0 == 0) do
+	{
+		es_set ts_tfail 6
+	}
+	else do
+	{
+		es_set ts_tfail 7
+	}
+
+	//testlib fail_unless ts_tfail equalto 0
+	testprint Skipping test.
+	testlib end elseif5
+
+	testlib begin elseif6 "Script Addon: test else with multiple calls of else/if 4"
+	es_set ts_tfail 1
+	if (1 == 0) do
+	{
+		es_set ts_tfail 2
+	}
+	else if (0 == 0) do
+	{
+		es_set ts_tfail 5
+	}
+	else do
+	{
+		es_set ts_tfail 7
+	}
+	if (server_var(ts_tfail) != 5) do
+	{
+		// should never get here
+		es_set ts_tfail 74
+	}
+	else if (server_var(ts_tfail) == 5) do
+	{
+		// yep
+		es_set ts_tfail 0
+	}
+	else do
+	{
+		// should never get here
+		es_set ts_tfail 8
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end elseif6
+
+	testlib begin elseif7 "Script Addon: test else with multiple calls of else/if with nested ifelse"
+	es_set ts_tfail 1
+	if (0 == 0) do
+	{
+		if (0 == 1) do
+		{
+			// never get here
+			es_set ts_tfail 2
+		}
+		else do
+		{
+			// we should run this
+			es_set ts_tfail 0
+		}
+	}
+	else if (0 == 0) do
+	{
+		// never get here
+		es_set ts_tfail 5
+	}
+	else do
+	{
+		// never get here
+		es_set ts_tfail 7
+	}
+	testprint Skipping test.
+	//testlib fail_unless ts_tfail equalto 0
+	testlib end elseif7
+
+	testlib begin elseif8 "Script Addon: test else with multiple calls of else/if with nested if"
+	es_set ts_tfail 1
+	if (0 == 0) do
+	{
+		es_set ts_tfail 0
+		if (0 == 1) do
+		{
+			// never get here
+			es_set ts_tfail 2
+		}
+	}
+	else if (0 == 0) do
+	{
+		// never get here
+		es_set ts_tfail 5
+	}
+	else do
+	{
+		// never get here
+		es_set ts_tfail 7
+	}
+	//testlib fail_unless ts_tfail equalto 0
+	testprint Skipping test.
+	testlib end elseif8
+
+
+}
+
+block testregcmd
+{
+	es_regcmd test_command unittest/cmdtest "This is a test command."
+	es_setinfo cmdtested 0
+	test_command param
+	es_xsetinfo ts_name "Script Addon: es_regcmd test"
+	ts_begin
+	es_setinfo ts_tfail server_var(cmdtested)
+	if (server_var(ts_tfail) equalto 0) then ts_fail
+	if (server_var(ts_tfail) notequalto 0) then ts_pass
+	ts_end
+
+	test_command more than2
+	test_command more than 4 commands
+	
+}
+
+block cmdtest
+{
+	es_xsetinfo ts_name "Script Addon: es_getargc test1: basic"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_getargc ts_tfail
+	if (server_var(ts_tfail) equalto 0) then ts_fail
+	if (server_var(ts_tfail) notequalto 0) then ts_pass
+	ts_end
+
+	if (server_var(ts_tfail) equalto 3) do
+	{
+		es_xsetinfo ts_name "Script Addon: es_getargc test2: inside block"
+		ts_begin
+		es_setinfo ts_tfail 0
+		es_getargc ts_tfail
+		if (server_var(ts_tfail) notequalto 3) then ts_fail
+		if (server_var(ts_tfail) equalto 3) then ts_pass
+		ts_end
+
+		test_command more than 3
+
+		es_xsetinfo ts_name "Script Addon: es_getargc test4: validate original argcount"
+		ts_begin
+		es_setinfo ts_tfail 0
+		es_getargc ts_tfail
+		if (server_var(ts_tfail) notequalto 3) then ts_fail
+		if (server_var(ts_tfail) equalto 3) then ts_pass
+		ts_end
+
+	}
+
+	if (server_var(ts_tfail) equalto 4) do
+	{
+		es_xsetinfo ts_name "Script Addon: es_getargc test3: reentrant"
+		ts_begin
+		es_setinfo ts_tfail 0
+		es_getargc ts_tfail
+		if (server_var(ts_tfail) notequalto 4) then ts_fail
+		if (server_var(ts_tfail) equalto 4) then ts_pass
+		ts_end
+	}
+
+
+	if (server_var(ts_tfail) equalto 5) do
+	{
+		es_regcmd test_command2 unittest/cmdtest2 "This is a test command2."
+		es_setinfo testloop 0
+		test_command2 param
+		es_xsetinfo ts_name "Script Addon: es_regcmd test5: regcmd within regcmd"
+		ts_begin
+		es_setinfo ts_tfail server_var(testloop)
+		if (server_var(ts_tfail) notequalto 6) then ts_fail
+		if (server_var(ts_tfail) equalto 6) then ts_pass
+		ts_end
+
+		es_xsetinfo ts_name "Script Addon: es_getargs test1"
+		ts_begin
+		es_setinfo ts_tfail 0
+		es_getargs ts_tfail
+		if (server_var(ts_tfail) notequalto "more than 4 commands") then ts_fail
+		if (server_var(ts_tfail) equalto "more than 4 commands") then ts_pass
+		ts_end
+
+		es_xsetinfo ts_name "Script Addon: es_getargv test1: argv(0)"
+		ts_begin
+		es_setinfo ts_tfail 0
+		es_getargv ts_tfail 0
+		if (server_var(ts_tfail) notequalto "test_command") then ts_fail
+		if (server_var(ts_tfail) equalto "test_command") then ts_pass
+		ts_end
+
+		es_xsetinfo ts_name "Script Addon: es_getargv test2: argv(1)"
+		ts_begin
+		es_setinfo ts_tfail 0
+		es_getargv ts_tfail 1
+		if (server_var(ts_tfail) notequalto "more") then ts_fail
+		if (server_var(ts_tfail) equalto "more") then ts_pass
+		ts_end
+
+	}
+	
+	es_setinfo cmdtested 1
+}
+
+block cmdtest2
+{
+	es_xmath testloop + 1
+	if (server_var(testloop) < 6) do
+	{
+		es test_command2 server_var(testloop)
+	}
+	else do
+	{
+		es_xsetinfo ts_name "Script Addon: es_getargv test0: two functions deep"
+		ts_begin
+		es_setinfo ts_tfail 0
+		es_getargv ts_tfail 0
+		if (server_var(ts_tfail) equalto "test_command") then ts_fail
+		if (server_var(ts_tfail) notequalto "test_command") then ts_pass
+		ts_end
+	}
+}
+
+block testqueryregsaycmd
+{
+	echo pass
+}
+block testqueryregclientcmd
+{
+	echo pass
+}
+
+block testqueryregcmd
+{
+	testlib begin testqueryregcmd "Script Addon: testqueryregcmd"
+	es_regcmd test_qrcommand unittest/testqueryregcmd "This is a test command."
+	es_setinfo ts_tfail 0
+	es_queryregcmd ts_tfail "test_qrcommand"
+	testlib fail_unless ts_tfail equalto "unittest/testqueryregcmd"
+	testlib end testqueryregcmd
+	
+	testlib begin testqueryregsaycmd "Script Addon: testqueryregsaycmd"
+	es_regsaycmd test_qrcommand unittest/testqueryregsaycmd
+	es_setinfo ts_tfail 0
+	es_queryregsaycmd ts_tfail "test_qrcommand"
+	testlib fail_unless ts_tfail equalto "unittest/testqueryregsaycmd"
+	testlib end testqueryregsaycmd
+
+	testlib begin testqueryregclientcmd "Script Addon: testqueryregclientcmd"
+	es_regclientcmd test_qrcommand unittest/testqueryregclientcmd
+	es_setinfo ts_tfail 0
+	es_queryregclientcmd ts_tfail "test_qrcommand"
+	testlib fail_unless ts_tfail equalto "unittest/testqueryregclientcmd"
+	testlib end testqueryregclientcmd
+
+	testlib begin testqueryregcmdmissing "Script Addon: testqueryregcmd missing"
+	es_setinfo ts_tfail 0
+	es_queryregcmd ts_tfail "abcdefg_prq_tuv_missing_command"
+	testlib fail_unless ts_tfail equalto "0"
+	testlib end testqueryregcmdmissing
+	
+	testlib begin testqueryregsaycmdmissing "Script Addon: testqueryregsaycmd missing"
+	es_setinfo ts_tfail 0
+	es_queryregsaycmd ts_tfail "abcdefg_prq_tuv_missing_command"
+	testlib fail_unless ts_tfail equalto "0"
+	testlib end testqueryregsaycmdmissing
+
+	testlib begin testqueryregclientcmdmissing "Script Addon: testqueryregclientcmd missing"
+	es_setinfo ts_tfail 0
+	es_queryregclientcmd ts_tfail "abcdefg_prq_tuv_missing_command"
+	testlib fail_unless ts_tfail equalto "0"
+	testlib end testqueryregclientcmdmissing
+}
+
+block testnewmath
+{
+	testlib begin atan "Script Addon: es_math atan test"
+	es_setinfo ts_tfail 3.00
+	es_math ts_tfail atan
+	testlib fail_unless ts_tfail equalto 1.249046
+	testlib end atan
+
+	testlib begin acos "Script Addon: es_math acos test"
+	es_setinfo ts_tfail 0.5
+	es_math ts_tfail acos
+	testlib fail_unless ts_tfail equalto 1.047198
+	testlib end acos
+
+	testlib begin asin "Script Addon: es_math asin test"
+	es_setinfo ts_tfail 0.5
+	es_math ts_tfail asin
+	testlib fail_unless ts_tfail equalto 0.523599
+	testlib end asin
+
+	testlib begin int "Script Addon: es_math int test"
+	es_setinfo ts_tfail 1.5
+	es_math ts_tfail int
+	testlib fail_unless ts_tfail equalto 1
+	testlib end int
+}
+
+
+block testexists
+{
+	es_xsetinfo ts_name "Script Addon: es_exists test: variable"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_setinfo this_variable_exists 0
+	es_exists ts_tfail variable this_variable_exists
+	if (server_var(ts_tfail) notequalto 1) then ts_fail
+	if (server_var(ts_tfail) equalto 1) then ts_pass
+	ts_end	
+
+	es_xsetinfo ts_name "Script Addon: es_exists test2: variable"
+	ts_begin
+	es_setinfo ts_tfail -1
+	es_exists ts_tfail variable this_variable_does_not_exist
+	if (server_var(ts_tfail) notequalto 0) then ts_fail
+	if (server_var(ts_tfail) equalto 0) then ts_pass
+	ts_end	
+
+	es_xsetinfo ts_name "Script Addon: es_exists test: cmd"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_regcmd test_exists unittest/testexists "This command exists."
+	es_exists ts_tfail command test_exists
+	if (server_var(ts_tfail) notequalto 1) then ts_fail
+	if (server_var(ts_tfail) equalto 1) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test2: cmd"
+	ts_begin
+	es_setinfo ts_tfail -1
+	es_exists ts_tfail command test_no_exists
+	if (server_var(ts_tfail) notequalto 0) then ts_fail
+	if (server_var(ts_tfail) equalto 0) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test: keygroup"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_keygroupcreate KEYGROUP_EXISTS
+	es_exists ts_tfail keygroup KEYGROUP_EXISTS
+	if (server_var(ts_tfail) notequalto 1) then ts_fail
+	if (server_var(ts_tfail) equalto 1) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test2: keygroup"
+	ts_begin
+	es_setinfo ts_tfail -1
+	es_keygroupdelete KEYGROUP_EXISTS
+	es_exists ts_tfail keygroup KEYGROUP_EXISTS
+	if (server_var(ts_tfail) notequalto 0) then ts_fail
+	if (server_var(ts_tfail) equalto 0) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test: key"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_keygroupcreate test_keygroup
+	es_keycreate test_keygroup key_exists1
+	es_exists ts_tfail key test_keygroup key_exists1
+	if (server_var(ts_tfail) notequalto 1) then ts_fail
+	if (server_var(ts_tfail) equalto 1) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test2: key"
+	ts_begin
+	es_setinfo ts_tfail -1
+	es_keydelete test_keygroup key_exists1
+	es_exists ts_tfail key test_keygroup key_exists1
+	if (server_var(ts_tfail) notequalto 0) then ts_fail
+	if (server_var(ts_tfail) equalto 0) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test3: key with no keygroup"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_keycreate key_exists
+	es_exists ts_tfail key key_exists
+	if (server_var(ts_tfail) notequalto 1) then ts_fail
+	if (server_var(ts_tfail) equalto 1) then ts_pass
+	es_keydelete key_exists
+	es_keygroupdelete test_keygroup
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test: keyvalue"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_keygroupcreate test_keygroup
+	es_keycreate test_keygroup key_exists1
+	es_keysetvalue test_keygroup key_exists1 myval 0
+	es_exists ts_tfail keyvalue test_keygroup key_exists1 myval
+	if (server_var(ts_tfail) notequalto 1) then ts_fail
+	if (server_var(ts_tfail) equalto 1) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test2: keyvalue"
+	ts_begin
+	es_setinfo ts_tfail -1
+	es_keydelete test_keygroup key_exists1
+	es_keycreate test_keygroup key_exists1
+	es_exists ts_tfail keyvalue test_keygroup key_exists1 myval
+	if (server_var(ts_tfail) notequalto 0) then ts_fail
+	if (server_var(ts_tfail) equalto 0) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_exists test3: keyvalue with no keygroup"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_keycreate key_exists
+	es_keysetvalue key_exists myval 0 
+	es_exists ts_tfail keyvalue key_exists myval
+	if (server_var(ts_tfail) notequalto 1) then ts_fail
+	if (server_var(ts_tfail) equalto 1) then ts_pass
+	ts_end
+
+
+	es_xsetinfo ts_name "Script Addon: es_exists test: saycmd"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_regsaycmd __test unittest/testexists Hello
+	es_exists ts_tfail saycommand __test
+	if (server_var(ts_tfail) notequalto 1) do
+	{
+	   ts_fail
+	}
+	else do
+	{
+		es_unregsaycmd __test
+		es_exists ts_tfail saycommand __test
+		if (server_var(ts_tfail) notequalto 0) do
+		{
+			ts_fail
+		}
+		else do
+		{
+	
+			ts_pass
+		}
+	}
+	ts_end
+
+
+	es_xsetinfo ts_name "Script Addon: es_exists test: clientcmd"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_regclientcmd __test unittest/testexists Hello
+	es_exists ts_tfail clientcommand __test
+	if (server_var(ts_tfail) notequalto 1) do
+	{
+	   ts_fail
+	}
+	else do
+	{
+		es_unregclientcmd __test
+		es_exists ts_tfail clientcommand __test
+		if (server_var(ts_tfail) notequalto 0) do
+		{
+			ts_fail
+		}
+		else do
+		{
+	
+			ts_pass
+		}
+	}
+	ts_end
+
+}
+
+block test_fek
+{
+	// run the es_foreachkey tests
+	es_xsetinfo ts_name "Script Addon: es_foreachkey nest tests"
+	ts_begin
+	es_setinfo fekcount 0
+	es_keygroupcreate fek
+	es_keycreate fek test
+	es_keysetvalue fek test value 1
+	es_keycreate fek test2
+	es_keysetvalue fek test2 value 2
+	es_keycreate fek test3
+	es_keysetvalue fek test3 value 3
+	es_keycreate fek test4
+	es_keysetvalue fek test4 value 4
+	es_keygroupcreate fek2
+	es_keycreate fek2 test
+	es_keysetvalue fek2 test value 1
+	es_keycreate fek2 test2
+	es_keysetvalue fek2 test2 value 2
+	es_keycreate fek2 test3
+	es_keysetvalue fek2 test3 value 3
+	es_keycreate fek2 test4
+	es_keysetvalue fek2 test4 value 4
+	es_keycreate fek2 test5
+	es_keysetvalue fek2 test5 value 5
+	es_foreachkey myvar in fek "es_xdoblock unittest/test_fek2"
+	// 4 on top and 100 internally
+	if (server_var(fekcount) == 104) then ts_pass
+	if (server_var(fekcount) != 104) then ts_fail
+	ts_end
+
+}
+
+block test_fek2
+{
+	es_xmath fekcount + 1
+	es_foreachkey myvar2 in fek2 "es_xdoblock unittest/test_fek3"
+}
+
+block test_fek3
+{
+	es_xmath fekcount + 1
+	es_foreachkey myvar3 in fek "es_xmath fekcount + 1"
+}
+
+block test_fev
+{
+	// run the es_foreachval tests
+	es_xsetinfo ts_name "Script Addon: es_foreachval nest tests"
+	ts_begin
+	es_setinfo fevcount 0
+	es_keygroupcreate fev
+	es_keycreate fev test
+	es_keysetvalue fev test value 1
+	es_keysetvalue fev test value1 2
+	es_keysetvalue fev test value2 3
+	es_keysetvalue fev test value3 4
+	es_keycreate fev test2
+	es_keysetvalue fev test2 valueA A
+	es_keysetvalue fev test2 valueB B
+	es_keysetvalue fev test2 valueC C
+	es_keysetvalue fev test2 valueD D
+	es_keysetvalue fev test2 valueE E
+	es_keycreate fev test3
+	es_keysetvalue fev test3 valueQ Q
+	es_keysetvalue fev test3 valueR R
+	es_keysetvalue fev test3 valueS S
+	es_foreachval myvar in fev test "es_xdoblock unittest/test_fev2"
+	// 4 on top and 80 internally
+	if (server_var(fevcount) == 84) then ts_pass
+	if (server_var(fevcount) != 84) then ts_fail
+	ts_end
+}
+
+block test_fev2
+{
+	es_xmath fevcount + 1
+	es_dbgmsg 1 server_var(myvar)
+	es_foreachval myvar2 in fev test2 "es_xdoblock unittest/test_fev3"
+}
+
+block test_fev3
+{
+	es_xmath fevcount + 1
+	es_dbgmsg 1 server_var(myvar2)
+	es_foreachval myvar3 in fev test3 "es_xmath fevcount + 1"
+}
+
+block test_kgf
+{
+	es_xsetinfo ts_name "Script Addon: es_keygroupfilter test: only"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_setinfo ts_texists 0
+	es_keygroupcreate KEYGROUP_FILTER
+	es_keycreate KEYGROUP_FILTER test
+	es_keysetvalue KEYGROUP_FILTER test valueA A
+	es_keysetvalue KEYGROUP_FILTER test valueB A
+	es_keysetvalue KEYGROUP_FILTER test valueC C
+	es_keycreate KEYGROUP_FILTER test2
+	es_keysetvalue KEYGROUP_FILTER test2 valueB A
+	es_keysetvalue KEYGROUP_FILTER test2 valueC C
+	es_keycreate KEYGROUP_FILTER test3
+	es_keysetvalue KEYGROUP_FILTER test3 valueB R
+	es_keysetvalue KEYGROUP_FILTER test3 valueC C
+	es_keycreate KEYGROUP_FILTER test4
+	es_keycreate KEYGROUP_FILTER test5
+	profile begin filter1
+	es_keygroupfilter KEYGROUP_FILTER only valueB A
+	profile end filter1
+	es_exists ts_texists key KEYGROUP_FILTER test
+	if (server_var(ts_texists) equalto 0) then es_xsetinfo ts_tfail 1
+	es_exists ts_texists key KEYGROUP_FILTER test2
+	if (server_var(ts_texists) equalto 0) then es_xsetinfo ts_tfail 1
+	es_exists ts_texists key KEYGROUP_FILTER test3
+	if (server_var(ts_texists) equalto 1) then es_xsetinfo ts_tfail 1
+	es_exists ts_texists key KEYGROUP_FILTER test4
+	if (server_var(ts_texists) equalto 1) then es_xsetinfo ts_tfail 1
+	es_exists ts_texists key KEYGROUP_FILTER test5
+	if (server_var(ts_texists) equalto 1) then es_xsetinfo ts_tfail 1
+	es_keygroupdelete KEYGROUP_FILTER
+
+	if (server_var(ts_tfail) equalto 1) then ts_fail
+	if (server_var(ts_tfail) notequalto 1) then ts_pass
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_keygroupfilter test: not"
+	ts_begin
+	es_setinfo ts_tfail 0
+	es_setinfo ts_texists 0
+	es_keygroupcreate KEYGROUP_FILTER
+	es_keycreate KEYGROUP_FILTER test
+	es_keysetvalue KEYGROUP_FILTER test valueA A
+	es_keysetvalue KEYGROUP_FILTER test valueB A
+	es_keysetvalue KEYGROUP_FILTER test valueC C
+	es_keycreate KEYGROUP_FILTER test2
+	es_keysetvalue KEYGROUP_FILTER test2 valueB A
+	es_keysetvalue KEYGROUP_FILTER test2 valueC C
+	es_keycreate KEYGROUP_FILTER test3
+	es_keysetvalue KEYGROUP_FILTER test3 valueB R
+	es_keysetvalue KEYGROUP_FILTER test3 valueC C
+	es_keycreate KEYGROUP_FILTER test4
+	es_keycreate KEYGROUP_FILTER test5
+	profile begin filter2
+	es_keygroupfilter KEYGROUP_FILTER not valueB A
+	profile end filter2
+
+	es_exists ts_texists key KEYGROUP_FILTER test
+	if (server_var(ts_texists) equalto 1) then es_xsetinfo ts_tfail 1
+	es_exists ts_texists key KEYGROUP_FILTER test2
+	if (server_var(ts_texists) equalto 1) then es_xsetinfo ts_tfail 1
+	es_exists ts_texists key KEYGROUP_FILTER test3
+	if (server_var(ts_texists) equalto 0) then es_xsetinfo ts_tfail 1
+	es_exists ts_texists key KEYGROUP_FILTER test4
+	if (server_var(ts_texists) equalto 0) then es_xsetinfo ts_tfail 1
+	es_exists ts_texists key KEYGROUP_FILTER test5
+	if (server_var(ts_texists) equalto 0) then es_xsetinfo ts_tfail 1
+	es_keygroupdelete KEYGROUP_FILTER
+
+	if (server_var(ts_tfail) equalto 1) then ts_fail
+	if (server_var(ts_tfail) notequalto 1) then ts_pass
+	ts_end
+
+}
+
+block test_ifx
+{
+	es_xsetinfo ts_name "Script Addon: ifx parse test"
+	ts_begin
+	es_setinfo ts_tfail 0
+	ifx parse("ts_tfail") do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ifx parse("ts_tfail + 1") do
+		{
+			es_setinfo ts_tfail 1
+		}	
+		if (server_var(ts_tfail) equalto 0) then ts_fail
+		if (server_var(ts_tfail) notequalto 0) then ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx parse test2: ! test"
+	ts_begin
+	ifx parse("0 or !1") do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx parse test3a: simple variable addition"
+	ts_begin
+	es_setinfo ts_tfail "0"
+	ifx parse("sv_timeout + sv_gravity") do
+	{
+		ts_pass
+	}
+	else do
+	{
+		ts_fail
+	}
+	ts_end
+
+
+	es_xsetinfo ts_name "Script Addon: ifx parse test3: variables and booleans"
+	ts_begin
+	es_setinfo ts_tfail "0"
+	ifx parse("!(sv_gravity == 800 and sv_gravity/10 > 79 and sv_gravity/10 < 81)") do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx parse test4: non-existing variable"
+	ts_begin
+	es_setinfo ts_tfail "0"
+	ifx parse("megaman") do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+
+	es_xsetinfo ts_name "Script Addon: ifx true test"
+	ts_begin
+	es_setinfo ts_tfail "0"
+	ifx true(ts_tfail) do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx true test2"
+	ts_begin
+	es_setinfo ts_tfail "1"
+	ifx true(ts_tfail) do
+	{
+		ts_pass
+	}
+	else do
+	{
+		ts_fail
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx true test3"
+	ts_begin
+	es_setinfo ts_tfail "test"
+	ifx true(ts_tfail) do
+	{
+		ts_pass
+	}
+	else do
+	{
+		ts_fail
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx false test"
+	ts_begin
+	es_setinfo ts_tfail "0"
+	ifx false(ts_tfail) do
+	{
+		ts_pass
+	}
+	else do
+	{
+		ts_fail
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx false test2"
+	ts_begin
+	es_setinfo ts_tfail "-100"
+	ifx false(ts_tfail) do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx false test3"
+	ts_begin
+	es_setinfo ts_tfail "hello"
+	ifx false(ts_tfail) do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx false test4"
+	ts_begin
+	es_setinfo ts_tfail "a"
+	es_string ts_tfail replace "a"
+	ifx false(ts_tfail) do
+	{
+		ts_pass
+	}
+	else do
+	{
+		ts_fail
+	}
+	ts_end
+
+
+	es_xsetinfo ts_name "Script Addon: ifx false test5"
+	ts_begin
+	es_setinfo ts_tfail "0.000000"
+	ifx false(ts_tfail) do
+	{
+		ts_pass
+	}
+	else do
+	{
+		ts_fail
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: ifx false test6"
+	ts_begin
+	es_setinfo ts_tfail "0f"
+	ifx false(ts_tfail) do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+}
+
+block test_esset
+{
+	es_xsetinfo ts_name "Script Addon: es_set test1"
+	ts_begin
+	es_set ts_tfailq 1
+	ifx false(ts_tfailq) do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_set test2"
+	ts_begin
+	es_set ts_tfailr hello
+	if (server_var(ts_tfailr) != "hello") do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+}
+
+event es_event_unittest
+{
+	es_xsetinfo ts_name "Script Addon: es_event fired"
+	ts_begin
+	if (event_var(teamonly) equalto 1) do
+	{
+		if (event_var(text) equalto "hello") do
+		{
+			if (event_var(userid) equalto 2) do
+			{
+				ts_pass
+			}
+			else do
+			{
+				ts_fail
+			}
+		}
+		else do
+		{
+			ts_fail
+		}
+
+	}
+	else do
+	{
+		ts_fail
+	}
+
+	ts_end
+
+	
+}
+
+event es_unittest_done
+{
+	es_dbgmsg 0 Results:
+	ts_alldone
+}
+
+block test_essql
+{
+
+	es_xsetinfo ts_name "Script Addon: es_sql open"
+	ts_begin
+	es_set ts_tfail server_var(eventscripts_lasterror)
+	es_set eventscripts_lasterror 0
+	es_sql open unittest |unittest
+	ifx true(eventscripts_lasterror) do
+	{
+		es_dbgmsg 0 server_var(eventscripts_lasterror)
+		ts_fail
+	}
+	else do
+	{
+		// clean it for future test
+		es_sql query unittest "DROP TABLE Person;"
+		es_sql close unittest
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_sql open (failure)"
+	ts_begin
+	es_set ts_tfail server_var(eventscripts_lasterror)
+	es_set eventscripts_lasterror 0
+	es_sql open unittest |doesntexist
+	ifx false(eventscripts_lasterror) do
+	{
+		es_dbgmsg 0 error was: server_var(eventscripts_lasterror)
+		ts_fail
+	}
+	else do
+	{
+		es_sql close unittest
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_sql query"
+	ts_begin
+	es_set ts_tfail server_var(eventscripts_lasterror)
+	es_set eventscripts_lasterror 0
+	es_sql open unittest |unittest
+	es_sql query unittest _unit_query "CREATE TABLE Person (LastName varchar,FirstName varchar,Address varchar,Age int);"
+	ifx true(eventscripts_lasterror) do
+	{
+		es_dbgmsg 0 error was: server_var(eventscripts_lasterror)
+		es_sql close unittest
+		ts_fail
+	}
+	else do
+	{
+		es_sql close unittest
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_sql query (insert)"
+	ts_begin
+	es_set ts_tfail server_var(eventscripts_lasterror)
+	es_set eventscripts_lasterror 0
+	es_sql open unittest |unittest
+	es_sql query unittest "INSERT INTO Person (LastName, FirstName, Address, Age) VALUES('Mattie', 'Mr.', 'Home', 33);"
+	ifx true(eventscripts_lasterror) do
+	{
+		es_sql close unittest
+		es_dbgmsg 0 error was: server_var(eventscripts_lasterror)
+		ts_fail
+	}
+	else do
+	{
+		es_sql close unittest
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_sql query (select)"
+	ts_begin
+	es_set ts_tfail server_var(eventscripts_lasterror)
+	es_set eventscripts_lasterror 0
+	es_keygroupdelete _unit_query
+	es_sql open unittest |unittest
+	es_sql query unittest _unit_query "SELECT * FROM Person;"
+	ifx true(eventscripts_lasterror) do
+	{
+		es_sql close unittest
+		es_dbgmsg 0 error was: server_var(eventscripts_lasterror)
+		ts_fail
+	}
+	else do
+	{
+		es_sql close unittest
+		es_set tsq 0 "used for unittest"
+		es_keygetvalue tsq _unit_query 1 LastName
+		if (server_var(tsq) equalto "Mattie") do
+		{
+			ts_pass
+		}
+		else do
+		{
+			ts_fail
+		}
+	}
+	ts_end
+}
+
+block test_regex
+{
+
+	testlib begin regex "Script Addon: es_regex"
+	es_set __myvar "a b c"
+	es_set tsrx 0
+	es_regex matchformat tsrx "(\w+) (\w+) (\w+)" server_var(__myvar) "Hello %1, %3, %2."
+	testlib fail_unless tsrx equalto "Hello a, c, b."
+	testlib end regex
+	
+	testlib begin regexlong "Script Addon: es_regex long"
+	es_set __myvar "a b c d e f g h i j k l"
+	es_set tsrx 0
+	es_regex matchformat tsrx "(\w+) (\w+) ((\w+) (\w+)) (\w+) (\w+) (\w+) (\w+) (\w+) (\w+)" server_var(__myvar) "Hello %1, %3, %2. %4 %5 %6 %7 %8 %9"
+	es_dbgmsgv 1 tsrx
+	testlib fail_unless tsrx equalto "Hello a, c d, b. c d e f g h"
+	testlib end regexlong
+	
+}
+
+
+block test_vcommands
+{
+	es_xsetinfo ts_name "Script Addon: formatv"
+	ts_begin
+	es_set myvar1 "HELLO"
+	es_set ts_vfail 0
+	es_formatv ts_vfail "%1 %2 %3" myvar1 myvar1 myvar1
+	es_formatv ts_vfail "%1 - %1" ts_vfail
+	if (server_var(ts_vfail) notequalto "HELLO HELLO HELLO - HELLO HELLO HELLO") do
+	{
+		es_msg server_var(ts_vfail)
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_commandv"
+	ts_begin
+	es_set _cmdv "es_xset _cmdv 99"
+	es_commandv _cmdv
+	if (server_var(_cmdv) notequalto 99) do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	es_xsetinfo ts_name "Script Addon: es_string replacev"
+	ts_begin
+	es_set _testv "es_xset _testv .DIE SCUM;."
+	es_set _rep1 "."
+	es_string _testv replacev _rep1 eventscripts_quote
+	es_commandv _testv
+	if (server_var(_testv) notequalto "DIE SCUM;") do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+}
+
+block testlogv
+{
+	testlib begin logv1 "Script Addon: test es_logv1"
+	es_set ts_tfail 0
+	es_set _badword "goähello"
+	es_logv _badword
+	testlib fail_unless ts_tfail equalto 0
+	testlib end logv1
+
+	testlib begin logv2 "Script Addon: test es_logv2"
+	es_set ts_tfail 0
+	es_set stuff 0
+	es_formatv stuff "%1hello%1 w00t says %1hates me!%1" eventscripts_quote
+	es_logv stuff
+	testlib fail_unless ts_tfail equalto 0
+	testlib end logv2
+
+}
+
+block stack_test
+{
+  log on
+  profile begin stack_test
+
+	testlib begin stack1 "Script Addon: test stack1"
+  es_xsetinfo _testcore 0
+  stack create teststack
+  stack push teststack 1
+  stack pop _testcore teststack
+	testlib fail_unless _testcore equalto 1
+	testlib end stack1
+
+	testlib begin stack2 "Script Addon: test stack2"
+  stack push teststack 1
+  stack push teststack 2
+  stack push teststack "hello"
+  stack push teststack 3
+  stack push teststack 4
+  stack pop _testcore teststack
+	testlib fail_unless _testcore equalto 4
+	testlib end stack2
+
+	testlib begin stack3 "Script Addon: test stack3"
+  stack pop _testcore teststack
+  stack pop _testcore teststack
+	testlib fail_unless _testcore equalto "hello"
+	testlib end stack3
+
+	testlib begin stack4 "Script Addon: test stack4"
+  stack push teststack 5
+  stack pop _testcore teststack
+  testlib fail_unless _testcore equalto "5"
+  stack pop _testcore teststack
+  testlib fail_unless _testcore equalto "2"
+  stack getlength _testcore teststack
+  testlib fail_unless _testcore equalto "1"
+	testlib end stack4
+	
+  stack delete teststack
+  profile end stack_test
+}
+
+
+block test_bugs
+{
+	// see if the bug is fixed for 0 values that had a string before
+	es_xsetinfo ts_name "Script Addon: bug 0 vs string"
+	ts_begin
+	es_set myvar "HELLO"
+	es_exists myvar script DOESNOTEXIST_
+	if (server_var(myvar) equalto "HELLO") do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	// see if the bug is fixed for 0 values that had a string before
+	es_xsetinfo ts_name "Script Addon: bug 0.0 vs string"
+	ts_begin
+	es_set myvar "HELLO"
+	es_mathparse myvar "0.00000"
+	if (server_var(myvar) equalto "HELLO") do
+	{
+		ts_fail
+	}
+	else do
+	{
+		ts_pass
+	}
+	ts_end
+
+	testlib begin unicodebug "Script Addon: test unicode"
+	es_set _badword "goähello"
+	//echo goähello
+	es_set ts_tfail 0
+	if (server_var(_badword) != "goähello") do
+	{
+		es_set ts_tfail 1
+	}
+	testlib fail_unless ts_tfail equalto 0
+	testlib end
+	
+  testlib begin regex1 "Script Addon: timed regex"
+  profile begin _temp
+  es_xregex match _tempcore "^(([^`]*)|(`[^`]*`))*divider.*" "echo playervar set divider myvar helloworld"
+  profile end _temp
+  testlib fail_unless _temp lessthan 1
+  testlib end	
+
+   testlib begin regex2 "Script Addon: timed regex2"
+   profile begin _temp
+   es_xregex match _tempcore "a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?aaaaaaaaaaaaaaaaaaaaaaaaaaaaa" "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   profile end _temp
+   testlib fail_unless _temp lessthan 1
+   testlib end
+
+   testlib begin big "Script Addon: test big #"
+   es_set myvar "11683011004"
+   testlib fail_unless myvar equalto 11683011004 
+   testlib end
+
+
+   testlib begin mathbig "Script Addon: test math and big #"
+   es_set myvar "1168301184"
+   es_math myvar - 180
+   testlib fail_unless myvar equalto 1168301004 
+   testlib end
+   
+   testlib begin mathparsebig "Script Addon: test mathparse and big #"
+   es_mathparse myvar "1168301184-180"
+   testlib warn_unless myvar equalto 1168301004 
+   testlib end
+
+   testlib begin gettimestamp "Script Addon: test es_gettimestamp for big number avoidance"
+   es_xset myvar 0
+   es_gettimestamp myvar
+   testlib fail_unless myvar lessthan 1136049334
+   testlib fail_unless myvar greaterthan 37583871 // the time when I wrote es_gettimestamp
+   testlib end
+
+   testlib begin gettimestamp "Script Addon: test ////"
+   es_xset myvar "////"
+   es_xset myfail 0
+   if (server_var(myvar) equalto "dieveryone") do
+   {
+    es_xset myfail 1
+   }
+   
+   testlib fail_unless myfail equalto 0
+   testlib end
+
+   testlib begin testnot0 "Script Addon: test es_mathparse !0"
+   es_xset myfail 0
+   es_mathparse myfail "!myfail"
+   testlib fail_unless myfail equalto 1
+   testlib end
+
+   testlib begin testnotnegative "Script Addon: test es_mathparse !-1"
+   es_xset myfail -1
+   es_mathparse myfail "!myfail"
+   testlib fail_unless myfail equalto 0
+   testlib end
+
+   testlib begin testnot1 "Script Addon: test es_mathparse !1"
+   es_xset myfail 1
+   es_mathparse myfail "!myfail"
+   testlib fail_unless myfail equalto 0
+   testlib end
+
+   testlib begin testnothello "Script Addon: test es_mathparse !hello"
+   es_xset myfail hello
+   es_mathparse myfail "!myfail"
+   testlib fail_unless myfail equalto 1
+   testlib end
+}

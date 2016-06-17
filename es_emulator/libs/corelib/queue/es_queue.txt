@@ -1,0 +1,165 @@
+block load
+{
+  es_xdoblock corelib/queue/queue_init
+}
+
+block queue_init
+{
+  es_xexists _tempcore command queue
+  ifx false(_tempcore) do
+  {
+    es_xregcmd queue corelib/queue/queue "Queue, FIFO type information structure"
+  }
+  es_xset _queue_command 0
+  es_xset _queue_list 0
+  es_xset _queue_var 0
+  es_xset _queue_pos 0
+  es_xset _queue_items 0
+  es_xset _queue_keygroup 0
+}
+
+block queue
+{
+  es_xgetargc _queue_items
+  if (server_var(_queue_items) < 2) do
+  {
+    es_xdbgmsg 0 "Usage: queue <create|delete|add|get|items> <params>"
+    es_xdbgmsg 0 " queue create <list> - Creates a queue list"
+    es_xdbgmsg 0 " queue delete <list> - Deletes a queue list"
+    es_xdbgmsg 0 " queue add <list> <value> - Adds an item to a list"
+    es_xdbgmsg 0 " queue get <variable> <list> - Gets an item from the list"
+    es_xdbgmsg 0 " queue items <variable> <list> - Gets the number of items still in list"
+    es_xdbgmsg 0 " queue foreach <variable> <list> <command> - Executes command for each queue item saved in variable"
+  }
+  else do
+  {
+    es_xgetargv _queue_command 1
+    es_xgetargv _queue_var 2
+    es_xgetargv _queue_list 3
+    if (server_var(_queue_command) == "create") do
+    {
+      es_xformatv _queue_keygroup "_queue_%1" _queue_var
+      es_exists _tempcore keygroup server_var(_queue_keygroup)
+      ifx true(_tempcore) do
+      {
+        es_dbgmsg 0 [Queue: Create] Queue list server_var(_queue_var) already exists!
+      }
+      else do
+      {
+        es_keygroupcreate server_var(_queue_keygroup)
+        es_keycreate server_var(_queue_keygroup) "queue"
+        es_keysetvalue server_var(_queue_keygroup) "queue" "position" "0"
+        es_keysetvalue server_var(_queue_keygroup) "queue" "items" "0"
+        es_dbgmsg 1 [Queue: Create] Queue list server_var(_queue_var) created.
+      }
+    }
+    if (server_var(_queue_command) == "delete") do
+    {
+      es_xformatv _queue_keygroup "_queue_%1" _queue_var
+      es_exists _tempcore keygroup server_var(_queue_keygroup)
+      ifx false(_tempcore) do
+	    {
+        es_dbgmsg 0 [Queue: Delete] Queue list server_var(_queue_var) does not exist!
+      }
+      else do
+      {
+        es_keygroupdelete server_var(_queue_keygroup)
+        es_dbgmsg 1 [Queue: Delete] Queue list server_var(_queue_var) deleted.
+      }
+    }
+    if (server_var(_queue_command) == "add") do
+    {
+      es_xformatv _queue_keygroup "_queue_%1" _queue_var
+      es_exists _tempcore keygroup server_var(_queue_keygroup)
+      ifx false(_tempcore) do
+      {
+        es_dbgmsg 0 [Queue: Add] Queue list server_var(_queue_var) does not exist! server_var(_queue_list)
+      }
+      else do
+      {
+        es_keygetvalue _queue_items server_var(_queue_keygroup) "queue" "items"
+        es_xmath _queue_items + 1
+        es_keysetvalue server_var(_queue_keygroup) "queue" "items" server_var(_queue_items)
+        es_keysetvalue server_var(_queue_keygroup) "queue" server_var(_queue_items) server_var(_queue_list)
+        es_dbgmsg 2 [Queue: Add] server_var(_queue_list) added to server_var(_queue_var)
+      }
+    }
+    if (server_var(_queue_command) == "get") do
+    {
+      es_xformatv _queue_keygroup "_queue_%1" _queue_list
+      es_exists _tempcore keygroup server_var(_queue_keygroup)
+      ifx false(_tempcore) do
+      {
+        es_dbgmsg 0 [Queue: Get] Queue list server_var(_queue_list) does not exist! server_var(_queue_var)
+      }
+      else do
+      {
+        es_keygetvalue _queue_items server_var(_queue_keygroup) "queue" "items"
+        es_keygetvalue _queue_pos server_var(_queue_keygroup) "queue" "position"
+        es_xmath _queue_pos + 1
+        if (server_var(_queue_pos) <= server_var(_queue_items)) do
+        {
+          es_keysetvalue server_var(_queue_keygroup) "queue" "position" server_var(_queue_pos)
+          es_keygetvalue server_var(_queue_var) server_var(_queue_keygroup) "queue" server_var(_queue_pos)
+          es_dbgmsg 2 [Queue: Get] Saved from server_var(_queue_list) to server_var(_queue_var)
+        }
+        else do
+        {
+          es_set server_var(_queue_var) "0"
+          es_dbgmsg 2 [Queue: Get] List server_var(_queue_list) is empty, server_var(_queue_var) set to 0.
+          if (server_var(_queue_items) > 50) do
+          {
+            es_dbgmsg 2 [Queue: Get] Empty list server_var(_queue_list) recreated to free memory.
+            es_keygroupdelete server_var(_queue_keygroup)
+            es queue create server_var(_queue_list)
+          }
+        }
+      }
+    }
+    if (server_var(_queue_command) == "items") do
+    {
+      es_xformatv _queue_keygroup "_queue_%1" _queue_list
+      es_exists _tempcore keygroup server_var(_queue_keygroup)
+      ifx false(_tempcore) do
+      {
+        es_dbgmsg 0 [Queue: Items] Queue list server_var(_queue_list) does not exist! server_var(_queue_var)
+      }
+      else do
+      {
+        es_keygetvalue _queue_items server_var(_queue_keygroup) "queue" "items"
+        es_keygetvalue _queue_pos server_var(_queue_keygroup) "queue" "position"
+        es_math _queue_items - server_var(_queue_pos)
+        es_set server_var(_queue_var) server_var(_queue_items)
+        es_dbgmsg 2 [Queue: Items] Saved from server_var(_queue_list) to server_var(_queue_var)
+      }
+    }
+    // Note to editors: foreach must be the last subcommand to test
+    if (server_var(_queue_command) == "foreach") do
+    {
+      es_xgetargv _queue_command 4
+      es_xformatv _queue_keygroup "_queue_%1" _queue_list
+      es_exists _tempcore keygroup server_var(_queue_keygroup)
+      ifx false(_tempcore) do
+      {
+        es_dbgmsg 0 [Queue: Foreach] Queue list server_var(_queue_list) does not exist! server_var(_queue_var)
+      }
+      else do
+      {
+        es_keygetvalue _queue_items server_var(_queue_keygroup) "queue" "items"
+        es_keygetvalue _queue_pos server_var(_queue_keygroup) "queue" "position"
+        es_xdoblock corelib/queue/foreach_loop
+      }
+    }
+  }
+}
+
+block foreach_loop
+{
+  if (server_var(_queue_pos) < server_var(_queue_items)) do
+  {
+    es_xmath _queue_pos + 1
+    es_keygetvalue server_var(_queue_var) server_var(_queue_keygroup) "queue" server_var(_queue_pos)
+    es_xcommandv _queue_command
+    es_xdoblock corelib/queue/foreach_loop
+  }
+}

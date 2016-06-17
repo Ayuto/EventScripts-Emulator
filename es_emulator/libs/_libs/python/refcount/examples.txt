@@ -1,0 +1,16 @@
+import refcount
+import es
+
+# Variables
+refcount.variable.increment(es.ServerVar("eventscripts_noisy"), True)		# Silent
+refcount.variable.increment(es.ServerVar("eventscripts_noisy"))
+count = refcount.variable.count(es.ServerVar("eventscripts_noisy"))		# 2	
+refcount.variable.decrement(es.ServerVar("eventscripts_noisy"), True)		# Silent
+refcount.variable.decrement(es.ServerVar("eventscripts_noisy"))
+count = refcount.variable.count(es.ServerVar("eventscripts_noisy"))		# 0
+
+# Addons
+refcount.addon.increment("mugmod")
+count = refcount.addon.count("mugmod")						# 1
+refcount.addon.decrement("mugmod")
+count = refcount.addon.count("mugmod")						# 0

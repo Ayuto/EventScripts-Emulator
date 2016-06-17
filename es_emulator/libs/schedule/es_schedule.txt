@@ -1,0 +1,1768 @@
+// schedule - standalone library - by Chun
+//
+// Syntax: schedule create <name> <command>
+//         schedule set <event> <name> [instances]
+//         schedule status <variable> <name/event>
+//         schedule del <event> <name>
+//         schedule delevent <event>
+//         schedule delcmd <name>
+   
+block load
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore command schedule
+   ifx false(_tempcore) do
+   {
+      es_xregcmd schedule schedule/schedule "Schedules a command to be run on a particular event"
+   }
+   es_xkeygroupcreate schedule_events
+   es_xkeygroupcreate schedule_commands
+   es_xkeygroupcreate schedule_eventlist
+   es_xkeycreate schedule_eventlist events
+   es_xkeycreate schedule_eventlist count
+   es_xkeysetvalue schedule_eventlist count status 0
+   es_xkeysetvalue schedule_eventlist events player_death 1
+   es_xkeysetvalue schedule_eventlist events player_hurt 1
+   es_xkeysetvalue schedule_eventlist events bomb_beginplant 1
+   es_xkeysetvalue schedule_eventlist events bomb_abortplant 1
+   es_xkeysetvalue schedule_eventlist events bomb_planted 1
+   es_xkeysetvalue schedule_eventlist events bomb_defused 1
+   es_xkeysetvalue schedule_eventlist events bomb_exploded 1
+   es_xkeysetvalue schedule_eventlist events bomb_dropped 1
+   es_xkeysetvalue schedule_eventlist events bomb_pickup 1
+   es_xkeysetvalue schedule_eventlist events bomb_begindefuse 1
+   es_xkeysetvalue schedule_eventlist events bomb_abortdefuse 1
+   es_xkeysetvalue schedule_eventlist events hostage_follows 1
+   es_xkeysetvalue schedule_eventlist events hostage_hurt 1
+   es_xkeysetvalue schedule_eventlist events hostage_killed 1
+   es_xkeysetvalue schedule_eventlist events hostage_rescued 1
+   es_xkeysetvalue schedule_eventlist events hostage_stops_following 1
+   es_xkeysetvalue schedule_eventlist events hostage_rescued_all 1
+   es_xkeysetvalue schedule_eventlist events hostage_call_for_help 1
+   es_xkeysetvalue schedule_eventlist events vip_escaped 1
+   es_xkeysetvalue schedule_eventlist events vip_killed 1
+   es_xkeysetvalue schedule_eventlist events player_radio 1
+   es_xkeysetvalue schedule_eventlist events bomb_beep 1
+   es_xkeysetvalue schedule_eventlist events weapon_fire 1
+   es_xkeysetvalue schedule_eventlist events weapon_fire_on_empty 1
+   es_xkeysetvalue schedule_eventlist events weapon_reload 1
+   es_xkeysetvalue schedule_eventlist events weapon_zoom 1
+   es_xkeysetvalue schedule_eventlist events item_pickup 1
+   es_xkeysetvalue schedule_eventlist events grenade_bounce 1
+   es_xkeysetvalue schedule_eventlist events hegrenade_detonate 1
+   es_xkeysetvalue schedule_eventlist events flashbang_detonate 1
+   es_xkeysetvalue schedule_eventlist events smokegrenade_detonate 1
+   es_xkeysetvalue schedule_eventlist events bullet_impact 1
+   es_xkeysetvalue schedule_eventlist events player_footstep 1
+   es_xkeysetvalue schedule_eventlist events player_jump 1
+   es_xkeysetvalue schedule_eventlist events player_blind 1
+   es_xkeysetvalue schedule_eventlist events player_falldamage 1
+   es_xkeysetvalue schedule_eventlist events door_moving 1
+   es_xkeysetvalue schedule_eventlist events round_freeze_end 1
+   es_xkeysetvalue schedule_eventlist events nav_blocked 1
+   es_xkeysetvalue schedule_eventlist events nav_generate 1
+   es_xkeysetvalue schedule_eventlist events team_info 1
+   es_xkeysetvalue schedule_eventlist events team_score 1
+   es_xkeysetvalue schedule_eventlist events player_team 1
+   es_xkeysetvalue schedule_eventlist events player_class 1
+   es_xkeysetvalue schedule_eventlist events player_death 1
+   es_xkeysetvalue schedule_eventlist events player_hurt 1
+   es_xkeysetvalue schedule_eventlist events player_chat 1
+   es_xkeysetvalue schedule_eventlist events player_score 1
+   es_xkeysetvalue schedule_eventlist events player_spawn 1
+   es_xkeysetvalue schedule_eventlist events player_shoot 1
+   es_xkeysetvalue schedule_eventlist events player_use 1
+   es_xkeysetvalue schedule_eventlist events player_changename 1
+   es_xkeysetvalue schedule_eventlist events game_newmap 1
+   es_xkeysetvalue schedule_eventlist events game_start 1
+   es_xkeysetvalue schedule_eventlist events game_end 1
+   es_xkeysetvalue schedule_eventlist events round_start 1
+   es_xkeysetvalue schedule_eventlist events round_end 1
+   es_xkeysetvalue schedule_eventlist events game_message 1
+   es_xkeysetvalue schedule_eventlist events break_breakable 1
+   es_xkeysetvalue schedule_eventlist events break_prop 1
+   es_xkeysetvalue schedule_eventlist events server_spawn 1
+   es_xkeysetvalue schedule_eventlist events server_shutdown 1
+   es_xkeysetvalue schedule_eventlist events server_cvar 1
+   es_xkeysetvalue schedule_eventlist events server_message 1
+   es_xkeysetvalue schedule_eventlist events server_addban 1
+   es_xkeysetvalue schedule_eventlist events server_removeban 1
+   es_xkeysetvalue schedule_eventlist events player_connect 1
+   es_xkeysetvalue schedule_eventlist events player_info 1
+   es_xkeysetvalue schedule_eventlist events player_disconnect 1
+   es_xkeysetvalue schedule_eventlist events player_activate 1
+   es_xkeysetvalue schedule_eventlist events player_say 1
+   es_xkeysetvalue schedule_eventlist events es_map_start 1
+   es_xkeysetvalue schedule_eventlist events es_scriptpack_register 1
+   es_xkeysetvalue schedule_eventlist events es_scriptpack_unregister 1
+   es_xkeysetvalue schedule_eventlist events es_player_validated 1
+   es_xkeysetvalue schedule_eventlist events es_player_setting 1
+   es_xkeysetvalue schedule_eventlist events es_client_command 1
+   es_xkeysetvalue schedule_eventlist events es_player_chat 1
+   es_xdisable schedule
+}
+
+block unload
+{
+   es_xkeygroupdelete schedule_events
+   es_xkeygroupdelete schedule_commands
+   es_xkeygroupdelete schedule_eventlist
+}
+
+block schedule
+{
+   es_xset _sc_op 0
+   es_xgetargv _sc_op 1
+   ifx true(_sc_op) do
+   {
+      es_xset _sc_argc 0
+      es_xgetargc _sc_argc
+      es_xset _sc_block 0
+      es_xformatv _sc_block "schedule/sc_%1" _sc_op
+      es_xset _tempcore 0
+      es_exists _tempcore block server_var(_sc_block)
+      ifx true(_tempcore) do
+      {
+         es_doblock server_var(_sc_block)
+      }
+      es_xelse do 
+      {
+         es_xdbgmsg 0 schedule : invalid operator
+      }
+   }
+   es_xelse do
+   {
+      es_xdbgmsg 0 schedule : no operator given
+   }
+}
+
+block sc_create
+{
+   if (server_var(_sc_argc) > 3) do
+   {
+      es_xset _sc_name 0
+      es_xgetargv _sc_name 2
+      es_xset _sc_cmd 0
+      es_xgetargv _sc_cmd 3
+      if (";" in server_var(_sc_cmd)) do
+      {
+         es_xstring _sc_cmd replace ";" ";es_xsoon "
+         if ("es_xsoon  " in server_var(_sc_cmd)) do
+         {
+            es_xstring _sc_cmd replace "es_xsoon  " "es_xsoon "
+         }  
+      }
+      es_xset _tempcore 0
+      es_exists _tempcore key schedule_commands server_var(_sc_name)
+      ifx false(_tempcore) do
+      {
+         es_keycreate schedule_commands server_var(_sc_name)
+      }
+      es_keysetvalue schedule_commands server_var(_sc_name) cmd server_var(_sc_cmd)
+   }
+   es_xelse do
+   {
+      es_xdbgmsg 0 Syntax : schedule create <name> <command>
+   }
+}
+
+block sc_set
+{
+   if (server_var(_sc_argc) > 3) do
+   {
+      es_xset _sc_event 0
+      es_xgetargv _sc_event 2
+      es_xset _tempcore 0
+      es_keygetvalue _tempcore schedule_eventlist events server_var(_sc_event)
+      ifx true(_tempcore) do
+      {
+         es_xset _sc_name 0
+         es_xgetargv _sc_name 3
+         es_xset _tempcore 0
+         es_exists _tempcore key schedule_commands server_var(_sc_name)
+         ifx true(_tempcore) do
+         {
+            es_xset _tempcore 0
+            es_exists _tempcore key schedule_events server_var(_sc_event)
+            ifx false(_tempcore) do
+            {
+               es_keycreate schedule_events server_var(_sc_event)
+            }
+            es_xset _tempcore 0
+            es_keygetvalue _tempcore schedule_events server_var(_sc_event) server_var(_sc_name)
+            ifx false(_tempcore) do
+            {
+               es_xset _tempcore 0
+               es_xkeygetvalue _tempcore schedule_eventlist count status
+               es_xmath _tempcore + 1
+               es_keysetvalue schedule_eventlist count status server_var(_tempcore)
+            }
+            es_keysetvalue schedule_events server_var(_sc_event) server_var(_sc_name) 1
+            es_xset _sc_instance 0
+            es_xgetargv _sc_instance 4
+            ifx false(_sc_instance) do
+            {
+               es_xset _sc_instance 0
+            }
+            es_xsetinfo _tempcore 0
+            es_regex match _tempcore "^[0-9]*$" server_var(_sc_instance)
+            if (server_var(_tempcore) > 0) do
+            {
+               es_xenable schedule
+               es_keysetvalue schedule_commands server_var(_sc_name) server_var(_sc_event) server_var(_sc_instance)
+            }
+            es_xelse do
+            {
+               es_xdbgmsg 0 schedule : instance must be numerical and greater than or equal to 0
+            }
+         }
+         es_xelse do
+         {
+            es_xdbgmsg 0 schedule : invalid command
+         }
+      }
+      es_xelse do
+      {
+         es_xdbgmsg 0 schedule : invalid event
+      }
+   }
+   es_xelse do
+   {   
+      es_xdbgmsg 0 Syntax : schedule set <event> <name> [instances]
+   }
+}
+   
+block sc_del
+{
+   if (server_var(_sc_argc) > 2) do
+   {
+      es_xset _sc_event 0
+      es_xgetargv _sc_event 2
+      es_xset _tempcore 0
+      es_exists _tempcore key schedule_events server_var(_sc_event)
+      ifx true(_tempcore) do
+      {
+         es_xset _sc_name 0
+         es_xgetargv _sc_name 3
+         es_xset _tempcore 0
+         es_keygetvalue _tempcore schedule_events server_var(_sc_event) server_var(_sc_name)
+         es_xset _sc_temp 0
+         isnull _sc_temp _tempcore
+         ifx false(_sc_temp) do
+         {
+            es_keysetvalue schedule_events server_var(_sc_event) server_var(_sc_name) 0
+            es_xdoblock schedule/checkdisable
+         }
+         es_xelse do
+         {
+            es_xdbgmsg 0 schedule : the specified command is not scheduled to the specified event
+         }
+      }
+      es_xelse do
+      {
+         es_xdbgmsg 0 schedule : the specified event does not exist
+      }
+   }
+   es_xelse do
+   {
+      es_xdbgmsg 0 Syntax : schedule del <event> <name>
+   }
+}
+
+block sc_delcmd
+{
+   if (server_var(_sc_argc) > 1) do
+   {
+      es_xset _sc_name 0
+      es_xgetargv _sc_name 2
+      if (server_var(_sc_name) = "#all") do
+      {
+         es_keygroupdelete schedule_commands
+         es_keygroupcreate schedule_commands
+         es_xkeysetvalue schedule_eventlist count status 0
+         es_xkeygroupdelete schedule_events
+         es_xkeygroupcreate schedule_events
+         es_xdisable schedule
+      }
+      es_xelse do
+      {
+         es_xset _tempcore 0
+         es_exists _tempcore key schedule_commands server_var(_sc_name)
+         ifx true(_tempcore) do
+         {
+            es_keydelete schedule_commands server_var(_sc_name)
+            es_xsetinfo _sc_event 0
+            es_xset _sc_continue 1
+            es_xforeachkey _sc_event in schedule_events "es_xdoblock schedule/delcmd2"
+         }
+         es_xelse do
+         {
+            es_xdbgmsg 0 schedule : the specified command does not exist
+         }
+      }
+   }
+   es_xelse do
+   {
+      es_xdbgmsg 0 Syntax : schedule delcmd <name>
+   }
+}
+
+block delcmd2
+{
+   ifx true(_sc_continue) do
+   {
+      es_xset _tempcore 0
+      es_keygetvalue _tempcore schedule_events server_var(_sc_event) server_var(_sc_name)
+      ifx true(_tempcore) do
+      {
+         es_keysetvalue schedule_events server_var(_sc_event) server_var(_sc_name) 0
+         es_xset _tempcore 0
+         es_xkeygetvalue _tempcore schedule_eventlist count status
+         if (server_var(_tempcore) > 1) do
+         {
+            es_xmath _tempcore - 1
+            es_keysetvalue schedule_eventlist count status server_var(_tempcore)
+         }
+         es_xelse do
+         {
+            es_xkeysetvalue schedule_eventlist count status 0
+            es_xkeygroupdelete schedule_events
+            es_xkeygroupcreate schedule_events
+            es_xdisable schedule
+            es_xset _sc_continue 0
+         }
+      }
+   }
+}
+
+block sc_delevent
+{
+   if (server_var(_sc_argc) > 1) do
+   {
+      es_xset _sc_event 0
+      es_xgetargv _sc_event 2
+      if (server_var(_sc_event) = "#all") do
+      {
+         es_xkeysetvalue schedule_eventlist count status 0
+         es_xkeygroupdelete schedule_events
+         es_xkeygroupcreate schedule_events
+         es_xdisable schedule
+      }
+      es_xelse do
+      {
+         es_xset _tempcore 0
+         es_exists _tempcore key schedule_events server_var(_sc_event)
+         ifx true(_tempcore) do
+         {
+            es_xset _sc_name 0
+            es_xset _sc_continue 1
+            es_foreachval _sc_name in schedule_events server_var(_sc_event) "es_xdoblock schedule/delevent2"
+            es_keydelete schedule_events server_var(_sc_event)
+         }
+         es_xelse do
+         {
+            es_xdbgmsg 0 schedule : the specified event does not exist
+         }
+      }
+   }
+   es_xelse do
+   {
+      es_xdbgmsg 0 Syntax : schedule delevent <event>
+   }
+}
+
+block delevent2
+{
+   ifx true(_sc_continue) do
+   {
+      es_xset _tempcore 0
+      es_keygetvalue _tempcore schedule_events server_var(_sc_event) server_var(_sc_name)
+      ifx true(_tempcore) do
+      {
+         es_xset _tempcore 0
+         es_xkeygetvalue _tempcore schedule_eventlist count status
+         if (server_var(_tempcore) > 1) do
+         {
+            es_xmath _tempcore - 1
+            es_keysetvalue schedule_eventlist count status server_var(_tempcore)
+         }
+         es_xelse do
+         {
+            es_xkeysetvalue schedule_eventlist count status 0
+            es_xkeygroupdelete schedule_events
+            es_xkeygroupcreate schedule_events
+            es_xdisable schedule
+         }
+      }
+   }
+}
+
+block sc_status
+{
+   if (server_var(_sc_argc) > 2) do
+   {
+      es_xset _sc_var 0
+      es_xgetargv _sc_var 2
+      es_xset _sc_name 0
+      es_xgetargv _sc_name 3
+      es_set server_var(_sc_var) 0
+      es_xset _tempcore 0
+      es_exists _tempcore key schedule_commands server_var(_sc_name)
+      ifx true(_tempcore) do
+      {
+         es_xset _tempcore 0
+         es_exists _tempcore key schedule_events server_var(_sc_name)
+         ifx true(_tempcore) do
+         {
+            es_set server_var(_sc_var) 3
+         }
+         es_xelse do
+         {
+            es_set server_var(_sc_var) 1
+         }
+      }
+      es_xelse do
+      {
+         es_xset _tempcore 0
+         es_exists _tempcore key schedule_events server_var(_sc_name)
+         ifx true(_tempcore) do
+         {
+            es_set server_var(_sc_var) 2
+         }
+      }
+      if (server_var(server_var(_sc_var)) > 1) do
+      {
+         es_xsetinfo _sc_check 0
+         es_xset _tempcore 0
+         es_xforeachval _tempcore in schedule_events server_var(_sc_name) "es_xdoblock schedule/statcheck"
+         ifx false(_sc_check) do
+         {
+            if (server_var(server_var(_sc_var)) = 2) do
+            {
+               es_set server_var(_sc_var) 0
+            }
+            if (server_var(server_var(_sc_var)) = 3) do
+            {
+               es_set server_var(_sc_var) 1
+            }
+         }
+      }
+   }
+   es_xelse do
+   {
+      es_xdbgmsg 0 Syntax : schedule status <variable> <name/event>
+   }
+}
+
+block statcheck
+{
+   es_xset _sc_temp 0
+   es_keygetvalue _sc_temp schedule_events server_var(_sc_name) server_var(_tempcore)
+   ifx true(_sc_temp) do
+   {
+      es_xset _sc_check 1
+   }
+}
+
+block checkdisable
+{ 
+   es_xset _tempcore 0
+   es_xkeygetvalue _tempcore schedule_eventlist count status
+   if (server_var(_tempcore) > 1) do
+   {
+      es_xmath _tempcore - 1
+      es_keysetvalue schedule_eventlist count status server_var(_tempcore)
+   }
+   es_xelse do
+   {
+      es_xkeysetvalue schedule_eventlist count status 0
+      es_xkeygroupdelete schedule_events
+      es_xkeygroupcreate schedule_events
+      es_xdisable schedule
+   }
+}
+
+block command
+{
+   es_xset _sc_status 0
+   es_keygetvalue _sc_status schedule_events event_var(es_event) server_var(_sc_name)
+   if (server_var(_sc_status) = 1) do
+   {
+      es_xset _tempcore 0
+      es_exists _tempcore key schedule_commands server_var(_sc_name)
+      ifx false(_tempcore) do
+      {
+         es_soon es_xkeysetvalue schedule_events event_var(es_event) server_var(_sc_name) 0
+      }
+      es_xelse do
+      {
+         es_xset _sc_cmd 0
+         es_keygetvalue _sc_cmd schedule_commands server_var(_sc_name) cmd
+         es_xset _sc_instance 0
+         es_keygetvalue _sc_instance schedule_commands server_var(_sc_name) event_var(es_event)
+         if (server_var(_sc_instance) = 1) do
+         {
+            es_keysetvalue schedule_events event_var(es_event) server_var(_sc_name) 0
+            es_xsoon es_xdoblock schedule/checkdisable
+         }
+         es_xelse do
+         {
+            es_xset _sc_check 1
+            if (server_var(_sc_instance) != 0) do
+            {
+               es_xmath _sc_instance - 1
+               es_keysetvalue schedule_commands server_var(_sc_name) event_var(es_event) server_var(_sc_instance)
+            }
+         }
+         es_xcommandv _sc_cmd
+      }
+   }
+}
+
+event player_death
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_death
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_death "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_keydelete schedule_events player_death
+      }
+   }
+}
+
+event player_hurt
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_hurt
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_hurt "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_hurt
+      }
+   }
+}
+
+event bomb_beginplant
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_beginplant
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_beginplant "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_beginplant
+      }
+   }
+}
+
+event bomb_abortplant
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_abortplant
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_abortplant "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_abortplant
+      }
+   }
+}
+
+event bomb_planted
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_planted
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_planted "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_planted
+      }
+   }
+}
+
+event bomb_defused
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_defused
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_defused "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_defused
+      }
+   }
+}
+
+event bomb_exploded
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_exploded
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_exploded "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_exploded
+      }
+   }
+}
+
+event bomb_dropped
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_dropped
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_dropped "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_dropped
+      }
+   }
+}
+
+event bomb_pickup
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_pickup
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_pickup "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_pickup
+      }
+   }
+}
+
+event bomb_begindefuse
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_begindefuse
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_begindefuse "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_begindefuse
+      }
+   }
+}
+
+event bomb_abortdefuse
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_abortdefuse
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_abortdefuse "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_abortdefuse
+      }
+   }
+}
+
+event hostage_hurt
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events hostage_hurt
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events hostage_hurt "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events hostage_hurt
+      }
+   }
+}
+
+event hostage_follows
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events hostage_follows
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events hostage_follows "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events hostage_follows
+      }
+   }
+}
+
+event hostage_killed
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events hostage_killed
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events hostage_killed "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events hostage_killed
+      }
+   }
+}
+
+event hostage_rescued
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events hostage_rescued
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events hostage_rescued "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events hostage_rescued
+      }
+   }
+}
+
+event hostage_stops_following
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events hostage_stops_following
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events hostage_stops_following "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events hostage_stops_following
+      }
+   }
+}
+
+event hostage_rescued_all
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events hostage_rescued_all
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events hostage_rescued_all "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events hostage_rescued_all
+      }
+   }
+}
+
+event hostage_call_for_help
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events hostage_call_for_help
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events hostage_call_for_help "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events hostage_call_for_help
+      }
+   }
+}
+
+event vip_escaped
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events vip_escaped
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events vip_escaped "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events vip_escaped
+      }
+   }
+}
+
+event vip_killed
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events vip_killed
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events vip_killed "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events vip_killed
+      }
+   }
+}
+
+event player_radio
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_radio
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_radio "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_radio
+      }
+   }
+}
+
+event bomb_beep
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bomb_beep
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bomb_beep "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bomb_beep
+      }
+   }
+}
+
+event weapon_fire
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events weapon_fire
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events weapon_fire "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events weapon_fire
+      }
+   }
+}
+
+event weapon_fire_on_empty
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events weapon_fire_on_empty
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events weapon_fire_on_empty "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events weapon_fire_on_empty
+      }
+   }
+}
+
+event weapon_reload
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events weapon_reload
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events weapon_reload "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events weapon_reload
+      }
+   }
+}
+
+event weapon_zoom
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events weapon_zoom
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events weapon_zoom "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events weapon_zoom
+      }
+   }
+}
+
+event item_pickup
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events item_pickup
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events item_pickup "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events item_pickup
+      }
+   }
+}
+
+event grenade_bounce
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events grenade_bounce
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events grenade_bounce "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events grenade_bounce
+      }
+   }
+}
+
+event hegrenade_detonate
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events hegrenade_detonate
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events hegrenade_detonate "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events hegrenade_detonate
+      }
+   }
+}
+
+event flashbang_detonate
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events flashbang_detonate
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events flashbang_detonate "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events flashbang_detonate
+      }
+   }
+}
+
+event smokegrenade_detonate
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events smokegrenade_detonate
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events smokegrenade_detonate "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events smokegrenade_detonate
+      }
+   }
+}
+
+event bullet_impact
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events bullet_impact
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events bullet_impact "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events bullet_impact
+      }
+   }
+}
+
+event player_footstep
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_footstep
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_footstep "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_footstep
+      }
+   }
+}
+
+event player_jump
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_jump
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_jump "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_jump
+      }
+   }
+}
+
+event player_blind
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_blind
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_blind "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_blind
+      }
+   }
+}
+
+event player_falldamage
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_falldamage
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_falldamage "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_falldamage
+      }
+   }
+}
+
+event door_moving
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events door_moving
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events door_moving "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events door_moving
+      }
+   }
+}
+
+event round_freeze_end
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events round_freeze_end
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events round_freeze_end "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events round_freeze_end
+      }
+   }
+}
+
+event nav_blocked
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events nav_blocked
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events nav_blocked "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events nav_blocked
+      }
+   }
+}
+
+event nav_generate
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events nav_generate
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events nav_generate "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events nav_generate
+      }
+   }
+}
+
+event team_info
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events team_info
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events team_info "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events team_info
+      }
+   }
+}
+
+event team_score
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events team_score
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events team_score "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events team_score
+      }
+   }
+}
+
+event player_team
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_team
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_team "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_team
+      }
+   }
+}
+
+event player_class
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_class
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_class "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_class
+      }
+   }
+}
+
+event player_death
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_death
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_death "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_death
+      }
+   }
+}
+
+event player_hurt
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_hurt
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_hurt "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_hurt
+      }
+   }
+}
+
+event player_chat
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_chat
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_chat "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_chat
+      }
+   }
+}
+
+event player_score
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_score
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_score "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_score
+      }
+   }
+}
+
+event player_spawn
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_spawn
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_spawn "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_spawn
+      }
+   }
+}
+
+event player_shoot
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_shoot
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_shoot "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_shoot
+      }
+   }
+}
+
+event player_use
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_use
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_use "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_use
+      }
+   }
+}
+
+event player_changename
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_changename
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_changename "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_changename
+      }
+   }
+}
+
+event game_newmap
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events game_newmap
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events game_newmap "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events game_newmap
+      }
+   }
+}
+
+event game_start
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events game_start
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events game_start "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events game_start
+      }
+   }
+}
+
+event game_end
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events game_end
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events game_end "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events game_end
+      }
+   }
+}
+
+event round_start
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events round_start
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events round_start "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events round_start
+      }
+   }
+}
+
+event round_end
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events round_end
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events round_end "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events round_end
+      }
+   }
+}
+
+event game_message
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events game_message
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events game_message "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events game_message
+      }
+   }
+}
+
+event break_breakable
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events break_breakable
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events break_breakable "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events break_breakable
+      }
+   }
+}
+
+event break_prop
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events break_prop
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events break_prop "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events break_prop
+      }
+   }
+}
+
+event server_spawn
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events server_spawn
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events server_spawn "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events server_spawn
+      }
+   }
+}
+
+event server_shutdown
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events server_shutdown
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events server_shutdown "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events server_shutdown
+      }
+   }
+}
+
+event server_cvar
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events server_cvar
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events server_cvar "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events server_cvar
+      }
+   }
+}
+
+event server_message
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events server_message
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events server_message "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events server_message
+      }
+   }
+}
+
+event server_addban
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events server_addban
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events server_addban "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events server_addban
+      }
+   }
+}
+
+event server_removeban
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events server_removeban
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events server_removeban "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events server_removeban
+      }
+   }
+}
+
+event player_connect
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_connect
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_connect "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_connect
+      }
+   }
+}
+
+event player_info
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_info
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_info "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_info
+      }
+   }
+}
+
+event player_disconnect
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_disconnect
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_disconnect "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_disconnect
+      }
+   }
+}
+
+event player_activate
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_activate
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_activate "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_activate
+      }
+   }
+}
+
+event player_say
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events player_say
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events player_say "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events player_say
+      }
+   }
+}
+
+event es_map_start 
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events es_map_start 
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events es_map_start "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events es_map_start
+      }
+   }
+}
+
+event es_scriptpack_register
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events es_scriptpack_register
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events es_scriptpack_register "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events es_scriptpack_register
+      }
+   }
+}
+
+event es_scriptpack_unregister
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events es_scriptpack_unregister
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events es_scriptpack_unregister "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events es_scriptpack_unregister
+      }
+   }
+}
+
+event es_player_validated
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events es_player_validated
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events es_player_validated "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events es_player_validated
+      }
+   }
+}
+
+event es_player_setting
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events es_player_setting
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events es_player_setting "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events es_player_setting
+      }
+   }
+}
+
+event es_client_command
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events es_client_command
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events es_client_command "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events es_client_command
+      }
+   }
+}
+
+event es_player_chat
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore key schedule_events es_player_chat
+   ifx true(_tempcore) do
+   {
+      es_xset _sc_check 0
+      es_xset _sc_name 0
+      es_xforeachval _sc_name in schedule_events es_player_chat "es_xdoblock schedule/command"
+      ifx false(_sc_check) do
+      {
+         es_xkeydelete schedule_events es_player_chat
+      }
+   }
+}

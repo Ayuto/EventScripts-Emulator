@@ -1,0 +1,683 @@
+block load
+{
+	es_xset _textlib_arg1 0
+	es_xset _textlib_argc 0
+	es_xset _textlib_exists 0
+	es_xset _textlib_format 0
+
+	es_xexists _textlib_exists command textlib
+	ifx false(_textlib_exists) do
+	{
+		es_xregcmd textlib corelib/textlib/textlib "Library containing text-specific functions."
+	}
+
+	// --------------------------
+
+	es_xset _w_texthandler_arg2 0
+	es_xset _w_texthandler_arg3 0
+	es_xset _w_texthandler_arg4 0
+	es_xset _w_texthandler_game 0
+	es_xset _w_texthandler_text 0
+
+	keygroupremove _texthandler_text
+	es_xkeygroupcreate _texthandler_text
+
+	// --------------------------
+
+	es_xset _w_sformatv_arg 0
+	es_xset _w_sformatv_arg2 0
+	es_xset _w_sformatv_arg3 0
+	es_xset _w_sformatv_argv 0
+	es_xset _w_sformatv_buffer 0
+	es_xset _w_sformatv_char 0
+	es_xset _w_sformatv_charend 0
+	es_xset _w_sformatv_charstart 0
+	es_xset _w_sformatv_strlen 0
+	es_xset _w_sformatv_wants 0
+
+  // --------------------------
+
+  es_xset _w_randtoken_string 0
+  es_xset _w_randtoken_count 0
+  es_xset _w_randtoken_returnvar 0
+  es_xset _w_randtoken_separator 0
+  es_xset _w_randtoken_random 0
+  es_xset _w_randtoken_token 0
+  es_xset _w_randtoken_isnull 0
+  
+  // --------------------------
+  
+  es_xset _w_inbetween_argc 0
+  es_xset _w_inbetween_arg1 0
+  es_xset _w_inbetween_arg2 0
+  es_xset _w_inbetween_arg3 0
+  es_xset _w_inbetween_arg4 0
+  es_xset _w_inbetween_arg5 0
+  es_xset _w_inbetween_temp1 0
+  es_xset _w_inbetween_temp2 0
+  
+	testcase qcreate corelib textlibtest "Tests textlib"
+	testcase addtest textlibtest match corelib/textlib/match_test "Match - Textlib Corelib Subcommand Test"
+	testcase addtest textlibtest regexcount corelib/textlib/regexcount_test "Regexcount - Textlib Corelib Subcommand Test"
+	testcase addtest textlibtest tokencount corelib/textlib/tokencount_test "Tokencount - Textlib Corelib Subcommand Test"
+	testcase addtest textlibtest randtoken corelib/textlib/randtoken_test "Randtoken - Textlib Corelib Subcommand Test"
+	testcase addtest textlibtest inbetween corelib/textlib/inbetween_test "Inbetween - Textlib Corelib Subcommand Test"
+}
+
+block unload
+{
+	es_xkeygroupdelete _texthandler_text
+}
+
+block textlib
+{
+	es_xgetargc _textlib_argc
+	if (server_var(_textlib_argc) > 1) do
+	{
+		es_xgetargv _textlib_arg1 1
+		es_xformatv _textlib_format corelib/textlib/textlib_%1_func _textlib_arg1
+		es_exists _textlib_exists block server_var(_textlib_format)
+		ifx true(_textlib_exists) do
+		{
+			es_doblock server_var(_textlib_format)
+		}
+		es_xelse do
+		{
+			es_xformatv _textlib_format "[textlib] %1%2%1 is an invalid function." eventscripts_quote _textlib_arg1
+			es_xdbgmsgv 0 _textlib_format
+		}
+	}
+	es_xelse do
+	{
+		es_xdbgmsg 0 [textlib] Please provide a function.
+	}
+}
+
+// textlib texthandler command v0.2
+// Submitted by Wonder
+block textlib_texthandler_func
+{
+	if (server_var(_textlib_argc) > 4) do
+	{
+		es_xgetargv _w_texthandler_arg2 2
+		if (server_var(_w_texthandler_arg2) == set) do
+		{
+			es_xgetargv _w_texthandler_arg3 3
+			es_exists _textlib_exists key _texthandler_text
+			ifx false(_textlib_exists) do
+			{
+				es_keycreate _texthandler_text server_var(_w_texthandler_arg3)
+			}
+
+			es_xgetargv _w_texthandler_arg4 4
+			es_keysetvalue _texthandler_text server_var(_w_texthandler_arg3) value server_var(_w_texthandler_arg4)
+		}
+		es_xelse do
+		{
+			if (server_var(_w_texthandler_arg2) == get) do
+			{
+				es_xgetargv _w_texthandler_arg3 3
+				es_exists _textlib_exists variable server_var(_w_texthandler_arg3)
+				ifx true(_textlib_exists) do
+				{
+					es_xgetargv _w_texthandler_arg4 4
+					es_exists _textlib_exists key _texthandler_text
+					ifx true(_textlib_exists) do
+					{
+						es_keygetvalue _w_texthandler_text _texthandler_text server_var(_w_texthandler_arg4)
+
+						es_xgetgame _w_texthandler_game
+						if (server_var(_w_texthandler_game) == "Counter-Strike: Source") do
+						{
+							es_set server_var(_w_texthandler_arg3) server_var(_w_texthandler_text)
+						}
+						es_xelse do
+						{
+							es_xstring _w_texthandler_text replace #default
+							es_xstring _w_texthandler_text replace #green
+							es_xstring _w_texthandler_text replace #lightgreen
+							es_set server_var(_w_texthandler_arg3) server_var(_w_texthandler_text)
+						}
+					}
+					es_xelse do
+					{
+						es_set server_var(_w_texthandler_arg3) 0
+
+						es_xformatv _textlib_format "[texthandler] %1%2%1 is an invalid string identifier." eventscripts_quote _w_texthandler_arg4
+						es_xdbgmsgv 0 _textlib_format
+					}
+				}
+				es_xelse do
+				{
+					es_xformatv _textlib_format "[texthandler] %1%2%1 is an invalid variable." eventscripts_quote _w_texthandler_arg3
+					es_xdbgmsgv 0 _textlib_format
+				}
+			}
+			es_xelse do
+			{
+				es_xformatv _w_refcount_format "[texthandler] %1%2%1 is an invalid operator." eventscripts_quote _w_texthandler_arg2
+				es_xdbgmsgv 0 _w_refcount_format
+			}
+		}
+	}
+	es_xelse do
+	{
+		es_xdbgmsg 0 [texthandler] Usage: textlib texthandler [var] <operator> <key> [value]
+	}
+}
+
+block texthandler_test
+{
+}
+
+// textlib sformatv command v0.1
+// Submitted by Wonder
+block textlib_sformatv_func
+{
+	if (server_var(_textlib_argc) > 3) do
+	{
+		es_xgetargv _w_sformatv_arg2 2
+		es_exists _textlib_exists variable server_var(_w_sformatv_arg2)
+		ifx true(_textlib_exists) do
+		{
+			es_xset _w_sformatv_buffer ""
+
+			es_xgetargv _w_sformatv_arg3 3
+			es_xset _w_sformatv_wants 0
+			es_xset _w_sformatv_arg 4
+			es_xset _w_sformatv_charstart 0
+			es_xset _w_sformatv_charend 1
+			es_strlen _w_sformatv_strlen server_var(_w_sformatv_arg3)
+
+			alias _sformatv_check "if (server_var(_w_sformatv_charend) <= server_var(_w_sformatv_strlen)) then _sformatv_do"
+			alias _sformatv_do "es_xdoblock corelib/textlib/sformatv_addchar;es_xmath _w_sformatv_charstart + 1;es_xmath _w_sformatv_charend + 1;_sformatv_check"
+			_sformatv_check
+
+			es_copy server_var(_w_sformatv_arg2) _w_sformatv_buffer
+		}
+		es_xelse do
+		{
+			es_xformatv _textlib_format "[sformatv] %1%2%1 is an invalid variable." eventscripts_quote _w_sformatv_arg2
+			es_xdbgmsgv 0 _textlib_format
+		}
+	}
+	es_xelse do
+	{
+		es_xdbgmsg 0 [sformatv] Usage: textlib sformatv <var> <format-text> [token1 [token2 [...]]]
+	}
+}
+
+block sformatv_addchar
+{
+	es_xcopy _w_sformatv_char _w_sformatv_arg3
+	es_string _w_sformatv_char section server_var(_w_sformatv_charstart) server_var(_w_sformatv_charend)
+
+	ifx true(_w_sformatv_wants) do
+	{
+		es_xset _w_sformatv_wants 0
+
+		if (server_var(_w_sformatv_char) == %) do
+		{
+			es_xformatv _w_sformatv_buffer %1% _w_sformatv_buffer
+		}
+		es_xelse do
+		{
+			if (server_var(_w_sformatv_char) == s) do
+			{
+				es_getargv _w_sformatv_argv server_var(_w_sformatv_arg)
+
+				es_formatv _w_sformatv_buffer %1%2 _w_sformatv_buffer server_var(_w_sformatv_argv)
+			}
+			es_xelse do
+			{
+				es_xformatv _textlib_format "[sformatv] %1%%2%1 is an invalid specifier." eventscripts_quote _w_sformatv_char
+				es_xdbgmsgv 0 _textlib_format
+			}
+
+			es_xmath _w_sformatv_arg + 1
+		}
+	}
+	es_xelse do
+	{
+		if (server_var(_w_sformatv_char) == %) do
+		{
+			es_xset _w_sformatv_wants 1
+		}
+		es_xelse do
+		{
+			es_xformatv _w_sformatv_buffer %1%2 _w_sformatv_buffer _w_sformatv_char
+		}
+	}
+}
+
+block sformatv_test
+{
+	es_xset _w_sformatv_test_bob Bob
+	es_xset _w_sformatv_test_drinks drinks
+	es_xset _w_sformatv_test_beer beer
+	es_xset _w_sformatv_test_result 0
+	es_xset _w_sformatv_test_confirm 0
+
+	testlib begin sformatv_test "sformatv test" 
+	profile begin sformatv_profile
+	textlib sformatv _w_sformatv_test_result "%s %% %s %% %s." _w_sformatv_test_bob _w_sformatv_test_drinks _w_sformatv_test_beer
+	profile end sformatv_profile
+	es_xformatv _w_sformatv_test_confirm "%1 % %2 % %3." _w_sformatv_test_bob _w_sformatv_test_drinks _w_sformatv_test_beer
+	es testlib fail_unless _w_sformatv_test_result equalto server_var(_w_sformatv_test_confirm)
+	testlib end sformatv_test
+}
+
+// textlib match command v0.1
+// Submitted by Chun
+block textlib_match_func
+{
+	es_xset _mtc_argc 0
+	es_xgetargc _mtc_argc
+	if (server_var(_mtc_argc) > 5) do
+	{
+		es_xset _mtc_op 0
+		es_xgetargv _mtc_op 4
+		es_xset _tempcore 0
+		es_regex match _tempcore "^(=|==|equalto|in)$" server_var(_mtc_op)
+		if (server_var(_tempcore) > 0) do
+		{
+			es_xset _mtc_val1 0
+			es_xset _mtc_val2 0
+			es_xgetargv _mtc_val1 3
+			es_xgetargv _mtc_val2 5
+			es_xstring _mtc_val1 replace \* $_mtc_asterisk
+			es_xstring _mtc_val2 replace \* $_mtc_asterisk
+			es_xset _mtc_wc 0
+			es_xset _mtc_cont 1
+			if (* in server_var(_mtc_val1)) do
+			{
+				es_xset _mtc_wc 1
+			}
+			if (* in server_var(_mtc_val2)) do
+			{
+				if (server_var(_mtc_wc) = 1) do
+				{
+					es_xset _mtc_wc 3
+				}
+				es_xelse do
+				{
+					es_xset _mtc_wc 2
+					if (server_var(_mtc_op) = in) do
+					{
+						es_xset _mtc_cont 0
+					}
+				}
+			}
+			if (server_var(_mtc_wc) = 3) do
+			{
+				es_xdbgmsg 0 textlib match : Both values can not contain wildcards
+			}
+			es_xelse do
+			{
+				es_xset _mtc_var 0
+				es_xgetargv _mtc_var 2
+				if (server_var(_mtc_cont) = 0) do
+				{
+					es_set server_var(_mtc_var) 1
+				}
+				es_xelse do
+				{
+					if (server_var(_mtc_wc) = 0) do
+					{
+						if (server_var(_mtc_val1) server_var(_mtc_op) server_var(_mtc_val2)) do
+						{
+							es_set server_var(_mtc_var) 1
+						}
+						es_xelse do
+						{
+							es_set server_var(_mtc_var) 0
+						}
+					}
+					es_xelse do
+					{
+						if (server_var(_mtc_wc) = 1) do
+						{
+							es_xcopy _tempcore _mtc_val2
+							es_xcopy _mtc_val2 _mtc_val1
+							es_xcopy _mtc_val1 _tempcore
+						}
+						es_xstring _mtc_val2 replace \ "\\"
+						es_xstring _mtc_val2 replace ^ "\^"
+						es_xstring _mtc_val2 replace + "\+"
+						es_xstring _mtc_val2 replace ? "\?"
+						es_xstring _mtc_val2 replace . "\."
+						es_xstring _mtc_val2 replace | "\|"
+						es_xstring _mtc_val2 replace ( "\("
+						es_xstring _mtc_val2 replace ) "\)"
+						es_xstring _mtc_val2 replace [ "\["
+						es_xstring _mtc_val2 replace ] "\]"
+						es_xstring _mtc_val2 replace { "\{"
+						es_xstring _mtc_val2 replace } "\}"
+						es_xstring _mtc_val2 replace * ".*"
+						es_xstring _mtc_val1 replace $_mtc_asterisk *
+						es_xstring _mtc_val2 replace $_mtc_asterisk \*
+						es_xstring _mtc_val2 replace $ "\$"
+						if (server_var(_mtc_op) = in) do
+						{
+							es_xformatv _mtc_val2 ".*%1.*" _mtc_val2
+						}
+						es_xformatv _mtc_val2 "^%1$" _mtc_val2
+						es_xset _tempcore 0
+						es_regex match _tempcore server_var(_mtc_val2) server_var(_mtc_val1)
+						if (server_var(_tempcore) > 0) do
+						{
+							es_set server_var(_mtc_var) 1
+						}
+						es_xelse do
+						{
+							es_set server_var(_mtc_var) 0
+						}
+					}
+				}
+			}
+		}
+		es_xelse do
+		{
+			es_xdbgmsg 0 textlib match : invalid operator
+		}
+	}
+	es_xelse do
+	{
+		es_xdbgmsg 0 Syntax : textlib match <variable> <value1> <operator> <value2>
+	}
+}
+
+block match_test
+{
+	profile begin match_test
+	testlib begin mtc1 "match test 1 - true equalto"
+	es_xset _mtc_testvar 0
+	textlib match _mtc_testvar hello*world = hellothereworld
+	testlib fail_unless _mtc_testvar equalto 1
+	testlib end
+	testlib begin mtc2 "match test 2 - false equalto"
+	es_xset _mtc_testvar 0
+	textlib match _mtc_testvar helloworld* = hellothereworld
+	testlib fail_unless _mtc_testvar equalto 0
+	testlib end
+	testlib begin mtc3 "match test 3 - true in"
+	es_xset _mtc_testvar 0
+	textlib match _mtc_testvar el*o in helloworld
+	testlib fail_unless _mtc_testvar equalto 1
+	testlib begin mtc4 "match test 4 - false in"
+	es_xset _mtc_testvar 0
+	textlib match _mtc_testvar el*xo in hellothere
+	testlib fail_unless _mtc_testvar equalto 0
+	testlib end
+	testlib end
+	profile end match_test
+}
+
+block textlib_regexcount_func
+{
+	es_xset _rf_argc 0
+	es_xgetargc _rf_argc
+	if (server_var(_rf_argc) > 4) do
+	{
+		es_xsetinfo _rf_var 0
+		es_xgetargv _rf_var 2
+		es_xsetinfo _rf_str 0
+		es_xgetargv _rf_str 3
+		es_xsetinfo _rf_reg 0
+		es_xgetargv _rf_reg 4
+		es_xformatv _rf_reg ".*(%1).*" _rf_reg
+		es_xset _tempcore 0
+		es_regex matchformat _tempcore server_var(_rf_reg) server_var(_rf_str) %1
+		ifx true(_tempcore) do
+		{
+			es_xset _rf_count 0
+			es_xdoblock corelib/textlib/regexcount_loop
+			es_setinfo server_var(_rf_var) server_var(_rf_count)
+		}
+		es_xelse do
+		{
+			es_setinfo server_var(_rf_var) 0
+			isnull _tempcore _tempcore
+			ifx true(_tempcore) do
+			{
+				es_xdbgmsg 0 textlib regexcount : invalid regexp
+			}
+		}
+	}
+	es_xelse do
+	{
+		es_xdbgmsg 0 Syntax : textlib regexcount <variable> <string> <regexp>
+	}
+}
+
+block regexcount_loop
+{
+	es_string _rf_str replace server_var(_tempcore) "$$_rf_tok$"
+	es_xsetinfo _tempcore 0
+	es_token _tempcore server_var(_rf_str) 0 "$_rf_tok"
+	es_xmathparse _rf_count "_rf_count + _tempcore - 1"
+	es_xstring _rf_str replace "$$_rf_tok$"
+	es_xset _tempcore 0
+	es_regex matchformat _tempcore server_var(_rf_reg) server_var(_rf_str) %1
+	ifx true(_tempcore) do
+	{
+		es_xdoblock corelib/textlib/regexcount_loop
+	}
+}
+
+block regexcount_test
+{
+	profile begin regexcount_test
+	testlib begin tf1 "regexcount test 1 - single character"
+	es_xset _rf_testvar 0
+	textlib regexcount _rf_testvar "hello world, this is a string" i
+	testlib fail_unless _rf_testvar equalto 3
+	testlib end
+	testlib begin tf2 "regexcount test 2 - repeated characters"
+	es_xset _rf_testvar 0
+	textlib regexcount _rf_testvar "hello world, lll, llll" ll
+	testlib fail_unless _rf_testvar equalto 4
+	testlib end
+	testlib begin tf3 "regexcount test 3 - string"
+	es_xset _rf_testvar 0
+	textlib regexcount _rf_testvar "hello world, repeat: hello world" "hello world"
+	testlib fail_unless _rf_testvar equalto 2
+	testlib end
+	testlib begin tf4 "regexcount test 4 - spaces"
+	es_xset _rf_testvar 0
+	textlib regexcount _rf_testvar "hello world, this is a string" " "
+	testlib fail_unless _rf_testvar equalto 5
+	testlib end
+	testlib begin tf5 "regexcount test 5 - negative case"
+	es_xset _rf_testvar 0
+	textlib regexcount _rf_testvar "hello world, this is a string" x
+	testlib fail_unless _rf_testvar equalto 0
+	testlib end
+	profile end regexcount_test
+}
+
+block textlib_tokencount_func
+{
+	es_xset _tf_argc 0
+	es_xgetargc _tf_argc
+	if (server_var(_tf_argc) > 4) do
+	{
+		es_xsetinfo _tf_var 0
+		es_xgetargv _tf_var 2
+		es_xsetinfo _tf_str 0
+		es_xgetargv _tf_str 3
+		es_xsetinfo _tf_tok 0
+		es_xgetargv _tf_tok 4
+		if (server_var(_tf_tok) in server_var(_tf_str)) do
+		{
+			es_string _tf_str replace server_var(_tf_tok) "$$_tf_tok$"
+			es_xsetinfo _tempcore 0
+			es_token _tempcore server_var(_tf_str) 0 "$_tf_tok"
+			es_xmath _tempcore - 1
+			es_setinfo server_var(_tf_var) server_var(_tempcore)
+		}
+		es_xelse do
+		{
+			es_setinfo server_var(_tf_var) 0
+		}
+	}
+	es_xelse do
+	{
+		es_xdbgmsg 0 Syntax : textlib tokencount <variable> <string> <token>
+	}
+}
+
+block tokencount_test
+{
+	profile begin tokencount_test
+	testlib begin tf1 "tokencount test 1 - single character"
+	es_xset _tf_testvar 0
+	textlib tokencount _tf_testvar "hello world, this is a string" i
+	testlib fail_unless _tf_testvar equalto 3
+	testlib end
+	testlib begin tf2 "tokencount test 2 - repeated characters"
+	es_xset _tf_testvar 0
+	textlib tokencount _tf_testvar "hello world, lll, llll" ll
+	testlib fail_unless _tf_testvar equalto 4
+	testlib end
+	testlib begin tf3 "tokencount test 3 - string"
+	es_xset _tf_testvar 0
+	textlib tokencount _tf_testvar "hello world, repeat: hello world" "hello world"
+	testlib fail_unless _tf_testvar equalto 2
+	testlib end
+	testlib begin tf4 "tokencount test 4 - spaces"
+	es_xset _tf_testvar 0
+	textlib tokencount _tf_testvar "hello world, this is a string" " "
+	testlib fail_unless _tf_testvar equalto 5
+	testlib end
+	testlib begin tf5 "tokencount test 5 - negative case"
+	es_xset _tf_testvar 0
+	textlib tokencount _tf_testvar "hello world, this is a string" x
+	testlib fail_unless _tf_testvar equalto 0
+	testlib end
+	profile end tokencount_test
+}
+
+block textlib_randtoken_func
+{
+  es_xgetargc _w_randtoken_count
+  if (server_var(_w_randtoken_count) >= 4) do
+  {
+    es_xgetargv _w_randtoken_returnvar 2
+    es_xgetargv _w_randtoken_string 3
+    es_xgetargv _w_randtoken_separator 4
+    isnull _w_randtoken_isnull _w_randtoken_separator
+    ifx true(_w_randtoken_isnull) do
+    {
+      es_xset _w_randtoken_separator " "
+    }
+    es_xset _w_randtoken_count 0
+    es foreach token _w_randtoken_token server_var(_w_randtoken_string) server_var(_w_randtoken_separator) "es_xmath _w_randtoken_count + 1"
+    es_rand _w_randtoken_random 1 server_var(_w_randtoken_count)
+    es_token server_var(_w_randtoken_returnvar) server_var(_w_randtoken_string) server_var(_w_randtoken_random) server_var(_w_randtoken_separator)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax: textlib randtoken <var> <"string"> <separator>
+  }
+}
+
+block randtoken_test
+{
+  testlib begin rt1 "randtoken test 1 - only 1 token and the separator is +"
+  es_xset _randtoken_tstring "1+"
+  es_xset _randtoken_treturn 0
+  es textlib randtoken _randtoken_treturn server_var(_randtoken_tstring) +
+  testlib fail_unless _randtoken_treturn equalto 1
+  testlib end
+  testlib begin rt2 "randtoken test2 - 2 tokens and the separator is -"
+  es_xset _randtoken_tstring "4-5"
+  es_xset _randtoken_treturn 0
+  es textlib randtoken _randtoken_treturn server_var(_randtoken_tstring) -
+  testlib fail_unless _randtoken_treturn in 45
+  testlib end
+  testlib begin rt2 "randtoken test 3 - randomness"
+  es_xset _randtoken_tstring "1-2"
+  es_xset _randtoken_treturn 0
+  es_xset _randtoken_treturnsum 0
+  es_xset _randtoken_twhile 0
+  while "server_var(_randtoken_twhile) < 10" "es_xdoblock corelib/textlib/randtoken_while"
+  testlib fail_if _randtoken_treturnsum in "10,20"
+  testlib end
+}
+
+block randtoken_while
+{
+  es_xmath _randtoken_twhile + 1
+  es textlib randtoken _randtoken_treturn server_var(_randtoken_tstring) -
+  es_math _randtoken_treturnsum + server_var(_randtoken_treturn)
+}
+
+block textlib_inbetween_func
+{
+  es_xgetargc _w_inbetween_argc
+  if (server_var(_w_inbetween_argc) >= 6) do
+  {
+    es_xgetargv _w_inbetween_arg1 2
+    es_xgetargv _w_inbetween_arg2 3
+    es_xgetargv _w_inbetween_arg3 4
+    es_xgetargv _w_inbetween_arg4 5
+    es_xgetargv _w_inbetween_arg5 6
+    isnull _w_inbetween_temp1 _w_inbetween_arg5
+    ifx true(_w_inbetween_temp1) do
+    {
+      es_xset _w_inbetween_arg5 0
+    }
+    ifx true(_w_inbetween_arg5) do
+    {
+      es_xset _w_inbetween_temp1 ">="
+      es_xset _w_inbetween_temp2 "<="
+    }
+    else do
+    {
+      es_xset _w_inbetween_temp1 ">"
+      es_xset _w_inbetween_temp2 "<"
+    }
+    if (server_var(_w_inbetween_arg3) > server_var(_w_inbetween_arg4)) do
+    {
+      es_xcopy _w_inbetween_temp3 _w_inbetween_arg3
+      es_xcopy _w_inbetween_arg3 _w_inbetween_arg4
+      es_xcopy _w_inbetween_arg4 _w_inbetween_temp3
+    }
+    if (server_var(_w_inbetween_arg2) server_var(_w_inbetween_temp1) server_var(_w_inbetween_arg3)) do
+    {
+      if (server_var(_w_inbetween_arg2) server_var(_w_inbetween_temp2) server_var(_w_inbetween_arg4)) do
+      {
+        es_set server_var(_w_inbetween_arg1) 1
+      }
+      else do
+      {
+        es_set server_var(_w_inbetween_arg1) 0
+      }
+    }
+    else do
+    {
+      es_set server_var(_w_inbetween_arg1) 0
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax: textlib inbetween <var> <check if inbetween number1 and number2> <number1> <number2> [exclusive/inclusive (0/1)]
+  }
+}
+
+block inbetween_test
+{
+  testlib begin inb1 "inbetween test 1 - normal inbetween"
+  textlib inbetween _inbetween_treturn 5 1 10
+  testlib fail_unless _inbetween_treturn equalto 1
+  testlib end
+  testlib begin inb2 "inbetween test 2 - exclusive inbetween"
+  textlib inbetween _inbetween_treturn 1 1 3 0
+  testlib fail_unless _inbetween_treturn equalto 0
+  testlib end
+  testlib begin inb3 "inbetween test 3 - inclusive inbetween"
+  textlib inbetween _inbetween_treturn 1 1 3 1
+  testlib fail_unless _inbetween_treturn equalto 1
+  testlib end
+}

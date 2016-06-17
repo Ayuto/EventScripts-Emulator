@@ -1,0 +1,1945 @@
+//-------------------------------------------------------------------------------------------
+// PlayerGetSet v3.131
+// by Don
+// 3/31/2008
+// Thanks to Chun for playerget distance.
+// Thanks to Einlanzers for various cool things.
+// Thanks to SumGuy14 for the flash stuff.
+// Thanks to GodJonez for the CBaseEntity info for playerset model and all the set color work.
+//
+// Description:
+// This script registers 2 commands, playerget and playerset.  Many commands work with DODS
+// and HL2DM.  Just type playerget or playerset in the console to see the supported commands.
+//
+// Installation:
+// Create a directory called playergetset under cstrike/addons/eventscripts.
+// Copy this file(es_playergetset.txt) to this directory.
+// Put "es_load playergetset" into your autoexec.cfg.
+// Restart your server.
+//
+// Use: playerget <item>
+// playerget primary <var> <userid> [var_index] - Get the players Primary weapon
+// playerget secondary <var> <userid> [var_index] - Get the players Secondary weapon
+// playerget he <var> <userid> [var_index] - 1/0 if the player has an HE Grenade
+// playerget sg <var> <userid> [var_index] - 1/0 if the player has a Smoke Grenade
+// playerget fb <var> <userid> - 1/0 if the player has a Flashbang
+// playerget c4 <var> <userid> [var_index] - 1/0 if the player has a Bomb
+// playerget weaponindex <var> <userid> <weapon_name> - Get the index of the player's weapon
+// playerget ammo <var> <userid> <weapon / slot> - Get the amount of ammo in the player's reserve
+// playerget clip <var> <userid> <weapon / slot> - Get the amount of ammo in the player's clip
+// playerget viewangle <userid> <return pitch> <return yaw> <return roll> - Get the angle the player is looking
+// playerget health <var> <userid> - Get the player's health
+// playerget armor <var> <userid> - Get the player's armor
+// playerget speed <var> <userid> - Get the player's speed
+// playerget cash <var> <userid> - Get the player's cash
+// playerget defuser <var> <userid> - 1/0 if the player has a defuser
+// playerget viewvector <return vector> <userid> - Get the x, y, z components of the vector where the player is looking
+// playerget distance <var> <player1> <player2> [plane] - Get the distance between 2 players in any plane(x,y,z,xy,xz,yz,xyz)
+// playerget isdead <var> <userid> - 1/0 if the player dead or alive
+// playerget noclip <var> <userid> - 1/0 if the player has noclip active or not
+// playerget jetpack <var> <userid> - 1/0 if the player has jetpack active or not
+// playerget freeze <var> <userid> - 1/0 if the player has freeze active or not
+// playerget location <userid> <x> <y> <z> - Location of the player
+// playerget flashalpha <var> <userid> - Intensity of the flash hitting player(0-255) 
+// playerget flashduration <var> <userid> - Duration of the flash hitting player
+//
+// [plane] is optional.  If left out will return xyz
+//
+// Use: playerset <item>
+// playerset ammo <userid> <weapon / slot> <amount> - Set the amount of ammo in the player's reserve
+// playerset clip <userid> <weapon / slot> <amount> - Set the amount of ammo in the player's clip
+// playerset health <userid> <var> - Set the player's health
+// playerset armor <userid> <var> - Set the player's armor
+// playerset speed <userid> <var> - Set the player's speed
+// playerset cash <userid> <var> - Set the player's cash
+// playerset defuser <userid> <var> - Give or take the player's defuser
+// playerset nightvision <userid> <var> - Give or take the player's nightvision
+// playerset nightvisionon <userid> <var> - Set the player's nightvision on or off
+// playerset viewplayer <player1> <player2> - Force player 1 to look at player 2
+// playerset viewcoord <userid> <x> <y> <z> - Force the player to look at a coordinate
+// playerset push <userid> <horiz multiplier> <vert mult/value> <mult vert/val for vert> - Push the player in the direction they are looking
+// playerset model <userid> <model> - Set the player's model
+// playerset color <userid> <red> <green> <blue> - Set the player's color 
+// playerset color <userid> <red> <green> <blue> [alpha] - Set the player's color and alpha
+// playersetnoclip <userid> <1/0> - Turn on or off noclip
+// playerset jetpack <userid> <1/0> - Turn on or off jetpack
+// playerset freeze <userid> <1/0> - Turn on or off player freeze
+// playerset location <userid> <x> <y> <z> - Set the player's location
+// playerset moveto <userid to move> <userid to move to> - Set the player close to another player // (like teleport)
+// playerset flash <userid> <alpha(0-255)> <duration> - Set the players view as if hit with a flashbang 
+// playerset healthadd <userid> <var> - Modify the player's health (use negative numbers to subtract)
+// playerset armoradd <userid> <var> - Modify the player's armor (use negative numbers to subtract)
+// playerset speedadd <userid> <var> - Modify the player's speed (use negative numbers to subtract)
+// playerset cashadd <userid> <var> - Modify the player's cash (use negative numbers to subtract)
+//
+// [var_index] is optional - will return the index of the weapon.
+//
+//
+// v3.131 Changed playerget viewcoord to common model so it should work in DOD:S and HL2MP
+//
+// v3.13 Added playerget viewcoord - Thanks for the idea and method bonbon!
+//
+// v3.122 Added es_getuserid to both players in setviewplayer
+//
+// v3.121 Added alpha to playerset model color setting.
+//
+// v3.12 Playerset color alpha now works.
+//
+// v3.11 Added playerset cashadd, healthadd, armoradd, & speedadd.  Removed color reference from DoD:S(doesn't work)
+//
+// v3.1 Modified so playerset color works with DOD:S and HL2DM
+//
+// v3.091 Updated header to list all commands
+//
+// v3.09 Modified playerset model to work with HL2DM and DOD:S
+//
+// v3.08 Added playerset flash and playerget flashalpha/flashduration
+//
+// v3.07 Added playerset/get freeze and jetpack
+//
+// v3.06 Added playerset moveto
+//
+// v3.05 Added playerset/get noclip and location
+//
+// v3.04 Made alpha an optional parameter in playerset color
+//
+// v3.03 Added alpha to playerset color
+//
+// v3.02 Added playerset color and model - Thanks Eins
+//
+// v3.01 Added playerget isdead - Thanks for the idea Wonder
+//
+// v3.0 Added weapon support for HL2DM and DODS
+//
+// v2.32 Removed last Artichoke command
+//
+// v2.31 Reverted to work with ES 1.3.006 and fixed typo
+//
+// v2.0 Updated to use es_set instead of es_setinfo
+//      Updated playerset viewplayer to use es_mathparse
+//      Added playerset viewcoord
+//      Added playerset push
+//      Added playerget viewvector
+//      Added playerget distance -  Thanks to Chun
+//-------------------------------------------------------------------------------------------
+block load
+{
+  es_xsetinfo _playergetset_game 0
+  es_xgetgame _playergetset_game
+  es_xdoblock corelib/playergetset/setgamevars
+  es_xdoblock corelib/playergetset/playergetset_register
+}
+
+block playergetset_register
+{
+  //variables used by playergetset
+  es_xsetinfo _playergetset_xvar 0
+  es_xsetinfo _playergetset_yvar 0
+  es_xsetinfo _playergetset_zvar 0
+  es_xsetinfo _playergetset_count 0
+  es_xsetinfo _playergetset_model 0
+  es_xsetinfo _playergetset_target 0
+  es_xsetinfo _playergetset_temp 0
+  es_xsetinfo _playergetset_temp2 0
+  es_xsetinfo _playergetset_temp3 0
+  es_xsetinfo _playergetset_temp4 0
+  es_xsetinfo _playergetset_find 0
+  es_xset oldrendermode 0
+  es_xset oldrenderfx 0
+  es_xset newrendermode 0
+  es_xset newrenderfx 0
+  es_xset _playergetset_red 0
+  es_xset _playergetset_green 0
+  es_xset _playergetset_blue 0
+  es_xset _playergetset_color 0
+  es_xsetinfo _playergetset_owner 0
+  es_xsetinfo _playergetset_userid 0
+  es_xsetinfo _playergetset_tempid 0
+  es_xsetinfo _playergetset_tempvar 0
+  es_xsetinfo _playergetset_cmd 0
+  es_xsetinfo _playergetset_argc 0
+  es_xsetinfo _playergetset_arg1 0
+  es_xsetinfo _playergetset_arg2 0
+  es_xsetinfo _playergetset_arg3 0
+  es_xsetinfo _playergetset_arg4 0
+  es_xsetinfo _playergetset_temparg1 0
+  es_xsetinfo _playergetset_temparg2 0
+  es_xsetinfo _playergetset_temparg3 0
+  es_xsetinfo _playergetset_block 0
+  es_xsetinfo _playergetset_vx 0
+  es_xsetinfo _playergetset_vy 0
+  es_xsetinfo _playergetset_vz 0
+  es_xsetinfo _playergetset_vector 0
+  es_xsetinfo _playergetset_hmult 0
+  es_xsetinfo _playergetset_hasparam 0
+  es_xsetinfo _playergetset_block 0
+  es_xsetinfo _playergetset_p1x 0
+  es_xsetinfo _playergetset_p1y 0
+  es_xsetinfo _playergetset_p1z 0
+  es_xsetinfo _playergetset_p1x 0
+  es_xsetinfo _playergetset_p2x 0
+  es_xsetinfo _playergetset_p2y 0
+  es_xsetinfo _playergetset_p2z 0
+  es_xsetinfo _playergetset_x 0
+  es_xsetinfo _playergetset_y 0
+  es_xsetinfo _playergetset_p1vec 0
+  es_xsetinfo _playergetset_p2vec 0
+  es_xsetinfo _playergetset_p12vec 0
+  es_xsetinfo _playergetset_atan 0
+  es_xsetinfo _playergetset_tempx 0
+  es_xsetinfo _playergetset_tempy 0
+  es_xsetinfo _playergetset_xangle 0
+  es_xsetinfo _playergetset_yangle 0
+  es_xsetinfo _playergetset_divpi 57.295779524
+  es_xsetinfo _playergetset_realangle 0
+  if (server_var(_playergetset_game) == "Counter-Strike: Source") do
+  {
+    es_xdoblock corelib/playergetset/csscreateprimary
+    es_xdoblock corelib/playergetset/csscreatesecondary
+  }
+  if ("Day of Defeat" in server_var(_playergetset_game)) do
+  {
+    es_xdoblock corelib/playergetset/dodcreateprimary
+    es_xdoblock corelib/playergetset/dodcreatesecondary
+  }
+  if ("Deathmatch" in server_var(_playergetset_game)) do
+  {
+    es_xdoblock corelib/playergetset/hl2createprimary
+    es_xdoblock corelib/playergetset/hl2createsecondary
+    es_xsetinfo _playergetset_hl2wep 0
+  }
+  //check to see if playergetset exists
+  es_xexists _exists command playerget
+  if (server_var(_exists) = 0) do
+  {
+    es_xregcmd playerget corelib/playergetset/_playerget "Get various user items"
+  }
+  es_xexists _exists command playerset
+  if (server_var(_exists) = 0) do
+  {
+    es_xregcmd playerset corelib/playergetset/_playerset "Set various user items"
+  }
+}
+
+block unload
+{
+  es_xkeygroupdelete _primaryweapons
+  es_xkeygroupdelete _secondaryweapons
+}
+
+block _playerget
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 1) do
+  {
+    es_xgetargv _playergetset_cmd 1
+    es_xgetargv _playergetset_userid 3
+    if (server_var(_playergetset_cmd) == viewangle) do
+    {
+      es_xgetargv _playergetset_userid 2
+    }
+    if (server_var(_playergetset_cmd) == location) do
+    {
+      es_xgetargv _playergetset_userid 2
+    }
+    if (server_var(_playergetset_cmd) == viewcoord) do
+    {
+      es_xgetargv _playergetset_userid 2
+    }
+    es_format _playergetset_block "corelib/playergetset/get%1" server_var(_playergetset_cmd)
+    if (server_var(_playergetset_arg1) > 2) do
+    {
+      es_getuserid _playergetset_userid server_var(_playergetset_userid)
+      if (server_var(_playergetset_userid) = 0) do
+      {
+        es_xdbgmsg 0 Player not found!
+      }
+      else do
+      {
+        es_doblock server_var(_playergetset_block)
+      }
+    }
+    else do
+    {
+      es_doblock server_var(_playergetset_block)
+    }
+  }
+  else do
+  {
+    es_dbgmsg 0 Type playerget server_var(_playerget_commands)
+  }
+}
+
+block _playerset
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 1) do
+  {
+    es_xgetargv _playergetset_cmd 1
+    es_format _playergetset_block "corelib/playergetset/set%1" server_var(_playergetset_cmd)
+    if (server_var(_playergetset_arg1) > 2) do
+    {
+      es_xgetargv _playergetset_userid 2
+      es_getuserid _playergetset_userid server_var(_playergetset_userid)
+      if (server_var(_playergetset_userid) = 0) do
+      {
+        es_xdbgmsg 0 Player not found!
+      }
+      else do
+      {
+        es_doblock server_var(_playergetset_block)
+      }
+    }
+    else do
+    {
+      es_doblock server_var(_playergetset_block)
+    }
+  }
+  else do
+  {
+    es_dbgmsg 0 Type playerset server_var(_playerset_commands)
+  }
+}
+
+block setviewplayer
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 2) do
+  {
+    es_xgetargv _playergetset_temparg1 2
+    es_xgetargv _playergetset_temparg2 3
+    es_getuserid _playergetset_temparg1 server_var(_playergetset_temparg1)
+    es_getuserid _playergetset_temparg2 server_var(_playergetset_temparg2)
+    es_getplayerlocation _playergetset_p1x _playergetset_p1y _playergetset_p1z server_var(_playergetset_temparg1)
+    es_getplayerlocation _playergetset_p2x _playergetset_p2y _playergetset_p2z server_var(_playergetset_temparg2)
+    es_createvectorstring _playergetset_p1vec server_var(_playergetset_p1x) server_var(_playergetset_p1y) server_var(_playergetset_p1z)
+    es_createvectorstring _playergetset_p2vec server_var(_playergetset_p2x) server_var(_playergetset_p2y) server_var(_playergetset_p2z)
+    es_createvectorfrompoints _playergetset_p12vec server_var(_playergetset_p1vec) server_var(_playergetset_p2vec)
+    es_splitvectorstring _playergetset_p1x _playergetset_p1y _playergetset_p1z server_var(_playergetset_p12vec)
+    es playerget viewangle server_var(_playergetset_temparg1) _playergetset_p2x _playergetset_p2y _playergetset_p2z
+    es_xmathparse _playergetset_atan "atan(_playergetset_p1y/_playergetset_p1x)*_playergetset_divpi"
+    es_xsetinfo _playergetset_realangle 180
+    if (server_var(_playergetset_p1x) < 0) do
+    {
+      es_math _playergetset_realangle + server_var(_playergetset_atan)
+    }
+    else do
+    {
+      if (server_var(_playergetset_p1y) < 0) do
+      {
+        es_xsetinfo _playergetset_realangle 360
+        es_math _playergetset_realangle + server_var(_playergetset_atan)
+      }
+      else do
+      {
+        es_setinfo _playergetset_realangle server_var(_playergetset_atan)
+      }
+    }
+    es_setinfo _playergetset_yangle server_var(_playergetset_realangle)
+    es_setinfo _playergetset_tempy server_var(_playergetset_p1y)
+    es_xmathparse _playergetset_xangle "0-atan(_playergetset_p1z/sqrt(_playergetset_p1y^2+_playergetset_p1x^2))*_playergetset_divpi"
+    es_setang server_var(_playergetset_temparg1) server_var(_playergetset_xangle) server_var(_playergetset_yangle) server_var(_playergetset_p2z)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset viewplayer <userid1> <userid2>
+  }
+}
+
+block setmoveto
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 2) do
+  {
+    es_xgetargv _playergetset_temparg1 2
+    es_xgetargv _playergetset_temparg2 3
+    es_getplayerlocation _playergetset_p1x _playergetset_p1y _playergetset_p1z server_var(_playergetset_temparg2)
+    es_xmath _playergetset_p1x + 50
+    es_xmath _playergetset_p1z + 10
+    es_setpos server_var(_playergetset_temparg1) server_var(_playergetset_p1x) server_var(_playergetset_p1y) server_var(_playergetset_p1z)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset moveto <userid to move> <userid to move to>
+  }
+}
+
+block setviewcoord
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 5) do
+  {
+    es_xgetargv _playergetset_temparg1 2
+    es_xgetargv _playergetset_p2x 3
+    es_xgetargv _playergetset_p2y 4
+    es_xgetargv _playergetset_p2z 5
+    es_getplayerlocation _playergetset_p1x _playergetset_p1y _playergetset_p1z server_var(_playergetset_temparg1)
+    es_createvectorstring _playergetset_p1vec server_var(_playergetset_p1x) server_var(_playergetset_p1y) server_var(_playergetset_p1z)
+    es_createvectorstring _playergetset_p2vec server_var(_playergetset_p2x) server_var(_playergetset_p2y) server_var(_playergetset_p2z)
+    es_createvectorfrompoints _playergetset_p12vec server_var(_playergetset_p1vec) server_var(_playergetset_p2vec)
+    es_splitvectorstring _playergetset_p1x _playergetset_p1y _playergetset_p1z server_var(_playergetset_p12vec)
+    es playerget viewangle server_var(_playergetset_temparg1) _playergetset_p2x _playergetset_p2y _playergetset_p2z
+    es_xmathparse _playergetset_atan "atan(_playergetset_p1y/_playergetset_p1x)*_playergetset_divpi"
+    es_xsetinfo _playergetset_realangle 180
+    if (server_var(_playergetset_p1x) < 0) do
+    {
+      es_math _playergetset_realangle + server_var(_playergetset_atan)
+    }
+    else do
+    {
+      if (server_var(_playergetset_p1y) < 0) do
+      {
+        es_xsetinfo _playergetset_realangle 360
+        es_math _playergetset_realangle + server_var(_playergetset_atan)
+      }
+      else do
+      {
+        es_setinfo _playergetset_realangle server_var(_playergetset_atan)
+      }
+    }
+    es_setinfo _playergetset_yangle server_var(_playergetset_realangle)
+    es_setinfo _playergetset_tempy server_var(_playergetset_p1y)
+    es_xmathparse _playergetset_xangle "0-atan(_playergetset_p1z/sqrt(_playergetset_p1y^2+_playergetset_p1x^2))*_playergetset_divpi"
+    es_setang server_var(_playergetset_temparg1) server_var(_playergetset_xangle) server_var(_playergetset_yangle) server_var(_playergetset_p2z)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset viewcoord <userid> <x> <y> <z>
+  }
+}
+
+block setflash
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 4) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    es_xgetargv _playergetset_arg3 4
+    es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_flFlashMaxAlpha server_var(_playergetset_arg2)
+    es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_flFlashDuration server_var(_playergetset_arg3)
+    es_delayed server_var(_playergetset_arg3) es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_flFlashMaxAlpha 0
+    es_delayed server_var(_playergetset_arg3) es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_flFlashDuration 0
+
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset flash <userid> <alpha> <duration>
+  }
+}
+
+block setlocation
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 5) do
+  {
+    es_xgetargv _playergetset_p1x 3
+    es_xgetargv _playergetset_p1y 4
+    es_xgetargv _playergetset_p1z 5
+    es_setpos server_var(_playergetset_userid) server_var(_playergetset_p1x) server_var(_playergetset_p1y) server_var(_playergetset_p1z)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset location <userid> <x> <y> <z>
+  }
+}
+
+block getweaponindex
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    if (weapon_ notin server_var(_playergetset_arg3)) do
+    {
+      es_format _playergetset_arg3 "weapon_%1" server_var(_playergetset_arg3)
+    }
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerhandle _playergetset_owner server_var(_playergetset_userid)
+    es_createentitylist _playergetset_weapons server_var(_playergetset_arg3)
+    es_keygroupfilter _playergetset_weapons only m_Howner server_var(_playergetset_owner)
+    es_xforeachkey _playergetset_tempid in _playergetset_weapons "es_xdoblock corelib/playergetset/getindex"
+    es_xkeygroupdelete _playergetset_weapons
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget weaponindex <var> <userid> <weapon_name>
+  }
+}
+
+block getprimary
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerhandle _playergetset_owner server_var(_playergetset_userid)
+    es_xforeachkey wep in _primaryweapons "es_xdoblock corelib/playergetset/checkall"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget primary <var> <userid> [var_index]
+  }
+}
+
+block getsecondary
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerhandle _playergetset_owner server_var(_playergetset_userid)
+    es_xforeachkey wep in _secondaryweapons "es_xdoblock corelib/playergetset/checkall"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget secondary <var> <userid> [var_index]
+  }
+}
+
+block gethe
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CBasePlayer.localdata.m_iAmmo.011"
+    es_getplayerhandle _playergetset_owner server_var(_playergetset_userid)
+    es_xcreateentitylist _playergetset_weapons weapon_hegrenade
+    es_keygroupfilter _playergetset_weapons only m_Howner server_var(_playergetset_owner)
+    es_xforeachkey _playergetset_tempid in _playergetset_weapons "es_xdoblock corelib/playergetset/weapon_list"
+    es_xkeygroupdelete _playergetset_weapons
+    if (server_var(_playergetset_find) == weapon_hegrenade) do
+    {
+      es_setinfo server_var(_playergetset_arg2) 1
+      es_setinfo server_var(_playergetset_arg3) server_var(_playergetset_tempid)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget he <var> <userid> [var_index]
+  }
+}
+
+block getfragus
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CBasePlayer.localdata.m_iAmmo.013"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget fragus <var> <userid>
+  }
+}
+
+block getfragger
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CBasePlayer.localdata.m_iAmmo.014"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget fragger <var> <userid>
+  }
+}
+
+block getisdead
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CBasePlayer.pl.deadflag"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget isdead <var> <userid>
+  }
+}
+
+block getflashalpha
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CCSPlayer.m_flFlashMaxAlpha"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget flashalpha <var> <userid>
+  }
+}
+
+block getflashduration
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CCSPlayer.m_flFlashDuration"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget flashduration <var> <userid>
+  }
+}
+
+block getfb
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CBasePlayer.localdata.m_iAmmo.012"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget fb <var> <userid>
+  }
+}
+
+block getsg
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CBasePlayer.localdata.m_iAmmo.013"
+    es_xcreateentitylist _playergetset_weapons weapon_smokegrenade
+    es_keygroupfilter _playergetset_weapons only m_Howner server_var(_playergetset_owner)
+    es_xforeachkey _playergetset_tempid in _playergetset_weapons "es_xdoblock corelib/playergetset/weapon_list"
+    es_xkeygroupdelete _playergetset_weapons
+    if (server_var(_playergetset_find) == weapon_smokegrenade) do
+    {
+      es_setinfo server_var(_playergetset_arg2) 1
+      es_setinfo server_var(_playergetset_arg3) server_var(_playergetset_tempid)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget sg <var> <userid> [var_index]
+  }
+}
+
+block getsgus
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CBasePlayer.localdata.m_iAmmo.017"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget sgus <var> <userid>
+  }
+}
+
+block getsgger
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) "CBasePlayer.localdata.m_iAmmo.017"
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget sgger <var> <userid>
+  }
+}
+
+block getc4
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 3) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_xsetinfo _playergetset_find 0
+    es_getplayerhandle _playergetset_owner server_var(_playergetset_userid)
+    es_xcreateentitylist _playergetset_weapons weapon_c4
+    es_keygroupfilter _playergetset_weapons only m_Howner server_var(_playergetset_owner)
+    es_xforeachkey _playergetset_tempid in _playergetset_weapons "es_xdoblock corelib/playergetset/weapon_list"
+    es_xkeygroupdelete _playergetset_weapons
+    if (server_var(_playergetset_find) == weapon_c4) do
+    {
+      es_setinfo server_var(_playergetset_arg2) 1
+      es_setinfo server_var(_playergetset_arg3) server_var(_playergetset_tempid)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget c4 <var> <userid> [var_index]
+  }
+}
+
+block getammo
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 2) do
+  {
+    es_xgetargv _playergetset_temparg2 2
+    es_xgetargv _playergetset_temparg3 4
+    if ("Deathmatch" in server_var(_playergetset_game)) do
+    {
+      es_xgetargv _playergetset_hl2wep 4
+    }
+    es_setinfo server_var(_playergetset_temparg2) 0
+    if (server_var(_playergetset_temparg3) != 1) do
+    {
+      if (server_var(_playergetset_temparg3) != 2) do
+      {
+        if (weapon_ notin server_var(_playergetset_temparg3)) do
+        {
+          es_format _playergetset_temparg3 "weapon_%1" server_var(_playergetset_temparg3)
+        }
+        es_xsetinfo _weapon_slot 1
+        es_xforeachkey _playergetset_tempid in _primaryweapons "es_xdoblock corelib/playergetset/findslot"
+        es_xsetinfo _weapon_slot 2
+        es_xforeachkey _playergetset_tempid in _secondaryweapons "es_xdoblock corelib/playergetset/findslot"
+      }
+    }
+    if (server_var(_playergetset_temparg3) == 1) do
+    {
+      if ("Deathmatch" in server_var(_playergetset_game)) do
+      {
+        es_setinfo _playergetset_temparg3 server_var(_playergetset_hl2wep)
+      }
+      else do
+      {
+        es playerget primary _playergetset_temparg3 server_var(_playergetset_userid)
+      }
+      if (server_var(_playergetset_temparg3) != 0) do
+      {
+        es_keygetvalue _playergetset_tempvar _primaryweapons server_var(_playergetset_temparg3) ammo
+        es getplayerinfo _playergetset_tempid server_var(_playergetset_userid) index
+        es_getindexprop server_var(_playergetset_temparg2) server_var(_playergetset_tempid) server_var(_playergetset_tempvar)
+      }
+    }
+    if (server_var(_playergetset_temparg3) == 2) do
+    {
+      if ("Deathmatch" in server_var(_playergetset_game)) do
+      {
+        es_setinfo _playergetset_temparg3 server_var(_playergetset_hl2wep)
+      }
+      else do
+      {
+        es playerget secondary _playergetset_temparg3 server_var(_playergetset_userid)
+      }
+      if (server_var(_playergetset_temparg3) != 0) do
+      {
+        es_keygetvalue _playergetset_tempvar _secondaryweapons server_var(_playergetset_temparg3) ammo
+        es getplayerinfo _playergetset_tempid server_var(_playergetset_userid) index
+        es_getindexprop server_var(_playergetset_temparg2) server_var(_playergetset_tempid) server_var(_playergetset_tempvar)
+      }
+    }
+  }
+  else do
+  {
+    if ("Deathmatch" notin server_var(_playergetset_game)) do
+    {
+      es_xdbgmsg 0 Syntax : playerget ammo <var> <userid> <weapon / slot>
+    }
+    else do
+    {
+      es_xdbgmsg 0 Syntax : playerget ammo <var> <userid> <weapon>
+    }
+  }
+}
+
+block getclip
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 3) do
+  {
+    es_xsetinfo _playergetset_temparg3 0
+    es_xgetargv _playergetset_temparg2 2
+    es_xgetargv _playergetset_temparg3 4
+    if ("Deathmatch" in server_var(_playergetset_game)) do
+    {
+      es_xgetargv _playergetset_hl2wep 4
+    }
+    es_setinfo server_var(_playergetset_temparg2) 0
+    if (server_var(_playergetset_temparg3) != 1) do
+    {
+      if (server_var(_playergetset_temparg3) != 2) do
+      {
+        if (weapon_ notin server_var(_playergetset_temparg3)) do
+        {
+          es_format _playergetset_temparg3 "weapon_%1" server_var(_playergetset_temparg3)
+        }
+        es_xsetinfo _weapon_slot 1
+        es_xforeachkey _playergetset_tempid in _primaryweapons "es_xdoblock corelib/playergetset/findslot"
+        es_xsetinfo _weapon_slot 2
+        es_xforeachkey _playergetset_tempid in _secondaryweapons "es_xdoblock corelib/playergetset/findslot"
+      }
+    }
+    if (server_var(_playergetset_temparg3) == 1) do
+    {
+      if ("Deathmatch" notin server_var(_playergetset_game)) do
+      {
+        es playerget primary _playergetset_temparg3 server_var(_playergetset_userid) server_var(_playergetset_tempid)
+      }
+      else do
+      {
+        es playerget weaponindex _playergetset_tempid server_var(_playergetset_userid) server_var(_playergetset_hl2wep)
+        es_setinfo _playergetset_temparg3 server_var(_playergetset_hl2wep)
+      }
+      if (server_var(_playergetset_temparg3) != 0) do
+      {
+        es_keygetvalue _playergetset_tempvar _primaryweapons server_var(_playergetset_temparg3) clip
+        es_getindexprop server_var(_playergetset_temparg2) server_var(_playergetset_tempid) server_var(_playergetset_tempvar)
+      }
+    }
+    if (server_var(_playergetset_temparg3) == 2) do
+    {
+      if ("Deathmatch" notin server_var(_playergetset_game)) do
+      {
+        es playerget secondary _playergetset_temparg3 server_var(_playergetset_userid) server_var(_playergetset_tempid)
+      }
+      else do
+      {
+        es playerget weaponindex _playergetset_tempid server_var(_playergetset_userid) server_var(_playergetset_hl2wep)
+        es_setinfo _playergetset_temparg3 server_var(_playergetset_hl2wep)
+      }
+      if (server_var(_playergetset_temparg3) != 0) do
+      {
+        es_keygetvalue _playergetset_tempvar _secondaryweapons server_var(_playergetset_temparg3) clip
+        es_getindexprop server_var(_playergetset_temparg2) server_var(_playergetset_tempid) server_var(_playergetset_tempvar)
+      }
+    }
+  }
+  else do
+  {
+    if ("Deathmatch" notin server_var(_playergetset_game)) do
+    {
+      es_xdbgmsg 0 Syntax : playerget clip <var> <userid> <weapon / slot>
+    }
+    else do
+    {
+      es_xdbgmsg 0 Syntax : playerget clip <var> <userid> <weapon>
+    }
+  }
+}
+
+block getcash
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CCSPlayer.m_iAccount
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget cash <var>  <userid>
+  }
+}
+
+block getdefuser
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CCSPlayer.m_bHasDefuser
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget defuser <var>  <userid>
+  }
+}
+
+block getspeed
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CBasePlayer.localdata.m_flLaggedMovementValue
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget speed <var>  <userid>
+  }
+}
+
+block getarmor
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CCSPlayer.m_ArmorValue
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget armor <var>  <userid>
+  }
+}
+
+block getsuit
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CHL2MP_Player.baseclass.m_HL2Local.m_flSuitPower
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget suit <var>  <userid>
+  }
+}
+
+block gethealth
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CBasePlayer.m_iHealth
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget health <var>  <userid>
+  }
+}
+
+block getnoclip
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype
+    if (server_var(server_var(_playergetset_arg2)) == 8) do
+    {
+      es_setinfo server_var(_playergetset_arg2) 1
+    }
+    else do
+    {
+      es_setinfo server_var(_playergetset_arg2) 0
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget noclip <var>  <userid>
+  }
+}
+
+block getjetpack
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype
+    if (server_var(server_var(_playergetset_arg2)) == 4) do
+    {
+      es_setinfo server_var(_playergetset_arg2) 1
+    }
+    else do
+    {
+      es_setinfo server_var(_playergetset_arg2) 0
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget jetpack <var>  <userid>
+  }
+}
+
+block getfreeze
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype
+    if (server_var(server_var(_playergetset_arg2)) == 0) do
+    {
+      es_setinfo server_var(_playergetset_arg2) 1
+    }
+    else do
+    {
+      es_setinfo server_var(_playergetset_arg2) 0
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget freeze <var>  <userid>
+  }
+}
+
+block getdistance
+{
+  es_xgetargc _playergetset_argc
+  if (server_var(_playergetset_argc) > 4) do
+  {
+    es_xgetargv _playergetset_arg1 2
+    es_xgetargv _playergetset_arg2 3
+    es_xgetargv _playergetset_arg3 4
+    es_setinfo server_var(_playergetset_arg1) 0
+    es_getplayerlocation _playergetset_p1x _playergetset_p1y _playergetset_p1z server_var(_playergetset_arg2)
+    es_getplayerlocation _playergetset_p2x _playergetset_p2y _playergetset_p2z server_var(_playergetset_arg3)
+
+    if (server_var(_playergetset_argc) == 6) do
+    {
+      es_xgetargv _playergetset_arg4 5
+      es_format _playergetset_block "corelib/playergetset/%1dist" server_var(_playergetset_arg4)
+      es_doblock server_var(_playergetset_block)
+    }
+    es_xelse do
+    {
+      es_xdoblock corelib/playergetset/xyzdist
+    }
+  }
+  es_xelse do
+  {
+    es_xdbgmsg 0 Syntax : playerget distance <var> <player1> <player2> [plane]
+  }
+}
+
+block xdist
+{
+  es_mathparse server_var(_playergetset_arg1) "_playergetset_p1x - _playergetset_p2x"
+}
+
+block ydist
+{
+  es_mathparse server_var(_playergetset_arg1) "_playergetset_p1y - _playergetset_p2y"
+}
+
+block zdist
+{
+  es_mathparse server_var(_playergetset_arg1) "_playergetset_p1z - _playergetset_p2z"
+}
+
+block xydist
+{
+  es_xmathparse _playergetset_x "_playergetset_p1x - _playergetset_p2x"
+  es_xmathparse _playergetset_y "_playergetset_p1y - _playergetset_p2y"
+  es_xdoblock corelib/playergetset/calcvector
+  es_setinfo server_var(_playergetset_arg1) server_var(_playergetset_temparg1)
+}
+
+block xzdist
+{
+  es_xmathparse _playergetset_x "_playergetset_p1x - _playergetset_p2x"
+  es_xmathparse _playergetset_y "_playergetset_p1z - _playergetset_p2z"
+  es_xdoblock corelib/playergetset/calcvector
+  es_setinfo server_var(_playergetset_arg1) server_var(_playergetset_temparg1)
+}
+
+block yzdist
+{
+  es_xmathparse _playergetset_x "_playergetset_p1y - _playergetset_p2y"
+  es_xmathparse _playergetset_y "_playergetset_p1z - _playergetset_p2z"
+  es_xdoblock corelib/playergetset/calcvector
+  es_setinfo server_var(_playergetset_arg1) server_var(_playergetset_temparg1)
+}
+
+block xyzdist
+{
+  es_xmathparse _playergetset_x "_playergetset_p1x - _playergetset_p2x"
+  es_xmathparse _playergetset_y "_playergetset_p1y - _playergetset_p2y"
+  es_xdoblock corelib/playergetset/calcvector
+  es_setinfo _playergetset_x server_var(_playergetset_temparg1)
+  es_xmathparse _playergetset_y "_playergetset_p1z - _playergetset_p2z"
+  es_xdoblock corelib/playergetset/calcvector
+  es_setinfo server_var(_playergetset_arg1) server_var(_playergetset_temparg1)
+}
+
+block calcvector
+{
+  es_xmathparse _playergetset_temparg1 "sqrt(_playergetset_x^2 + _playergetset_y^2)"
+}
+
+block getviewangle
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 4) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    es_xgetargv _playergetset_arg3 4
+    es_xgetargv _playergetset_arg4 5
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_setinfo server_var(_playergetset_arg4) 0
+    es_getplayerprop _playergetset_arg1 server_var(_playergetset_userid) CBasePlayer.baseclass.baseclass.baseclass.baseclass.baseclass.m_angRotation
+    es_splitvectorstring server_var(_playergetset_arg2) server_var(_playergetset_arg3) server_var(_playergetset_arg4) server_var(_playergetset_arg1)
+    es_getplayerprop server_var(_playergetset_arg2) server_var(_playergetset_userid) server_var(_playergetset_eyeangle0)
+    es_getplayerprop server_var(_playergetset_arg3) server_var(_playergetset_userid) server_var(_playergetset_eyeangle1)
+    if (server_var(server_var(_playergetset_arg3)) < 0) then es_xmath server_var(_playergetset_arg3) + 360
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget viewangle  <userid> <return pitch> <return yaw> <return roll>
+  }
+
+}
+
+block getlocation
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 4) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    es_xgetargv _playergetset_arg3 4
+    es_xgetargv _playergetset_arg4 5
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_setinfo server_var(_playergetset_arg4) 0
+    es_getplayerlocation server_var(_playergetset_arg2) server_var(_playergetset_arg3) server_var(_playergetset_arg4) server_var(_playergetset_userid)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget location  <userid> <x> <y> <z>
+  }
+
+}
+
+block getviewvector
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 2
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_getplayerprop _playergetset_temparg1 server_var(_playergetset_userid) server_var(_playergetset_eyeangle1)
+    es_xmathparse _playergetset_vx "cos(_playergetset_temparg1/_playergetset_divpi)"
+    es_xmathparse _playergetset_vy "sin(_playergetset_temparg1/_playergetset_divpi)"
+    es_getplayerprop _playergetset_temparg2 server_var(_playergetset_userid) server_var(_playergetset_eyeangle0)
+    es_xmathparse _playergetset_vz "-sin(_playergetset_temparg2/_playergetset_divpi)"
+    es_createvectorstring server_var(_playergetset_arg2) server_var(_playergetset_vx) server_var(_playergetset_vy) server_var(_playergetset_vz)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget viewvector <return vector> <userid>
+  }
+}
+
+block getviewcoord
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 4) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    es_xgetargv _playergetset_arg3 4
+    es_xgetargv _playergetset_arg4 5
+    es_setinfo server_var(_playergetset_arg2) 0
+    es_setinfo server_var(_playergetset_arg3) 0
+    es_setinfo server_var(_playergetset_arg4) 0
+    es_prop_dynamic_create server_var(_playergetset_userid) props_c17/tv_monitor01_screen.mdl
+    es_getindexprop _playergetset_temparg2 server_var(eventscripts_lastgive) CBaseEntity.m_vecOrigin
+    es_remove server_var(eventscripts_lastgive)
+    es_splitvectorstring server_var(_playergetset_arg2) server_var(_playergetset_arg3) server_var(_playergetset_arg4) server_var(_playergetset_temparg2)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerget viewcoord <userid> <x> <y> <z>
+  }
+}
+
+block setpush
+{
+  es_xgetargc _playergetset_arg1
+  es_xgetargv _playergetset_arg4 5
+  //  ifx parse ("(_playergetset_arg1 > 5) and (_playergetset_arg4 < 2)") do
+  if (server_var(_playergetset_arg1) > 5) do
+  {
+    if (server_var(_playergetset_arg4) < 2) do
+    {
+      es_xgetargv _playergetset_hmult 3
+      es_xgetargv _playergetset_temparg3 4
+      es playerget viewvector _playerset_vector server_var(_playergetset_userid)
+      es_splitvectorstring _playergetset_vx _playergetset_vy _playergetset_vz server_var(_playerset_vector)
+      es_math _playergetset_vx * server_var(_playergetset_hmult)
+      es_math _playergetset_vy * server_var(_playergetset_hmult)
+      if (server_var(_playergetset_arg4) == 0) do
+      {
+        es_math _playergetset_vz * server_var(_playergetset_temparg3)
+      }
+      else do
+      {
+        es_setinfo _playergetset_vz server_var(_playergetset_temparg3)
+      }
+      es_createvectorstring _playergetset_vector server_var(_playergetset_vx) server_var(_playergetset_vy) server_var(_playergetset_vz)
+      es_setplayerprop server_var(_playergetset_userid) "CBasePlayer.localdata.m_vecBaseVelocity" server_var(_playergetset_vector)
+    }
+    else do
+    {
+      es_xdbgmsg 0 Syntax : playerset push <userid> <horizontal multiplier> <vertical mult/value> <0 = multiply vert/1 = use value for vert>
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset push <userid> <horizontal multiplier> <vertical mult/value> <0 = multiply vert/1 = use value for vert>
+  }
+}
+
+block setnoclip
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) == 1) do
+    {
+      es_setplayerprop server_var(_playergetset_userid) "CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype"  8
+    }
+    else do
+    {
+      es_setplayerprop server_var(_playergetset_userid) "CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype"  2
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset noclip <userid> 1/0
+  }
+}
+
+block setjetpack
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) == 1) do
+    {
+      es_setplayerprop server_var(_playergetset_userid) "CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype"  4
+    }
+    else do
+    {
+      es_setplayerprop server_var(_playergetset_userid) "CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype"  2
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset jetpack <userid> 1/0
+  }
+}
+
+block setfreeze
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) == 1) do
+    {
+      es_setplayerprop server_var(_playergetset_userid) "CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype"  0
+    }
+    else do
+    {
+      es_setplayerprop server_var(_playergetset_userid) "CCSPlayer.baseclass.baseclass.baseclass.baseclass.baseclass.baseclass.movetype"  2
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset freeze <userid> 1/0
+  }
+}
+
+block setnightvisionon
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) >= 0) do
+    {
+      if (server_var(_playergetset_arg2) <= 1) do
+      {
+        es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_bNightVisionOn server_var(_playergetset_arg2)
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset nightvisionon <userid> 1/0
+  }
+}
+
+block setnightvision
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) >= 0) do
+    {
+      if (server_var(_playergetset_arg2) <= 1) do
+      {
+        es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_bHasNightVision server_var(_playergetset_arg2)
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset nightvision <userid> 1/0
+  }
+}
+
+block setdefuser
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) >= 0) do
+    {
+      if (server_var(_playergetset_arg2) <= 1) do
+      {
+        es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_bHasDefuser server_var(_playergetset_arg2)
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset defuser <userid> 1/0
+  }
+}
+
+block setcash
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) >= 0) do
+    {
+      if (server_var(_playergetset_arg2) < 16001) do
+      {
+        es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_iAccount server_var(_playergetset_arg2)
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset cash <userid> <var>
+  }
+}
+
+block setcashadd
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    es_getplayerprop _playergetset_temparg1 server_var(_playergetset_userid) CCSPlayer.m_iAccount
+    es_math _playergetset_temparg1 + server_var(_playergetset_arg2)
+    if (server_var(_playergetset_temparg1) < 16001) do
+    {
+        if (server_var(_playergetset_temparg1) >= 0) do
+        {
+          es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_iAccount server_var(_playergetset_temparg1)
+            }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset cashadd <userid> <var>
+  }
+}
+
+block setspeed
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) >= 0) do
+    {
+      es_setplayerprop server_var(_playergetset_userid) CBasePlayer.localdata.m_flLaggedMovementValue server_var(_playergetset_arg2)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset speed <userid> <var>
+  }
+}
+
+block setspeedadd
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+      es_getplayerprop _playergetset_temparg1 server_var(_playergetset_userid) CBasePlayer.localdata.m_flLaggedMovementValue
+      es_math _playergetset_temparg1  + server_var(_playergetset_arg2)
+    es_setplayerprop server_var(_playergetset_userid) CBasePlayer.localdata.m_flLaggedMovementValue server_var(_playergetset_temparg1)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset speedadd <userid> <var>
+  }
+}
+
+block setarmor
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) >= 0) do
+    {
+      es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_ArmorValue server_var(_playergetset_arg2)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset armor <userid> <var>
+  }
+}
+
+block setarmoradd
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+      es_getplayerprop _playergetset_temparg1 server_var(_playergetset_userid) CCSPlayer.m_ArmorValue
+      es_math _playergetset_temparg1  + server_var(_playergetset_arg2)
+    es_setplayerprop server_var(_playergetset_userid) CCSPlayer.m_ArmorValue server_var(_playergetset_temparg1)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset armoradd <userid> <var>
+  }
+}
+
+block sethealth
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+    if (server_var(_playergetset_arg2) >= 0) do
+    {
+      es_setplayerprop server_var(_playergetset_userid) CBasePlayer.m_iHealth server_var(_playergetset_arg2)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset health <userid> <var>
+  }
+}
+
+block sethealthadd
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_arg2 3
+      es_getplayerprop _playergetset_temparg1 server_var(_playergetset_userid) CBasePlayer.m_iHealth
+      es_math _playergetset_temparg1  + server_var(_playergetset_arg2)
+    es_setplayerprop server_var(_playergetset_userid) CBasePlayer.m_iHealth server_var(_playergetset_temparg1)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset healthadd <userid> <var>
+  }
+}
+
+block setclip
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 3) do
+  {
+    es_xgetargv _playergetset_temparg2 4
+    es_xgetargv _playergetset_temparg3 3
+    if ("Deathmatch" in server_var(_playergetset_game)) do
+    {
+      es_xgetargv _playergetset_hl2wep 3
+    }
+    if (server_var(_playergetset_temparg3) != 1) do
+    {
+      if (server_var(_playergetset_temparg3) != 2) do
+      {
+        if (weapon_ notin server_var(_playergetset_temparg3)) do
+        {
+          es_format _playergetset_temparg3 "weapon_%1" server_var(_playergetset_temparg3)
+        }
+        es_xsetinfo _weapon_slot 1
+        es_xforeachkey _playergetset_tempid in _primaryweapons "es_xdoblock corelib/playergetset/findslot"
+        es_xsetinfo _weapon_slot 2
+        es_xforeachkey _playergetset_tempid in _secondaryweapons "es_xdoblock corelib/playergetset/findslot"
+      }
+    }
+    if (server_var(_playergetset_temparg3) == 1) do
+    {
+      if ("Deathmatch" notin server_var(_playergetset_game)) do
+      {
+        es playerget primary _playergetset_temparg3 server_var(_playergetset_userid) server_var(_playergetset_tempid)
+      }
+      else do
+      {
+        es playerget weaponindex _playergetset_tempid server_var(_playergetset_userid) server_var(_playergetset_hl2wep)
+        es_setinfo _playergetset_temparg3 server_var(_playergetset_hl2wep)
+      }
+      es_keygetvalue _playergetset_tempvar _primaryweapons server_var(_playergetset_temparg3) clip
+      es_setindexprop server_var(_playergetset_tempid) server_var(_playergetset_tempvar) server_var(_playergetset_temparg2)
+    }
+    if (server_var(_playergetset_temparg3) == 2) do
+    {
+      if ("Deathmatch" notin server_var(_playergetset_game)) do
+      {
+        es playerget secondary _playergetset_temparg3 server_var(_playergetset_userid) server_var(_playergetset_tempid)
+      }
+      else do
+      {
+        es playerget weaponindex _playergetset_tempid server_var(_playergetset_userid) server_var(_playergetset_hl2wep)
+        es_setinfo _playergetset_temparg3 server_var(_playergetset_hl2wep)
+      }
+      es_keygetvalue _playergetset_tempvar _secondaryweapons server_var(_playergetset_temparg3) clip
+      es_setindexprop server_var(_playergetset_tempid) server_var(_playergetset_tempvar) server_var(_playergetset_temparg2)
+    }
+  }
+  else do
+  {
+    if ("Deathmatch" notin server_var(_playergetset_game)) do
+    {
+      es_xdbgmsg 0 Syntax : playerset clip <userid> <weapon / slot> <amount>
+    }
+    else do
+    {
+      es_xdbgmsg 0 Syntax : playerset clip <userid> <weapon> <amount>
+    }
+  }
+}
+
+block setammo
+{
+  es_xgetargc _playergetset_temparg1
+  if (server_var(_playergetset_temparg1) > 3) do
+  {
+    es_xgetargv _playergetset_temparg2 4
+    es_xgetargv _playergetset_temparg3 3
+    if ("Deathmatch" in server_var(_playergetset_game)) do
+    {
+      es_xgetargv _playergetset_hl2wep 3
+    }
+    if (server_var(_playergetset_temparg3) != 1) do
+    {
+      if (server_var(_playergetset_temparg3) != 2) do
+      {
+        if (weapon_ notin server_var(_playergetset_temparg3)) do
+        {
+          es_format _playergetset_temparg3 "weapon_%1" server_var(_playergetset_temparg3)
+        }
+        es_xsetinfo _weapon_slot 1
+        es_xforeachkey _playergetset_tempid in _primaryweapons "es_xdoblock corelib/playergetset/findslot"
+        es_xsetinfo _weapon_slot 2
+        es_xforeachkey _playergetset_tempid in _secondaryweapons "es_xdoblock corelib/playergetset/findslot"
+      }
+    }
+    if (server_var(_playergetset_temparg3) == 1) do
+    {
+      if ("Deathmatch" notin server_var(_playergetset_game)) do
+      {
+        es playerget primary _playergetset_temparg3 server_var(_playergetset_userid)
+      }
+      else do
+      {
+        es_setinfo _playergetset_temparg3 server_var(_playergetset_hl2wep)
+      }
+      es_keygetvalue _playergetset_tempvar _primaryweapons server_var(_playergetset_temparg3) ammo
+      es getplayerinfo _playergetset_tempid server_var(_playergetset_userid) index
+      es_setindexprop server_var(_playergetset_tempid) server_var(_playergetset_tempvar) server_var(_playergetset_temparg2)
+    }
+    if (server_var(_playergetset_temparg3) == 2) do
+    {
+      if ("Deathmatch" notin server_var(_playergetset_game)) do
+      {
+        es playerget secondary _playergetset_temparg3 server_var(_playergetset_userid)
+      }
+      else do
+      {
+        es_setinfo _playergetset_temparg3 server_var(_playergetset_hl2wep)
+      }
+      es_keygetvalue _playergetset_tempvar _secondaryweapons server_var(_playergetset_temparg3) ammo
+      es getplayerinfo _playergetset_tempid server_var(_playergetset_userid) index
+      es_setindexprop server_var(_playergetset_tempid) server_var(_playergetset_tempvar) server_var(_playergetset_temparg2)
+    }
+  }
+  else do
+  {
+    if ("Deathmatch" notin server_var(_playergetset_game)) do
+    {
+      es_xdbgmsg 0 Syntax : playerset ammo <userid> <weapon / slot> <amount>
+    }
+    else do
+    {
+      es_xdbgmsg 0 Syntax : playerset ammo <userid> <weapon> <amount>
+    }
+  }
+}
+
+block setmodel
+{
+  es_xgetargc _playergetset_count
+  if (server_var(_playergetset_count) > 2) do
+  {
+    es_xgetargv _playergetset_target 2
+    es_xgetargv _playergetset_model 3
+    es_getuserid _playergetset_userid server_var(_playergetset_target)
+    if (server_var(_playergetset_userid) notequalto "0") do
+    {
+      es_xstring _playergetset_model replace "/" "\"
+      es_setinfo _playergetset_temp2 server_var(_playergetset_model)
+      es_xstring _playergetset_temp2 section 0 7
+      if (server_var(_playergetset_temp2) notequalto "models\") then es_xformat _playergetset_model "models\%1" server_var(_playergetset_model)
+      es_setinfo _playergetset_temp2 server_var(_playergetset_model)
+      es_strlen _playergetset_temp3 server_var(_playergetset_temp2)
+      es_setinfo _playergetset_temp4 server_var(_playergetset_temp3)
+      es_xmath _playergetset_temp4 - 4
+      es_string _playergetset_temp2 section server_var(_playergetset_temp4) server_var(_playergetset_temp3)
+      if (server_var(_playergetset_temp2) notequalto ".mdl") then es_xformat _playergetset_model "%1.mdl" server_var(_playergetset_model)
+      es_precachemodel _playergetset_temp server_var(_playergetset_model)
+      es_setplayerprop server_var(_playergetset_userid) "CBaseEntity.m_nModelIndex" server_var(_playergetset_temp)
+      es playerset color server_var(_playergetset_userid) 255 255 255 255
+    }
+    else do
+    {
+      es_xdbgmsg 0 setplayermodel: Invalid target
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax: playerset playermodel <userid> <model>
+  }
+}
+
+block setcolor
+{
+  es_xgetargc _playergetset_arg1
+  if (server_var(_playergetset_arg1) > 2) do
+  {
+    es_xgetargv _playergetset_red 3
+    es_xgetargv _playergetset_green 4
+    es_xgetargv _playergetset_blue 5
+    es_mathparse _playergetset_color "(_playergetset_green*2^8)+(_playergetset_blue*2^16)"
+    es_math _playergetset_color + server_var(_playergetset_red)
+    if (server_var(_playergetset_arg1) == 7) do
+    {
+      es_xgetargv _playergetset_temp4 6
+      es_xmath _playergetset_temp4 * 16777216
+      es_math _playergetset_color + server_var(_playergetset_temp4)
+    }
+    else do
+    {
+      es_getplayerprop _playergetset_temp server_var(_playergetset_userid) CBaseEntity.m_clrRender
+      es_mathparse _playergetset_temp "_playergetset_temp and 4278190080"
+      es_math _playergetset_color + server_var(_playergetset_temp)
+    }
+    es_getplayerprop oldrendermode server_var(_playergetset_userid) CBaseEntity.m_nRenderMode
+    es_getplayerprop oldrenderfx server_var(_playergetset_userid) CBaseEntity.m_nRenderFX
+    es_mathparse newrendermode "oldrendermode or 1"
+    es_mathparse newrenderfx "oldrenderfx or 256"
+    es_setplayerprop server_var(_playergetset_userid) CBaseEntity.m_nRenderMode server_var(newrendermode)
+    es_setplayerprop server_var(_playergetset_userid) CBaseEntity.m_nRenderFX server_var(newrenderfx)
+    es_setplayerprop server_var(_playergetset_userid) CBaseEntity.m_clrRender server_var(_playergetset_color)
+  }
+  else do
+  {
+    es_xdbgmsg 0 Syntax : playerset color <userid> <red> <green> <blue> [alpha]
+  }
+}
+
+block findslot
+{
+  if (server_var(_playergetset_tempid) == server_var(_playergetset_temparg3)) do
+  {
+    es_setinfo _playergetset_temparg3 server_var(_weapon_slot)
+  }
+}
+
+block checkall
+{
+  es_createentitylist _playergetset_weapons server_var(wep)
+  es_keygroupfilter _playergetset_weapons only m_Howner server_var(_playergetset_owner)
+  es_xsetinfo _playergetset_find 0
+  es_xforeachkey _playergetset_tempid in _playergetset_weapons "es_xdoblock corelib/playergetset/weapon_list"
+  es_xkeygroupdelete _playergetset_weapons
+}
+
+block weapon_list
+{
+  es_keygetvalue _playergetset_find _playergetset_weapons server_var(_playergetset_tempid) Classname
+  if (weapon_ in server_var(_playergetset_find)) do
+  {
+    es_setinfo server_var(_playergetset_arg2) server_var(_playergetset_find)
+    es_setinfo server_var(_playergetset_arg3) server_var(_playergetset_tempid)
+  }
+}
+
+block getindex
+{
+  es_keygetvalue _playergetset_find _playergetset_weapons server_var(_playergetset_tempid) Classname
+  if (weapon_ in server_var(_playergetset_find)) do
+  {
+    es_setinfo server_var(_playergetset_arg2) server_var(_playergetset_tempid)
+  }
+}
+
+block csscreateprimary
+{
+  es_xkeygroupcreate _primaryweapons
+  es_xkeycreate _primaryweapons weapon_awp
+  es_xkeysetvalue _primaryweapons weapon_awp ammo "CCSPlayer.baseclass.localdata.m_iAmmo.005"
+  es_xkeysetvalue _primaryweapons weapon_awp clip "CWeaponAWP.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_scout
+  es_xkeysetvalue _primaryweapons weapon_scout ammo "CCSPlayer.baseclass.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_scout clip "CWeaponScout.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_aug
+  es_xkeysetvalue _primaryweapons weapon_aug ammo "CCSPlayer.baseclass.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_aug clip "CWeaponAug.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mac10
+  es_xkeysetvalue _primaryweapons weapon_mac10 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_mac10 clip "CWeaponMAC10.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_tmp
+  es_xkeysetvalue _primaryweapons weapon_tmp ammo "CCSPlayer.baseclass.localdata.m_iAmmo.006"
+  es_xkeysetvalue _primaryweapons weapon_tmp clip "CWeaponTMP.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mp5navy
+  es_xkeysetvalue _primaryweapons weapon_mp5navy ammo "CCSPlayer.baseclass.localdata.m_iAmmo.006"
+  es_xkeysetvalue _primaryweapons weapon_mp5navy clip "CWeaponMP5Navy.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_ump45
+  es_xkeysetvalue _primaryweapons weapon_ump45 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_ump45 clip "CWeaponUMP45.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_p90
+  es_xkeysetvalue _primaryweapons weapon_p90 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.010"
+  es_xkeysetvalue _primaryweapons weapon_p90 clip "CWeaponP90.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_galil
+  es_xkeysetvalue _primaryweapons weapon_galil ammo "CCSPlayer.baseclass.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_galil clip "CWeaponGalil.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_famas
+  es_xkeysetvalue _primaryweapons weapon_famas ammo "CCSPlayer.baseclass.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_famas clip "CWeaponFamas.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_ak47
+  es_xkeysetvalue _primaryweapons weapon_ak47 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_ak47 clip "CAK47.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_sg552
+  es_xkeysetvalue _primaryweapons weapon_sg552 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_sg552 clip "CWeaponSG552.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_sg550
+  es_xkeysetvalue _primaryweapons weapon_sg550 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_sg550 clip "CWeaponSG550.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_g3sg1
+  es_xkeysetvalue _primaryweapons weapon_g3sg1 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_g3sg1 clip "CWeaponG3SG1.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_m249
+  es_xkeysetvalue _primaryweapons weapon_m249 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.004"
+  es_xkeysetvalue _primaryweapons weapon_m249 clip "CWeaponM249.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_m4a1
+  es_xkeysetvalue _primaryweapons weapon_m4a1 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_m4a1 clip "CWeaponM4A1.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_m3
+  es_xkeysetvalue _primaryweapons weapon_m3 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.007"
+  es_xkeysetvalue _primaryweapons weapon_m3 clip "CWeaponM3.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_xm1014
+  es_xkeysetvalue _primaryweapons weapon_xm1014 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.007"
+  es_xkeysetvalue _primaryweapons weapon_xm1014 clip "CWeaponXM1014.baseclass.baseclass.LocalWeaponData.m_iClip1"
+}
+
+block csscreatesecondary
+{
+  es_xkeygroupcreate _secondaryweapons
+  es_xkeycreate _secondaryweapons weapon_glock
+  es_xkeysetvalue _secondaryweapons weapon_glock ammo "CCSPlayer.baseclass.localdata.m_iAmmo.006"
+  es_xkeysetvalue _secondaryweapons weapon_glock clip "CWeaponGlock.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_usp
+  es_xkeysetvalue _secondaryweapons weapon_usp ammo "CCSPlayer.baseclass.localdata.m_iAmmo.008"
+  es_xkeysetvalue _secondaryweapons weapon_usp clip "CWeaponUSP.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_p228
+  es_xkeysetvalue _secondaryweapons weapon_p228 ammo "CCSPlayer.baseclass.localdata.m_iAmmo.009"
+  es_xkeysetvalue _secondaryweapons weapon_p228 clip "CWeaponP228.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_deagle
+  es_xkeysetvalue _secondaryweapons weapon_deagle ammo "CCSPlayer.baseclass.localdata.m_iAmmo.001"
+  es_xkeysetvalue _secondaryweapons weapon_deagle clip "CDEagle.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_elite
+  es_xkeysetvalue _secondaryweapons weapon_elite ammo "CCSPlayer.baseclass.localdata.m_iAmmo.006"
+  es_xkeysetvalue _secondaryweapons weapon_elite clip "CWeaponElite.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_fiveseven
+  es_xkeysetvalue _secondaryweapons weapon_fiveseven ammo "CCSPlayer.baseclass.localdata.m_iAmmo.010"
+  es_xkeysetvalue _secondaryweapons weapon_fiveseven clip "CWeaponFiveSeven.baseclass.baseclass.LocalWeaponData.m_iClip1"
+}
+
+block dodcreateprimary
+{
+  es_xkeygroupcreate _primaryweapons
+  es_xkeycreate _primaryweapons weapon_garand
+  es_xkeysetvalue _primaryweapons weapon_garand ammo "CDODPlayer.baseclass.localdata.m_iAmmo.004"
+  es_xkeysetvalue _primaryweapons weapon_garand clip "CWeaponGarand.baseclass.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_thompson
+  es_xkeysetvalue _primaryweapons weapon_thompson ammo "CDODPlayer.baseclass.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_thompson clip "CWeaponThompson.baseclass.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_bar
+  es_xkeysetvalue _primaryweapons weapon_bar ammo "CDODPlayer.baseclass.localdata.m_iAmmo.009"
+  es_xkeysetvalue _primaryweapons weapon_bar clip "CWeaponBAR.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_spring
+  es_xkeysetvalue _primaryweapons weapon_spring ammo "CDODPlayer.baseclass.localdata.m_iAmmo.007"
+  es_xkeysetvalue _primaryweapons weapon_spring clip "CWeaponSpring.baseclass.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_30cal
+  es_xkeysetvalue _primaryweapons weapon_30cal ammo "CDODPlayer.baseclass.localdata.m_iAmmo.010"
+  es_xkeysetvalue _primaryweapons weapon_30cal clip "CWeapon30cal.baseclass.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_bazooka
+  es_xkeysetvalue _primaryweapons weapon_bazooka ammo "CDODPlayer.baseclass.localdata.m_iAmmo.012"
+  es_xkeysetvalue _primaryweapons weapon_bazooka clip "CWeaponBazooka.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_pschreck
+  es_xkeysetvalue _primaryweapons weapon_pschreck ammo "CDODPlayer.baseclass.localdata.m_iAmmo.012"
+  es_xkeysetvalue _primaryweapons weapon_pschreck clip "CWeaponPschreck.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_k98
+  es_xkeysetvalue _primaryweapons weapon_k98 ammo "CDODPlayer.baseclass.localdata.m_iAmmo.005"
+  es_xkeysetvalue _primaryweapons weapon_k98 clip "CWeaponK98.baseclass.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mp40
+  es_xkeysetvalue _primaryweapons weapon_mp40 ammo "CDODPlayer.baseclass.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_mp40 clip "CWeaponMP40.baseclass.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mp44
+  es_xkeysetvalue _primaryweapons weapon_mp44 ammo "CDODPlayer.baseclass.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_mp44 clip "CWeaponMP44.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_k98_scoped
+  es_xkeysetvalue _primaryweapons weapon_k98_scoped ammo "CDODPlayer.baseclass.localdata.m_iAmmo.005"
+  es_xkeysetvalue _primaryweapons weapon_k98_scoped clip "CWeaponK98Scoped.baseclass.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mg42
+  es_xkeysetvalue _primaryweapons weapon_mg42 ammo "CDODPlayer.baseclass.localdata.m_iAmmo.011"
+  es_xkeysetvalue _primaryweapons weapon_mg42 clip "CWeaponMG42.baseclass.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+}
+
+block dodcreatesecondary
+{
+  es_xkeygroupcreate _secondaryweapons
+  es_xkeycreate _secondaryweapons weapon_colt
+  es_xkeysetvalue _secondaryweapons weapon_colt ammo "CDODPlayer.baseclass.localdata.m_iAmmo.001"
+  es_xkeysetvalue _secondaryweapons weapon_colt clip "CWeaponColt.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_p38
+  es_xkeysetvalue _secondaryweapons weapon_p38 ammo "CDODPlayer.baseclass.localdata.m_iAmmo.002"
+  es_xkeysetvalue _secondaryweapons weapon_p38 clip "CWeaponP38.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_c96
+  es_xkeysetvalue _secondaryweapons weapon_c96 ammo "CDODPlayer.baseclass.localdata.m_iAmmo.003"
+  es_xkeysetvalue _secondaryweapons weapon_c96 clip "CWeaponC96.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_m1carbine
+  es_xkeysetvalue _secondaryweapons weapon_m1carbine ammo "CCSPlayer.baseclass.localdata.m_iAmmo.006"
+  es_xkeysetvalue _secondaryweapons weapon_m1carbine clip "CWeaponM1Carbine.baseclass.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+}
+
+block hl2createprimary
+{
+  es_xkeygroupcreate _primaryweapons
+  es_xkeycreate _primaryweapons weapon_ar2
+  es_xkeysetvalue _primaryweapons weapon_ar2 ammo "CHL2MP_Player.baseclass.baseclass.localdata.m_iAmmo.001"
+  es_xkeysetvalue _primaryweapons weapon_ar2 clip "CWeaponAR2.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_crossbow
+  es_xkeysetvalue _primaryweapons weapon_crossbow ammo "CHL2MP_Player.baseclass.baseclass.localdata.m_iAmmo.006"
+  es_xkeysetvalue _primaryweapons weapon_crossbow clip "CWeaponCrossbow.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_rpg
+  es_xkeysetvalue _primaryweapons weapon_rpg ammo "CHL2MP_Player.baseclass.baseclass.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_rpg clip "CWeaponRPG.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_shotgun
+  es_xkeysetvalue _primaryweapons weapon_shotgun ammo "CHL2MP_Player.baseclass.baseclass.localdata.m_iAmmo.007"
+  es_xkeysetvalue _primaryweapons weapon_shotgun clip "CWeaponShotgun.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_SMG1
+  es_xkeysetvalue _primaryweapons weapon_SMG1 ammo "CHL2MP_Player.baseclass.baseclass.localdata.m_iAmmo.004"
+  es_xkeysetvalue _primaryweapons weapon_SMG1 clip "CWeaponSMG1.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+}
+
+block hl2createsecondary
+{
+  es_xkeygroupcreate _secondaryweapons
+  es_xkeycreate _secondaryweapons weapon_357
+  es_xkeysetvalue _secondaryweapons weapon_357 ammo "CHL2MP_Player.baseclass.baseclass.localdata.m_iAmmo.005"
+  es_xkeysetvalue _secondaryweapons weapon_357 clip "CWeapon357.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_pistol
+  es_xkeysetvalue _secondaryweapons weapon_pistol ammo "CHL2MP_Player.baseclass.baseclass.localdata.m_iAmmo.003"
+  es_xkeysetvalue _secondaryweapons weapon_pistol clip "CWeaponPistol.baseclass.baseclass.baseclass.LocalWeaponData.m_iClip1"
+}
+
+block setgamevars
+{
+  if (server_var(_playergetset_game) == "Counter-Strike: Source") do
+  {
+    es_xsetinfo _playergetset_eyeangle0 "CCSPlayer.m_angEyeAngles[0]"
+    es_xsetinfo _playergetset_eyeangle1 "CCSPlayer.m_angEyeAngles[1]"
+    es_xsetinfo _playerget_commands "primary|secondary|he|sg|fb|c4|ammo|clip|weaponindex|viewangle|health|armor|speed|defuser|viewvector|distance|isdead|noclip|jetpack|freeze|location|flashalpha|flashduration|viewcoord"
+    es_xsetinfo _playerset_commands "ammo|clip|health|armor|speed|cash|defuser|nightvision|nightvisionon|viewplayer|viewcoord|push|model|color|noclip|jetpack|freeze|location|moveto|flash|healthadd|armoradd|speedadd|cashadd"
+  }
+  if ("Day of Defeat" in server_var(_playergetset_game)) do
+  {
+    es_xsetinfo _playergetset_eyeangle0 "CDODPlayer.m_angEyeAngles[0]"
+    es_xsetinfo _playergetset_eyeangle1 "CDODPlayer.m_angEyeAngles[1]"
+    es_xsetinfo _playerget_commands "primary|secondary|ammo|clip|weaponindex|sgus|sgger|fragus|fragger|viewangle|health|speed|viewvector|distance|isdead|location|viewcoord"
+    es_xsetinfo _playerset_commands "ammo|clip|health|speed|viewplayer|viewcoord|push|location|moveto|model"
+  }
+  if ("Deathmatch" in server_var(_playergetset_game)) do
+  {
+    es_xsetinfo _playergetset_eyeangle0 "CHL2MP_Player.m_angEyeAngles[0]"
+    es_xsetinfo _playergetset_eyeangle1 "CHL2MP_Player.m_angEyeAngles[1]"
+    es_xsetinfo _playerget_commands "ammo|clip|weaponindex|viewangle|health|speed|viewvector|distance|isdead|location|viewcoord"
+    es_xsetinfo _playerset_commands "ammo|clip|health|speed|viewplayer|viewcoord|push|location|moveto|model|color"
+  }
+}
+

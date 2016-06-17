@@ -1,0 +1,142 @@
+// getbotname command v0.3
+// Submitted by Wonder
+// Syntax: getbotname <var> <userid>
+block load
+{
+  es_xsetinfo _tempcore 0
+  es_xexists _tempcore command getbotname
+  es es_xif (server_var(_tempcore) == 0) do
+  {
+    es_xregcmd getbotname corelib/getbotname/getbotname "Returns the name of a player and strips their prefix if they are a bot."
+  }
+  es_xsetinfo _gbn_a1 0
+  es_xsetinfo _gbn_a2 0
+  es_xsetinfo _gbn_regex 0
+  es_xsetinfo _gbn_hashok 0
+  es_xsetinfo _gbn_name 0
+  es_xsetinfo _gbn_size 0
+  es_xsetinfo _gbn_size2 0
+}
+block getbotname
+{
+  es_xgetargc _tempcore
+  es es_xif (server_var(_tempcore) > 1) do
+  {
+    es es_xif (server_var(_tempcore) > 2) do
+    {
+      es_xgetargv _gbn_a1 1
+      es_xsetinfo _tempcore 0
+      es es_xexists _tempcore variable server_var(_gbn_a1)
+      es es_xif (server_var(_tempcore) == 1) do
+      {
+        es_xgetargv _gbn_a2 2
+        es_xsetinfo _tempcore 0
+        es es_xexists _tempcore userid server_var(_gbn_a2)
+        es es_xif (server_var(_tempcore) == 1) do
+        {
+          es_xsetinfo _tempcore 0
+          es es_xisbot _tempcore server_var(_gbn_a2)
+          es es_xif (server_var(_tempcore) == 1) do
+          {
+            isnull _tempcore bot_prefix
+            es es_xif (server_var(_tempcore) == 0) do
+            {
+              es_xcopy _gbn_regex bot_prefix
+              es_xstring _gbn_regex replace %
+              es_xstring _gbn_regex replace ~
+              es_xsetinfo _gbn_hashok 0
+              while "server_var(_gbn_hashok) == 0" "es_xdoblock corelib/getbotname/removehash"
+              es_xstring _gbn_regex replace \ \\
+              es_xstring _gbn_regex replace ^ \^
+              es_xstring _gbn_regex replace $ \$
+              es_xstring _gbn_regex replace * \*
+              es_xstring _gbn_regex replace + \+
+              es_xstring _gbn_regex replace ? \?
+              es_xstring _gbn_regex replace . \.
+              es_xstring _gbn_regex replace | \|
+              es_xstring _gbn_regex replace [ \[
+              es_xstring _gbn_regex replace ] \]
+              es_xstring _gbn_regex replace "(" "\("
+              es_xstring _gbn_regex replace ")" "\)"
+              es_xstring _gbn_regex replace "{" "\{"
+              es_xstring _gbn_regex replace "}" "\}"
+              es_xstring _gbn_regex replace <difficulty> "(\w*)"
+              es_xstring _gbn_regex replace <weaponclass> "(\w*)"
+              es_xstring _gbn_regex replace <skill> "(\w*)"
+              es es_xgetplayername _gbn_name server_var(_gbn_a2)
+              es_xsetinfo _gbn_size 0
+              es es_xregex match _gbn_size server_var(_gbn_regex) server_var(_gbn_name)
+              es_xmath _gbn_size + 1
+              isnull _tempcore _gbn_regex
+              es es_xif (server_var(_tempcore) == 1) do
+              {
+                es_xmath _gbn_size + 1
+              }
+              es es_xstrlen _gbn_size2 server_var(_gbn_name)
+              es es_xstring _gbn_name section server_var(_gbn_size) server_var(_gbn_size2)
+              es es_xcopy server_var(_gbn_a1) _gbn_name
+            }
+            es_xelse do
+            {
+              es es_xgetplayername server_var(_gbn_a1) server_var(_gbn_a2)
+            }
+          }
+          es_xelse do
+          {
+            es es_xgetplayername server_var(_gbn_a1) server_var(_gbn_a2)
+          }
+        }
+        es_xelse do
+        {
+          es es_xdbgmsg 0 [getbotname] The userid server_var(_gbn_a2) is not in use!
+        }
+      }
+      es_xelse do
+      {
+        es es_xdbgmsg 0 [getbotname] The CVAR server_var(_gbn_a1) does not exist!
+      }
+    }
+    es_xelse do
+    {
+      es_xdbgmsg 0 [getbotname] You need to provide a userid!
+    }
+  }
+  es_xelse do
+  {
+    es_xdbgmsg 0 [getbotname] You need to provide a return CVAR!
+  }
+}
+block removehash
+{
+  es_xcopy _tempcore _gbn_regex
+  es_xstring _tempcore section 0 1
+  es es_xif (server_var(_tempcore) == #) do
+  {
+    es es_xstrlen _gbn_size server_var(_gbn_regex)
+    es es_xstring _gbn_regex section 1 server_var(_gbn_size)
+    es_xcopy _tempcore _gbn_regex
+    es_xstring _tempcore section 0 1
+    es es_xif (server_var(_tempcore) != #) do
+    {
+      es_xsetinfo _gbn_hashok 1
+    }
+  }
+  es_xelse do
+  {
+    es_xsetinfo _gbn_hashok 1
+  }
+}
+block getbotnametest
+{
+  es_xsetinfo __gbn_bot 0
+  getrandplayer __gbn_bot #bot
+  es es_xif (server_var(__gbn_bot) > 0) do
+  {
+    es_xsetinfo __gbn_name 0
+    profile begin getbotnametest
+    es getbotname __gbn_name server_var(__gbn_bot)
+    profile end getbotnametest
+
+    es echo This lil' bots name is server_var(__gbn_name)!
+  }
+}

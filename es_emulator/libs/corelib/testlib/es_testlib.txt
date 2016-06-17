@@ -1,0 +1,622 @@
+block load
+{
+  es_xregcmd testlib corelib/testlib/testlib "Execute various unit test commands."
+  es_xregcmd testcase corelib/testlib/testcase "Allows you to define blocks for a test case."
+  es_xregcmd testsuite corelib/testlib/testsuite "Allows you to define a testsuite of testcases."
+  es_xregcmd testprint corelib/testlib/testprint "Used for printing out test messages."
+  es_xregcmd testtest corelib/testlib/tc-test "Test the tests"
+  es_xset _tlib_stack_delimiter "-!-STACKMARKER-!-"
+  es_xset _tlib_temp 0
+  es_xset _tlib_print 0
+  es_xset _tlib_a1 0
+  es_xset _tlib_a2 0
+  es_xset _tlib_a3 0
+  es_xset _tlib_a4 0
+  es_xset _tlib_a5 0
+  es_xset _tcase_temp 0
+  es_xset _tcase_a1 0
+  es_xset _tcase_a2 0
+  es_xset _tcase_a3 0
+  es_xset _tcase_a4 0
+  es_xset _tcase_a5 0
+  es_xset _tsuite_a1 0
+  es_xset _tsuite_a2 0
+  es_xset _tsuite_a3 0
+  es_xset _tsuite_a5 0
+  es_xset _tcase_current-test 0
+  es_xset _tcase_current-suite "root"
+  es_xset _tcase_current-test-block 0
+  es_xset _tcase_tempcopyname 0
+  es_xset _tcase_resultvar 0
+  es_xset _tsuite_resultvar 0
+  es_exists _tlib_a1 variable testlib_output
+  ifx false(_tlib_a1) do
+  {
+    es_xset testlib_output 0
+    es_xset testlib_output_verbose 1 "Set to 0 to reduce the verbose output from testlib"
+  }
+  es_exists _tlib_a1 variable testlib_prefix
+  ifx false(_tlib_a1) do
+  {
+    es_xset testlib_prefix "[Tests]:"
+  }
+  es_xset testcase_groupprefix "_testcase"
+  es_xset testsuite_groupprefix "_testsuite"
+  stack create _testlib_stack
+  stack create _testcase_stack
+  stack create _testsuite_stack
+  es_keygroupcreate _testsuites
+  es_keycreate _testsuites _metadata
+  es_keysetvalue _testsuites _metadata quantity 0
+}
+
+block unload
+{
+  stack delete _testlib_stack
+  stack delete _testcase_stack
+  stack delete _testsuite_stack
+  es_keygroupdelete _testsuites
+}
+
+
+block tc-test
+{
+  es_xset myvartest 0
+  testcase delete MyUnitTest1
+  testcase create MyUnitTest1 "This is a unit test description for MyUnitTest1"
+  testcase addtest MyUnitTest1 mytest corelib/testlib/testit "Example test block"
+  testcase addtest MyUnitTest1 mytest2 corelib/testlib/testit2 "Example test block2"
+  //testcase run MyUnitTest1 myvartest
+  testsuite create MyTestSuite1 "This is my test suite"
+  testsuite addcase MyTestSuite1 MyUnitTest1
+  testsuite run MyTestSuite1 myvartest
+  //testsuite runall myvartest
+  testprint TestTest results:
+  es testprint server_var(myvartest) test cases failed.
+}
+
+block testit
+{
+  testlib begin ifxtest1 "Hello this is a test"
+  es_xset myvar 0
+  ifx false(myvar) do
+  {
+    es_xset myvar 1
+  }
+  else do
+  {
+    es_xset myvar 3
+  }
+  es_xset myvar2 1
+  testlib fail_unless myvar equalto 1
+  testlib fail_unlessv myvar equalto myvar // should be 1
+  testlib fail_if myvar notequalto 1
+  testlib fail_ifv myvar notequalto myvar2
+  testlib end ifxtest1
+
+  testlib begin ifxtest2 "Hello this is a test2"
+  es_xset myvar 0
+  ifx true(myvar) do
+  {
+    es_xset myvar 1
+  }
+  else do
+  {
+    es_xset myvar 3
+  }
+  testlib fail_if myvar equalto 3
+  testlib fail_unless myvar equalto 1
+  testlib fail_ifv myvar notequalto myvar2
+  testlib fail_unlessv myvar notequalto myvar // should be 1
+  testlib end ifxtest2
+}
+
+block testit2
+{
+  testlib begin ifxtest1a "Hello this is a test"
+  es_xset myvar 0
+  ifx false(myvar) do
+  {
+    es_xset myvar 1
+  }
+  else do
+  {
+    es_xset myvar 3
+  }
+  es_xset myvar2 1
+  testlib fail_unless myvar equalto 1
+  testlib fail_unlessv myvar equalto myvar // should be 1
+  testlib fail_if myvar notequalto 1
+  testlib fail_ifv myvar notequalto myvar2
+  testlib end ifxtest1a
+
+  testlib begin ifxtest3 "Hello this is a test"
+  es_xset myvar 0
+  ifx false(myvar) do
+  {
+    es_xset myvar 1
+  }
+  else do
+  {
+    es_xset myvar 3
+  }
+  es_xset myvar2 1
+  testlib fail_unless myvar equalto 1
+  testlib fail_unlessv myvar equalto myvar // should be 1
+  testlib fail_if myvar notequalto 1
+  testlib fail_ifv myvar notequalto myvar2
+  testlib end ifxtest3
+
+  testlib begin ifxtest2a "Hello this is a test2"
+  es_xset myvar 0
+  ifx true(myvar) do
+  {
+    es_xset myvar 1
+  }
+  else do
+  {
+    es_xset myvar 3
+  }
+  testlib fail_if myvar equalto 3
+  testlib fail_unless myvar equalto 1
+  testlib fail_ifv myvar notequalto myvar2
+  testlib fail_unlessv myvar notequalto myvar // should be 1
+  testlib end ifxtest2a
+}
+
+
+//testlib begin ifxtest1 "Hello this is a test"
+// some code
+//testlib fail_unless myvar equalto 1
+//testlib fail_if myvar equalto 2
+//testlib fail_unlessv myvar equalto myvar2
+//testlib fail_ifv myvar equalto myvar2
+//testlib fail_now reason
+//testlib succeed_now
+//testlib end ifxtest1
+
+block testlib
+{
+  es_xgetargv _tlib_a1 1
+  es_xformatv _tlib_a1 "corelib/testlib/testlib_%1" _tlib_a1
+  es_doblock server_var(_tlib_a1)
+}
+
+block testprint
+{
+  es_xgetargs _tlib_print
+  es_formatv _tlib_print "%1 %2" testlib_prefix _tlib_print
+  //es_formatv _tlib_print "[%1\%2] %3" _tcase_current-suite _tsuite_current-case _tlib_print
+  es_dbgmsgv server_var(testlib_output) _tlib_print
+}
+
+block testlib_begin
+{
+  es_xgetargv _tlib_a2 2
+  es_xgetargv _tlib_a3 3
+  // put the description and name on the testlib stack
+  es stack push _testlib_stack server_var(_tlib_a3)
+  es stack push _testlib_stack server_var(_tlib_a2)
+  es stack push _testlib_stack server_var(_tlib_stack_delimiter)
+  if (server_var(testlib_output_verbose) greaterthan 0) do
+  {
+    es testprint Test server_var(_tlib_a2) begins: server_var(_tlib_a3)
+  }
+}
+
+block testlib_fail_unlessv
+{
+  es_xgetargv _tlib_a2 2
+  es_xgetargv _tlib_a3 3
+  es_xgetargv _tlib_a4 4
+  es_xgetargs _tlib_temp
+  if (server_var(server_var(_tlib_a2)) server_var(_tlib_a3) server_var(server_var(_tlib_a4))) do
+  {
+    testlib succeed_now
+  }
+  else do
+  {
+    es testlib fail_now server_var(_tlib_temp)
+  }
+}
+
+block testlib_fail_unless
+{
+  es_xgetargv _tlib_a2 2
+  es_xgetargv _tlib_a3 3
+  es_xgetargv _tlib_a4 4
+  es_xgetargs _tlib_temp
+  if (server_var(server_var(_tlib_a2)) server_var(_tlib_a3) server_var(_tlib_a4)) do
+  {
+    testlib succeed_now
+  }
+  else do
+  {
+    es testprint Failure: server_var(_tlib_a2) is server_var(server_var(_tlib_a2))
+    es testlib fail_now server_var(_tlib_temp)
+  }
+}
+
+block testlib_warn_unless
+{
+  es_xgetargv _tlib_a2 2
+  es_xgetargv _tlib_a3 3
+  es_xgetargv _tlib_a4 4
+  es_xgetargs _tlib_temp
+  if (server_var(server_var(_tlib_a2)) server_var(_tlib_a3) server_var(_tlib_a4)) do
+  {
+    testlib succeed_now
+  }
+  else do
+  {
+    es testprint Warning: server_var(_tlib_a2) is server_var(server_var(_tlib_a2))  
+    es testlib warn_now server_var(_tlib_temp)
+    testlib succeed_now
+  }
+}
+
+// will mark the current test section a failure if the condition is true
+block testlib_fail_if
+{
+  es_xgetargv _tlib_a2 2
+  es_xgetargv _tlib_a3 3
+  es_xgetargv _tlib_a4 4
+  es_xgetargs _tlib_temp
+  if (server_var(server_var(_tlib_a2)) server_var(_tlib_a3) server_var(_tlib_a4)) do
+  {
+    es testlib fail_now server_var(_tlib_temp)
+  }
+  else do
+  {
+    testlib succeed_now
+  }
+}
+
+block testlib_fail_ifv
+{
+  es_xgetargv _tlib_a2 2
+  es_xgetargv _tlib_a3 3
+  es_xgetargv _tlib_a4 4
+  es_xgetargs _tlib_temp
+  if (server_var(server_var(_tlib_a2)) server_var(_tlib_a3) server_var(server_var(_tlib_a4))) do
+  {
+    es testlib fail_now server_var(_tlib_temp)
+  }
+  else do
+  {
+    testlib succeed_now
+  }
+}
+
+block testlib_fail_now
+{
+  es_xset _tlib_last 0
+  es_xgetargv _tlib_last 2
+  es stack push _testlib_stack server_var(_tlib_last)
+}
+
+// just print a warning
+block testlib_warn_now
+{
+  es_xset _tlib_last 0
+  es_xgetargv _tlib_last 2
+  es testprint WARNING WARNING WARNING: server_var(_tlib_last)
+}
+
+
+block testlib_succeed_now
+{
+  stack push _testlib_stack 0
+}
+
+block testlib_end
+{
+  //es_xgetargv _tlib_a2 2
+  es_xset _tlib_a3 0
+  es_xset _tlib_total 0
+  es_xset _tlib_failed 0
+  es_xset _tlib_description 0
+  stack pop  _tlib_a3 _testlib_stack
+  while "server_var(_tlib_a3) != server_var(_tlib_stack_delimiter)" "es_doblock corelib/testlib/testlib_end_tally"
+  stack pop _tlib_a2 _testlib_stack
+  stack pop _tlib_description _testlib_stack
+  ifx true(_tlib_failed) do
+  {
+    es_formatv _tlib_temp "Test %1 ends: FAILED %2 out of %3 checks. **** FAILURE" _tlib_a2 _tlib_failed _tlib_total
+    testcase notify failure server_var(_tlib_a2) server_var(_tlib_description)
+  }
+  else do
+  {
+    if (server_var(testlib_output_verbose) greaterthan 0) do
+    {
+      es_formatv _tlib_temp "Test %1 ends: Passed." _tlib_a2
+    }
+    else do
+    {
+      es_set _tlib_temp "."
+    }
+    testcase notify success server_var(_tlib_a2) server_var(_tlib_description)
+  }
+  esnq testprint server_var(_tlib_temp)
+}
+
+block testlib_end_tally
+{
+  es_xmath _tlib_total + 1
+  ifx true(_tlib_a3) do
+  {
+    es_xmath _tlib_failed + 1
+    es_formatv _tlib_temp "____TEST FAILURE: %1" _tlib_a3
+    esnq testprint server_var(_tlib_temp)
+  }
+  stack pop _tlib_a3 _testlib_stack
+}
+
+//testcase create MyUnitTest1 "This is a unit test description for MyUnitTest1"
+//testcase addtest MyUnitTest1 myscript/myblock "Description"
+//...
+//testcase run MyUnitTest1 myvar
+//testcase notify failure testname testdescription
+
+block testcase
+{
+  es_xgetargv _tcase_a1 1
+  es_xformatv _tcase_a1 "corelib/testlib/testcase_%1" _tcase_a1
+  es_doblock server_var(_tcase_a1)
+}
+
+//testcase create MyUnitTest1 "This is a unit test description for MyUnitTest1"
+block testcase_create
+{
+  es_xgetargv _tcase_a2 2
+  es_xgetargv _tcase_a3 3
+  es_xgetargv _tcase_a4 4
+  es_formatv _tcase_temp "%1_%2" testcase_groupprefix _tcase_a2
+  // need a keygroup to store the testcase
+  es_keygroupcreate server_var(_tcase_temp)
+  es_keycreate server_var(_tcase_temp) _metadata
+  es_keysetvalue server_var(_tcase_temp) _metadata name server_var(_tcase_a2)
+  es_keysetvalue server_var(_tcase_temp) _metadata description server_var(_tcase_a3)
+}
+
+// Quick Create
+// Allows you to very quickly delete, create, and associate a testcase
+// testcase qcreate2 <testsuite-name> <testcase-name> "<testcase-description>"
+block testcase_qcreate
+{
+  es_xset _tcase_c2_tsname 0
+  es_xset _tcase_c2_tcname 0
+  es_xset _tcase_c2_tcdesc 0
+  es_xgetargv _tcase_c2_tsname 2
+  es_xgetargv _tcase_c2_tcname 3
+  es_xgetargv _tcase_c2_tcdesc 4
+  es testcase delete server_var(_tcase_c2_tcname)
+  es testcase create server_var(_tcase_c2_tcname) server_var(_tcase_c2_tcdesc)
+  es testsuite addcase server_var(_tcase_c2_tsname) server_var(_tcase_c2_tcname)
+}
+
+block testcase_delete
+{
+  es_xgetargv _tcase_a2 2
+  es_formatv _tcase_temp "%1_%2" testcase_groupprefix _tcase_a2
+  es keygroupremove server_var(_tcase_temp)
+}
+
+//testcase addtest MyUnitTest1 testname myscript/myblock "Description"
+block testcase_addtest
+{
+  es_xgetargv _tcase_a2 2
+  es_xgetargv _tcase_a3 3
+  es_xgetargv _tcase_a4 4
+  es_formatv _tcase_temp "%1_%2" testcase_groupprefix _tcase_a2
+  es_exists _tcase_a5 keygroup server_var(_tcase_temp)
+  ifx true(_tcase_a5) do
+  {
+    es_xgetargv _tcase_a5 5
+    es_keycreate server_var(_tcase_temp) server_var(_tcase_a3)
+    es_keysetvalue server_var(_tcase_temp) server_var(_tcase_a3) block server_var(_tcase_a4)
+    es_keysetvalue server_var(_tcase_temp) server_var(_tcase_a3) description server_var(_tcase_a5)
+  }
+  else do
+  {
+    es_xgetargv _tcase_a2 2
+    es_dbgmsg 0 testcase: server_var(_tcase_a2) does not exist. Could not add test.
+  }
+}
+
+//testcase run MyUnitTest1 myfailedchecksvar
+block testcase_run
+{
+  stack save _testcase_stack _tcase_current-test
+  stack save _testcase_stack _tcase_a2
+  stack save _testcase_stack _tcase_a3
+  stack save _testcase_stack _tcase_tempcopyname
+  stack save _testcase_stack _tcase_resultvar
+
+  es_xset _tcase_tempcopyname 0
+  es_xgetargv _tcase_a2 2
+  if (server_var(testlib_output_verbose) greaterthan 0) do
+  {
+    es testprint Running test case server_var(_tcase_a2) ...
+  }
+
+  es_xgetargv _tcase_resultvar 3
+  es_set server_var(_tcase_resultvar) 0
+  es_formatv _tcase_a2 "%1_%2" testcase_groupprefix _tcase_a2
+  es_formatv _tcase_tempcopyname "%1__running" _tcase_a2
+  es_keygroupcopy server_var(_tcase_a2) server_var(_tcase_tempcopyname)
+  es_keydelete server_var(_tcase_tempcopyname) _metadata
+  es_foreachkey _tcase_current-test in server_var(_tcase_tempcopyname) "es_doblock corelib/testlib/testcase_runloop"
+  es_keygroupdelete server_var(_tcase_tempcopyname)
+
+  if (server_var(testlib_output_verbose) greaterthan 0) do
+  {
+    es testprint Done running the test case.
+  }
+  stack restore _testcase_stack _tcase_resultvar
+  stack restore _testcase_stack _tcase_tempcopyname
+  stack restore _testcase_stack _tcase_a3
+  stack restore _testcase_stack _tcase_a2
+  stack restore _testcase_stack _tcase_current-test
+}
+
+block testcase_runloop
+{
+  stack save _testcase_stack _tcase_current-test
+  stack save _testcase_stack _tcase_current-test-block
+  es_keygetvalue _tcase_current-test-block server_var(_tcase_tempcopyname) server_var(_tcase_current-test) block
+  es_doblock server_var(_tcase_current-test-block)
+  stack restore _testcase_stack _tcase_current-test-block
+  stack restore _testcase_stack _tcase_current-test
+}
+
+//testcase notify failure testname testdescription
+block testcase_notify
+{
+  stack save _testcase_stack _tcase_a2
+  es_xgetargv _tcase_a2 2
+  if (server_var(_tcase_a2) equalto "failure") do
+  {
+    // assume a failure for now
+    es_math server_var(_tcase_resultvar) + 1
+  }
+  stack restore _testcase_stack _tcase_a2
+}
+
+block testsuite
+{
+  es_xgetargv _tsuite_a1 1
+  es_xformatv _tsuite_a1 "corelib/testlib/testsuite_%1" _tsuite_a1
+  es_doblock server_var(_tsuite_a1)
+}
+
+//testsuite create MyTestSuite1 "This is my test suite"
+block testsuite_create
+{
+  es_xgetargv _tsuite_a2 2
+  es_xgetargv _tsuite_a3 3
+  es_formatv _tsuite_temp "%1_%2" testsuite_groupprefix _tsuite_a2
+  // need a keygroup to store the testsuite's test cases
+  es_keygroupcreate server_var(_tsuite_temp)
+  es_keycreate server_var(_tsuite_temp) _metadata
+  es_keysetvalue server_var(_tsuite_temp) _metadata name server_var(_tsuite_a2)
+  es_keysetvalue server_var(_tsuite_temp) _metadata description server_var(_tsuite_a3)
+  // now log it in the global tracker for suites
+  keymath _testsuites _metadata quantity + 1
+  es_keycreate _testsuites server_var(_tsuite_a2)
+  es_keysetvalue _testsuites server_var(_tsuite_a2) keygroup server_var(_tsuite_temp)
+}
+
+//testsuite delete MyTestSuite1
+block testsuite_delete
+{
+  es_xgetargv _tsuite_a2 2
+  es_xgetargv _tsuite_a3 3
+  es_formatv _tsuite_temp "%1_%2" testsuite_groupprefix _tsuite_a2
+  es keygroupremove server_var(_tsuite_temp)
+  // now delete it from the global tracker for suites
+  es_exists _tsuite_temp key _testsuites server_var(_tsuite_a2)
+  ifx true(_tsuite_temp) do
+  {
+    keymath _testsuites _metadata quantity - 1
+    es_keydelete _testsuites server_var(_tsuite_a2)
+  }
+}
+
+//testsuite addcase MyTestSuite1 MyUnitTest1
+block testsuite_addcase
+{
+  es_xgetargv _tsuite_a2 2
+  es_xgetargv _tsuite_a3 3
+  // add the testcase to the suite in question
+  es_formatv _tsuite_temp "%1_%2" testsuite_groupprefix _tsuite_a2
+  es_exists _tsuite_a5 keygroup server_var(_tsuite_temp)
+  ifx true(_tsuite_a5) do
+  {
+    es_keycreate server_var(_tsuite_temp) server_var(_tsuite_a3)
+  }
+  else do
+  {
+    es_xgetargv _tsuite_a2 2
+    es_dbgmsg 0 testsuite: server_var(_tsuite_a2) does not exist. Could not add testcase.
+  }
+
+  
+}
+
+//testsuite run MyTestSuite1 myvar-outcome
+block testsuite_run
+{
+  es_xset _tsuite_tempcopyname 0
+  es_xgetargv _tsuite_a2 2
+  es_copy _tcase_current-suite _tsuite_a2
+  if (server_var(testlib_output_verbose) greaterthan 0) do
+  {
+    es testprint Starting test suite server_var(_tsuite_a2) ...
+  }
+  es_xgetargv _tsuite_resultvar 3
+  es_set server_var(_tsuite_resultvar) 0
+  es_formatv _tsuite_a2 "%1_%2" testsuite_groupprefix _tsuite_a2
+  es_formatv _tsuite_tempcopyname "%1__running" _tsuite_a2
+  es_keygroupcopy server_var(_tsuite_a2) server_var(_tsuite_tempcopyname)
+  es_keydelete server_var(_tsuite_tempcopyname) _metadata
+  es_foreachkey _tsuite_current-case in server_var(_tsuite_tempcopyname) "es_doblock corelib/testlib/testsuite_runloop"
+  es_keygroupdelete server_var(_tsuite_tempcopyname)
+  es ifx true(server_var(_tsuite_resultvar)) do
+  {
+    es_formatv _tsuite_tempout "Test suite %1 ends: FAILED %2 cases. **** FAILURE" _tcase_current-suite server_var(_tsuite_resultvar)
+    esnq testprint server_var(_tsuite_tempout)
+  }
+  else do
+  {
+    es_formatv _tsuite_tempout "Test suite %1 ends: Passed." _tcase_current-suite
+    esnq testprint server_var(_tsuite_tempout)  
+  }
+  es_set _tcase_current-suite "root"
+}
+
+block testsuite_runloop
+{
+  es_xset _tsuite_tempout 0
+  es testcase run server_var(_tsuite_current-case) _tsuite_tempout
+  // give them a sum of the failures
+  es_math server_var(_tsuite_resultvar) + server_var(_tsuite_tempout)
+}
+
+//testsuite runall myvar-failurecount
+block testsuite_runall
+{
+  es_xset _tsuite_runallvar 0
+  es_xgetargv _tsuite_runallvar 2
+  es_set server_var(_tsuite_runallvar) 0
+
+  es_xkeygroupcopy _testsuites _testsuites__running
+  es_xkeydelete _testsuites__running _metadata
+  es_foreachkey _testsuite_name in _testsuites__running "es_doblock corelib/testlib/testsuite_runallloop"
+  es_keygroupdelete _testsuites__running
+  es ifx true(server_var(_tsuite_runallvar)) do
+  {
+    es_formatv _tsuite_tempout "ALL test suites ended: FAILED %1 cases. **** FAILURE" server_var(_tsuite_runallvar)
+    esnq testprint server_var(_tsuite_tempout)
+  }
+  else do
+  {
+    testprint ALL test suites ended: Passed. 
+  }  
+}
+
+block testsuite_runallloop
+{
+  es_xset _tsuite_allout 0
+  es_msg RUN server_var(_testsuite_name)
+  es testsuite run server_var(_testsuite_name) _tsuite_allout
+  // give them a sum of the failures
+  es_math server_var(_tsuite_runallvar) + server_var(_tsuite_allout)
+}
+//testsuite create MyTestSuite1 "This is my test suite"
+//testsuite addcase MyTestSuite1 MyUnitTest1
+//testsuite run MyTestSuite1
+
+//testsuite runall
+
+

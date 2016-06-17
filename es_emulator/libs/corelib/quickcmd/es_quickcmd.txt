@@ -1,0 +1,370 @@
+// quickcmd - corelib subscript - by Chun
+//
+// Syntax: quickclientcmd
+//         quicksaycmd
+//         quickcmd create <cmd-name> <command> <description>
+//         quickcmd delete <cmd-name>
+//         quickcmd status <variable> <cmd-name>
+
+block load
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore command quickcmd
+   ifx false(_tempcore) do
+   {
+      es_xregcmd quickcmd corelib/quickcmd/quickcmd "Create server commands"
+   }
+   es_xset _tempcore 0
+   es_xexists _tempcore command quickclientcmd
+   ifx false(_tempcore) do
+   {
+      es_xregcmd quickclientcmd corelib/quickcmd/quickcmd "Create client server commands"
+   }
+   es_xset _tempcore 0
+   es_xexists _tempcore command quicksaycmd
+   ifx false(_tempcore) do
+   {
+      es_xregcmd quicksaycmd corelib/quickcmd/quickcmd "Create chat commands"
+   }
+   es_xkeygroupcreate quickcmd
+   es_xkeycreate quickcmd quickcmd
+   es_xkeycreate quickcmd quickclientcmd
+   es_xkeycreate quickcmd quicksaycmd
+   es_xkeycreate quickcmd delcmd
+   es_xset _cmd_temp 0
+   testcase qcreate corelib createcmdtest "Tests quickcmd"
+   testcase addtest createcmdtest createcmdtest corelib/quickcmd/test_createcmd "quickcmd Corelib Command Test"
+}
+
+block unload
+{
+   es_xkeygroupdelete quickcmd
+}
+
+block quickcmd
+{
+   es_xset _cmd_cmd 0
+   es_xgetargv _cmd_cmd 0
+   es_xset _cmd_op 0
+   es_xgetargv _cmd_op 1
+   ifx false(_cmd_op) do
+   {
+      es_xformatv _cmd_error "%1 : no operator given" _cmd_cmd
+      esnq es_xdbgmsg 0 server_var(_cmd_error)
+   }
+   es_xelse do
+   {
+      es_xset _cmd_argcnt 0
+      es_xgetargc _cmd_argcnt
+      es_xset _cmd_block 0
+      es_xformatv _cmd_block "corelib/quickcmd/cmd_%1" _cmd_op
+      es_xset _tempcore 0
+      es_exists _tempcore block server_var(_cmd_block)
+      ifx true(_tempcore) do
+      {
+         es_doblock server_var(_cmd_block)
+      }
+      es_xelse do
+      {
+         es_xformatv _cmd_error "%1 : invalid operator" _cmd_cmd
+         esnq es_xdbgmsg 0 server_var(_cmd_error)
+      }
+   }
+}
+
+block cmd_create
+{
+   if (server_var(_cmd_argcnt) > 4) do
+   {
+      es_xset _cmd_name 0
+      es_xgetargv _cmd_name 2
+      es_xset _tempcore 0
+      es_keygetvalue _tempcore quickcmd server_var(_cmd_cmd) server_var(_cmd_name)
+      if (server_var(_tempcore) = 0) do
+      {
+         es_xset _cmd_str 0
+         es_xgetargv _cmd_str 3
+         es_xset _cmd_desc 0
+         es_xgetargv _cmd_desc 4
+         es_xformatv _tempcore "corelib/quickcmd/cmd_%1" _cmd_cmd
+         es_doblock server_var(_tempcore)
+      }
+      es_xelse do
+      {
+         es_xformatv _cmd_error "%1 : command has already been created: '%2'" _cmd_cmd _cmd_name
+         esnq es_xdbgmsg 0 server_var(_cmd_error)
+      }
+   }
+   es_xelse do
+   {
+      es_xformatv _cmd_error "Syntax : %1 create <name> <command> <description>" _cmd_cmd
+      esnq es_xdbgmsg 0 server_var(_cmd_error)
+   }
+}
+
+block cmd_delete
+{
+   if (server_var(_cmd_argcnt) > 2) do
+   {
+      es_xset _cmd_name 0
+      es_xgetargv _cmd_name 2
+      es_xset _tempcore 0
+      es_keygetvalue _tempcore quickcmd server_var(_cmd_cmd) server_var(_cmd_name)
+      ifx false(_tempcore) do
+      {
+         es_xformatv _cmd_error "%1 : command does not exist" _cmd_cmd
+         esnq es_xdbgmsg 0 server_var(_cmd_error)
+      }
+      es_xelse do
+      {
+         es_keysetvalue quickcmd server_var(_cmd_cmd) server_var(_cmd_name) 0
+         es_xformatv _tempcore "corelib/quickcmd/cmddel_%1" _cmd_cmd
+         es_doblock server_var(_tempcore)
+      }
+   }
+   es_xelse do
+   {
+      es_xformatv _cmd_error "Syntax : %1 delete <cmd-name>" _cmd_cmd
+      esnq es_xdbgmsg 0 server_var(_cmd_error)
+   }
+}
+
+block cmddel_quickcmd
+{
+   es_keysetvalue quickcmd delcmd server_var(_cmd_name) 1
+}
+
+block cmddel_quickclientcmd
+{
+   es_xset _tempcore 0
+   es_exists _tempcore clientcommand server_var(_cmd_name)
+   ifx true(_tempcore) do
+   {
+      es_unregclientcmd server_var(_cmd_name)
+   }
+}
+
+block cmddel_quicksaycmd
+{
+   es_xset _tempcore 0
+   es_exists _tempcore saycommand server_var(_cmd_name)
+   ifx true(_tempcore) do
+   {
+      es_unregsaycmd server_var(_cmd_name)
+   }
+}
+   
+block cmd_status
+{
+   if (server_var(_cmd_argcnt) > 3) do
+   {
+      es_xset _cmd_var 0
+      es_xgetargv _cmd_var 2
+      es_xset _cmd_name 0
+      es_xgetargv _cmd_name 3
+      es_xset _tempcore 0
+      es_keygetvalue _tempcore quickcmd server_var(_cmd_cmd) server_var(_cmd_name)
+      ifx true(_tempcore) do
+      {
+         es_set server_var(_cmd_var) 1
+      }
+      es_xelse do
+      {
+         es_set server_var(_cmd_var) 0
+         if (server_var(_cmd_cmd) = quickcmd) do
+         {
+            es_xset _tempcore 0
+            es_keygetvalue _tempcore quickcmd delcmd server_var(_cmd_name)
+            ifx true(_tempcore) do
+            {
+               es_set server_var(_cmd_var) "-1"
+            }
+            es_xelse do
+            {
+               es_xset _tempcore 0
+               es_exists _tempcore command server_var(_cmd_name)
+               ifx true(_tempcore) do
+               {
+                  es_set server_var(_cmd_var) "-2"
+               }
+            }
+         }
+      }
+   }
+   es_xelse do
+   {
+      es_xformatv _cmd_error "Syntax : %1 status <variable> <cmd-name>" _cmd_cmd
+      esnq es_xdbgmsg 0 server_var(_cmd_error)
+   }
+}
+
+block cmd_quickcmd
+{
+   es_xset _cmd_cont 1
+   es_xset _tempcore 0
+   es_exists _tempcore command server_var(_cmd_name)
+   ifx true(_tempcore) do
+   {
+      es_xset _tempcore 0
+      es_keygetvalue _tempcore quickcmd delcmd server_var(_cmd_name)
+      ifx true(_tempcore) do
+      {
+         es_keysetvalue quickcmd quickcmd server_var(_cmd_name) server_var(_cmd_str)
+      }
+      es_xelse do
+      {
+         es_xformatv _cmd_error "quickcmd: command already registered : '%1'" _cmd_name
+         esnq es_xdbgmsg 0 server_var(_cmd_error)
+      }
+   }
+   es_xelse do
+   {
+      es_regcmd server_var(_cmd_name) corelib/quickcmd/command server_var(_cmd_desc)
+      es_keysetvalue quickcmd quickcmd server_var(_cmd_name) server_var(_cmd_str)
+   }
+}
+
+block cmd_quickclientcmd
+{
+   es_xset _tempcore 0
+   es_exists _tempcore clientcommand server_var(_cmd_name)
+   ifx true(_tempcore) do
+   {
+      es_xformatv _cmd_error "quickclientcmd: command already registered : '%1'" _cmd_name
+      esnq es_xdbgmsg 0 server_var(_cmd_error)
+   }
+   es_xelse do
+   {
+      es_regclientcmd server_var(_cmd_name) corelib/quickcmd/clientcommand server_var(_cmd_desc)
+      es_keysetvalue quickcmd quickclientcmd server_var(_cmd_name) server_var(_cmd_str)
+   }
+}
+
+block cmd_quicksaycmd
+{
+   es_xset _tempcore 0
+   es_exists _tempcore saycommand server_var(_cmd_name)
+   ifx true(_tempcore) do
+   {
+      es_xformatv _cmd_error "quicksaycmd : command already registered: '%1'" _cmd_name
+      esnq es_xdbgmsg 0 server_var(_cmd_error)
+   }
+   es_xelse do
+   {
+      es_regsaycmd server_var(_cmd_name) corelib/quickcmd/saycommand server_var(_cmd_desc)
+      es_keysetvalue quickcmd quicksaycmd server_var(_cmd_name) server_var(_cmd_str)
+   }
+}
+
+block command
+{
+   es_xset _cmd_name 0
+   es_xgetargv _cmd_name 0
+   es_xset _cmd_str 0
+   es_keygetvalue _cmd_str quickcmd quickcmd server_var(_cmd_name)
+   ifx true(_cmd_str) do
+   {
+      es_xset _cmd_args 0
+      es_xgetargs _cmd_args
+      es_xset _cmd_argc 0
+      es_xgetargc _cmd_argc
+      es_xdoblock corelib/quickcmd/argc
+      es_xset _cmd_argc 0
+      es_xgetargc _cmd_argc
+      es_xset _cmd_userid 0
+      es_xgetcmduserid _cmd_userid
+      es_xcommandv _cmd_str
+   }
+}
+   
+block clientcommand
+{
+   es_xset _cmd_name 0
+   es_xgetargv _cmd_name 0
+   es_xset _cmd_str 0
+   es_keygetvalue _cmd_str quickcmd quickclientcmd server_var(_cmd_name)
+   ifx true(_cmd_str) do
+   {
+      es_xset _cmd_args 0
+      es_xgetargs _cmd_args
+      es_xset _cmd_argc 0
+      es_xgetargc _cmd_argc
+      es_xdoblock corelib/quickcmd/argc
+      es_xset _cmd_argc 0
+      es_xgetargc _cmd_argc
+      es_xset _cmd_userid 0
+      es_xgetcmduserid _cmd_userid
+      es_xcommandv _cmd_str
+   }
+}
+   
+block saycommand
+{
+   es_xset _cmd_name 0
+   es_xgetargv _cmd_name 0
+   es_xset _cmd_str 0
+   es_keygetvalue _cmd_str quickcmd quicksaycmd server_var(_cmd_name)
+   ifx true(_cmd_str) do
+   {
+      es_xset _cmd_args 0
+      es_xgetargs _cmd_args
+      es_xset _cmd_argc 0
+      es_xgetargc _cmd_argc
+      es_xdoblock corelib/quickcmd/argc
+      es_xset _cmd_argc 0
+      es_xgetargc _cmd_argc
+      es_xset _cmd_userid 0
+      es_xgetcmduserid _cmd_userid
+      es_xcommandv _cmd_str
+   }
+}
+
+block argc
+{
+   es_xmath _cmd_argc - 1
+   ifx true(_cmd_argc) do
+   {
+      es_xset _tempcore 0
+      es_xformatv _tempcore "_cmd_arg%1" _cmd_argc
+      es_set server_var(_tempcore) 0
+      es_getargv server_var(_tempcore) server_var(_cmd_argc)
+      es_xdoblock corelib/quickcmd/argc
+   }
+}
+
+block test_createcmd
+{
+   quickcmd status _tempcore _createcmd_testcmd
+   ifx true(_tempcore) do
+   {
+      quickcmd delete _createcmd_testcmd
+   }
+   profile begin createcmd_test
+   testlib begin cmd1 "quickcmd test 1 - create server command"
+   quickcmd create _createcmd_testcmd "es_set _cmd_testvar server_var(_cmd_arg1)" "quickcmd test command"
+   es_xset _cmd_testvar 0
+   _createcmd_testcmd 5
+   testlib fail_unless _cmd_testvar equalto 5
+   testlib end
+
+   testlib begin cmd2 "quickcmd test 2 - delete server command"
+   quickcmd delete _createcmd_testcmd
+   es_xset _cmd_testvar 0
+   _createcmd_testcmd 5
+   testlib fail_unless _cmd_testvar equalto 0
+   testlib end
+
+   testlib begin cmd3 "quickcmd test 3 - re-register server command and test argc var"
+   quickcmd create _createcmd_testcmd "es_set _cmd_testvar server_var(_cmd_argc)" "quickcmd test command"
+   es_xset _cmd_testvar 0
+   _createcmd_testcmd 1 2 3 4
+   testlib fail_unless _cmd_testvar equalto 5
+   testlib end
+
+   testlib begin cmd4 "quickcmd test 4 - status command"
+   es_xset _cmd_testvar 0
+   quickcmd status _cmd_testvar _createcmd_testcmd
+   testlib fail_unless _cmd_testvar equalto 1
+   testlib end
+   profile end createcmd_test
+}

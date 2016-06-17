@@ -1,0 +1,127 @@
+// EventScripts: Benchmark 1.0
+//  Port of the SourceMod benchmark plugin by BAILOPAN to EventScripts
+//  by an anonymous author (thanks!)
+
+
+block load
+{
+	es_load corelib
+
+	es_xsetinfo int_iter 2000
+	es_xsetinfo float_iter 2000
+	es_xsetinfo format_iter 2000
+	es_xsetinfo replace_iter 2000
+
+	es_xdoblock benchmark/string_bench
+	es_xdoblock benchmark/math_bench
+}
+
+block math_int_loop
+{
+	es_math i - 1
+	es_mathparse a "i*7"
+	es_mathparse b "i+5"
+	es_mathparse c "6/(i+3)"
+	es_mathparse a "6*i"
+	es_mathparse b "a*185"
+	es_mathparse a "b/25"
+	es_mathparse c "b-a+3"
+	es_mathparse b "b*b"
+	es_mathparse a "(a+c)/(b-c)"
+	es_xsetinfo b 6
+	es_xsetinfo c 1
+	es_mathparse b "a*128-c"
+	es_mathparse c "b*(a+16)*b"
+	if (server_var(a) == 0) then es_xsetinfo a 5
+	es_mathparse a "c+(28/a)-c"
+}
+
+block math_float_loop
+{
+	es_math i - 1
+	es_mathparse a "i*0.7"
+	es_mathparse b "5.1+i"
+	es_mathparse c "6.1/(i+2.5)"
+	es_mathparse a "6.1*i"
+	es_mathparse b "a*185.26"
+	es_mathparse a "b/25.56"
+	es_mathparse c "b-a+3.0"
+	es_mathparse b "b*b"
+	es_mathparse a "(a+c)/(b-c)"
+	es_xsetinfo b 6.2
+	es_xsetinfo c 1.0
+	es_setinfo int1 server_var(a)
+	es_math int1 int
+	es_mathparse b "a*128.0-int1"
+	es_mathparse c "b*(a+16.85)*b"
+	if (server_var(a) == 0.0) then es_xsetinfo a 5.0
+	es_mathparse a "c+(28/a)-c"
+}
+
+block math_bench
+{
+	es_setinfo i server_var(int_iter)
+
+	es_xsetinfo a 0
+	es_xsetinfo b 0
+	es_xsetinfo c 0
+	es_xsetinfo int1 0
+
+	es_xsetinfo t 0
+	profile begin t
+	while "server_var(i) != 0" "es_xdoblock benchmark/math_int_loop"
+	profile end t
+
+	es_msg int benchmark: server_var(t) seconds
+
+
+	es_setinfo i server_var(float_iter)
+	es_xsetinfo t 0
+	profile begin t
+	while "server_var(i) != 0" "es_xdoblock benchmark/math_float_loop"
+	profile end t
+
+	es_msg float benchmark: server_var(t) seconds
+}
+
+block string_format_loop
+{
+	es_math i - 1
+	es_format buffer "%1" server_var(i)
+	es_format buffer "%1 %2 %3 %4 %5 %6 %7" server_var(i) "gaben" "30" "10.0" "20" "hello" "what a gaben"
+	es_format buffer "Well, that's just %1!" "what.  this isn't a valid string! wait it is"
+	es_format buffer "%1 There are %2 in this" server_var(buffer) server_var(i)
+	es_format buffer "%1 There are %2 in this" server_var(buffer) server_var(i)
+}
+
+block string_replace_loop
+{
+	es_math i - 1
+	es_xsetinfo buffer This is a test string for you.
+	es_string buffer replace " " "ADSF"
+	es_string buffer replace "SDF" ""
+	es_string buffer replace "string" "gnirts"
+}
+
+block string_bench
+{
+	es_setinfo i server_var(format_iter)
+
+	es_xsetinfo buffer hmm
+
+	es_xsetinfo t 0
+	profile begin t
+	while "server_var(i) != 0" "es_xdoblock benchmark/string_format_loop"
+	profile end t
+
+	es_msg format benchmark: server_var(t) seconds
+
+
+	es_setinfo i server_var(replace_iter)
+	es_xsetinfo t 0
+	profile begin t
+	while "server_var(i) != 0" "es_xdoblock benchmark/string_replace_loop"
+	profile end t
+
+	es_msg replace benchmark: server_var(t) seconds
+}

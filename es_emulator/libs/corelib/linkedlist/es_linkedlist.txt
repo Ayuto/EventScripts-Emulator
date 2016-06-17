@@ -1,0 +1,1227 @@
+//LinkedList by ichthys. A Corelib submission for Mattie's Eventscripts
+//THIS IS A SUBSCRIPT corelib/linkedlist
+//Version 1.0
+
+//Commands
+
+//linkedlist init <keygroup> <key> //Will create keygroup and key if they dont exists and set to 0
+//linkedlist insertend <keygroup> <key> <value> //Insert a node at the end of a list
+//linkedlist insertbeginning <keygroup> <key> <value> //Insert a node at the beginning of a list
+//linkedlist removeend <keygroup> <key> [var] //Remove the last node of a list - Var is optional to return value
+//linkedlist removebeginning <keygroup> <key> [var] //Remove the first node of a list - var is optional to return value
+//linkedlist getvalue <var> <keygroup> <key> <node> //Get the value of a node
+//linkedlist foreach <value var> <pointer var> <keygroup> <key> <command> [backwards] //Loop through the list from 0 to x. The value var is the value of the current node and the pointer var is the location of the current node
+//linkedlist insertbefore <keygroup> <key> <node to insert before> <value> //Inserts a node before an existing node
+//linkedlist insertafter <keygroup> <key> <node to insert after> <value> //Inserts a node after an existing node
+//linkedlist removenode <keygroup> <key> <node> [var] //Removes a node - Var is optional to return value
+//linkedlist getlength <var> <keygroup> <key> //Gets the length of a list
+
+block linkedlist
+{
+	es_xsetinfo ll.command 0
+	es_xgetargv ll.command 1
+	es_exists ll.exists key ll.commands server_var(ll.command)
+	if (server_var(ll.exists) = 1) do
+	{
+		es_format ll.format corelib/linkedlist/linkedlist.%1 server_var(ll.command)
+		es_doblock server_var(ll.format)
+	}
+}
+block linkedlist.init
+{
+	//linkedlist init <keygroup> <key>
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) = 4) do
+	{
+		es_xgetargv ll.keygroup 2
+		es_xgetargv ll.key 3
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		if (server_var(ll.exists) = 0) do
+		{
+			//Create all
+			es_keygroupcreate server_var(ll.keygroup)
+			es_keycreate server_var(ll.keygroup) server_var(ll.key)
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty 0
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count 0
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start -1
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end -1
+		}
+		else do
+		{
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 0) do
+			{
+				//Create key and under
+				es_keycreate server_var(ll.keygroup) server_var(ll.key)
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty 0
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count 0
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start -1
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end -1
+			}
+			else do
+			{
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				isnull ll.isnull ll.count
+				if (server_var(ll.isnull) = 1) do
+				{
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty 0
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count 0
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start -1
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end -1
+				}
+			}
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.init] Incorrect number of parameters - linkedlist init <keygroup> <key>
+	}
+}
+block linkedlist.getlength
+{
+	//linkedlist getlength <var> <keygroup> <key>
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) = 5) do
+	{
+		es_xgetargv ll.returnvar 2
+		es_xgetargv ll.keygroup 3
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		if (server_var(ll.exists) = 1) do
+		{
+			es_xgetargv ll.key 4
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 1) do
+			{
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				es_setinfo server_var(ll.returnvar) server_var(ll.count)
+			}
+			else do
+			{
+				es_setinfo server_var(ll.returnvar) 0
+			}
+		}
+		else do
+		{
+			es_setinfo server_var(ll.returnvar) 0
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.getlength] Incorrect number of parameters
+	}
+}
+block linkedlist.removenode
+{
+	//linkedlist removenode <keygroup> <key> <node> [var]
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) in _5_6_) do
+	{
+		//get keygroup and check if it exists
+		es_xgetargv ll.keygroup 2
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		if (server_var(ll.exists) = 1) do
+		{
+			//get key/list
+			es_xgetargv ll.key 3
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 1) do
+			{
+				//Get count for list if its 0 don't do anything
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				if (server_var(ll.count) != 0) do
+				{
+					es_xgetargv ll.node 4
+					if (server_var(ll.node) <= server_var(ll.count)) do
+					{
+						es_xsetinfo ll.prev -1
+						es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) ll.start
+						es_keygetvalue ll.end server_var(ll.keygroup) server_var(ll.key) ll.end
+						es_xsetinfo ll.pointer 0
+						es_xdoblock corelib/linkedlist/linkedlist.removenode_loop_forward
+					}
+					else do
+					{
+						es_dbgmsg -1 [linkedlist.removenode] node server_var(ll.node) does not exist
+					}
+				}
+				else do
+				{
+					es_dbgmsg -1 [linkedlist.removenode] the list server_var(ll.keygroup) server_var(ll.key) is empty or does not exist
+				}
+			}
+			else do
+			{
+				es_dbgmsg -1 [linkedlist.removenode] key server_var(ll.key) does not exist
+			}
+		}
+		else do
+		{
+			es_dbgmsg -1 [linkedlist.removenode] keygroup server_var(ll.keygroup) does not exists
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.removenode] incorrent number of parameters
+	}
+}
+
+block linkedlist.removenode_loop_forward
+{
+	if (server_var(ll.node) = server_var(ll.pointer)) do
+	{
+		//Get value if told to
+		if (server_var(ll.argc) = 6) do
+		{
+			es_getargv ll.returnvar 5
+			es_format ll.format "ll.%1" server_var(ll.next)
+			es_keygetvalue server_var(ll.returnvar) server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		}
+		 
+		 //Set next empty space
+		//decrement count
+		es_xmath ll.count - 1
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count server_var(ll.count)
+		
+		//Set old end node as the next empty space. and point it to the previous empty space
+		//This is our linked list of empty slots
+		es_keygetvalue ll.nextempty server_var(ll.keygroup) server_var(ll.key) ll.nextempty
+		
+		es_format ll.format ll.%1 server_var(ll.next)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+		
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.next)
+		
+		//get next next node
+		es_format ll.format ll.%1_next server_var(ll.next)
+		es_keygetvalue ll.nextnext server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		
+			//Set next pointer for prev node
+		if (server_var(ll.prev) = -1) do
+		{
+			if (server_var(ll.nextnext) = -1) do
+			{
+				//No previous or next node, list is empty
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start -1
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end -1
+			}
+			else do
+			{
+				 //No previous node but there is a next node
+				
+				//Set new start pointer
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start server_var(ll.nextnext)
+				
+				//Set prev pointer to -1
+				es_format ll.format ll.%1_prev server_var(ll.nextnext)
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) -1
+			}
+		}
+		else do
+		{
+			if (server_var(ll.nextnext) = -1) do
+			{
+				 //Is a prev node but no next node
+				
+				//Set new end pointer
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end server_var(ll.prev)
+				
+				//Set next pointer to -1
+				es_format ll.format ll.%1_next server_var(ll.prev)
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) -1
+			}
+			else do
+			{
+				//Is a prev and is a next node
+				
+				//Set next pointer
+				es_format ll.format ll.%1_next server_var(ll.prev)
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextnext)
+				
+				//Set prev pointer
+				es_format ll.format ll.%1_prev server_var(ll.nextnext)
+				es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.prev)
+			}
+		}
+	}
+	else do
+	{
+		if (server_var(ll.next) != server_var(ll.end)) do
+		{
+			//Retain prev pointer
+			es_xcopy ll.prev ll.next
+			
+			//Get next pointer
+			es_format ll.format ll.%1_next server_var(ll.next)
+			es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+			es_xmath ll.pointer + 1
+			es_xdoblock corelib/linkedlist/linkedlist.removenode_loop_forward
+		}
+	}
+}
+
+block linkedlist.insertafter
+{
+	//linkedlist insertafter <keygroup> <key> <node to insert after> <value>
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) in _6_7_) do
+	{
+		//get keygroup and check if it exists
+		es_xgetargv ll.keygroup 2
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		if (server_var(ll.exists) = 1) do
+		{
+			//get key/list
+			es_xgetargv ll.key 3
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 1) do
+			{
+				//Get count for list if its 0 don't do anything
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				if (server_var(ll.count) != 0) do
+				{
+					es_xgetargv ll.node 4
+					if (server_var(ll.node) <= server_var(ll.count)) do
+					{
+						es_xgetargv ll.value 5
+						es_keygetvalue ll.start server_var(ll.keygroup) server_var(ll.key) ll.start
+						es_xcopy ll.prev ll.start
+						es_keygetvalue ll.end server_var(ll.keygroup) server_var(ll.key) ll.end
+						es_xsetinfo ll.pointer 0
+						es_xdoblock corelib/linkedlist/linkedlist.insertafter_loop_forward
+					}
+					else do
+					{
+						es_dbgmsg -1 [linkedlist.insertafter] node server_var(ll.node) does not exist
+					}
+				}
+				else do
+				{
+					es_dbgmsg -1 [linkedlist.insertafter] the list server_var(ll.keygroup) server_var(ll.key) is empty or does not exist
+				}
+			}
+			else do
+			{
+				es_dbgmsg -1 [linkedlist.insertafter] key server_var(ll.key) does not exist
+			}
+		}
+		else do
+		{
+			es_dbgmsg -1 [linkedlist.insertafter] keygroup server_var(ll.keygroup) does not exists
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.insertafter] incorrent number of parameters
+	}
+}
+block linkedlist.insertafter_loop_forward
+{
+	//ll.pointer is current node. ll.node is desired node value is to be inserted after
+	//ll.prev is the address for the current node
+	
+	if (server_var(ll.node) = server_var(ll.pointer)) do
+	{
+		//increment count
+		es_xmath ll.count + 1
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count server_var(ll.count)
+		
+		//find next empty space
+		es_keygetvalue ll.nextempty server_var(ll.keygroup) server_var(ll.key) ll.nextempty
+		
+		//get next next empty space, if there is any, and store it in the lists nextempty slot
+		es_format ll.format ll.%1 server_var(ll.nextempty)
+		es_keygetvalue ll.oldvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		isnull ll.isnull ll.oldvalue
+		if (server_var(ll.isnull) = 0) do
+		{
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.oldvalue)
+		}
+		else do
+		{
+			es_xcopy ll.nextnextempty ll.nextempty
+			es_xmath ll.nextnextempty + 1
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.nextnextempty)
+		}
+		
+		//store value in nextempty slot
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.value)
+		
+		//Get next node
+		es_format ll.format ll.%1_next server_var(ll.prev)
+		es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		
+		//set next pointer for previous node
+		es_format ll.format ll.%1_next server_var(ll.prev)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+		
+		//set previous pointer for new node
+		es_format ll.format ll.%1_prev server_var(ll.nextempty)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.prev)
+		
+		//set next pointer for new node
+		es_format ll.format ll.%1_next server_var(ll.nextempty)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.next)
+		
+		//Set prev poiner for next node
+		if (server_var(ll.next) != -1) do
+		{
+			es_format ll.format ll.%1_prev server_var(ll.next)
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+		}
+		else do
+		{
+			//There is no next node and the new node is the new ending node
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end server_var(ll.nextempty)
+		}
+	}
+	else do
+	{
+		if (server_var(ll.prev) != server_var(ll.end)) do
+		{
+			//Get next node
+			es_format ll.format ll.%1_next server_var(ll.prev)
+			es_keygetvalue ll.prev server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+			
+			//Increment 
+			es_xmath ll.pointer + 1
+			es_xdoblock corelib/linkedlist/linkedlist.insertafter_loop_forward
+		}
+	}
+}
+
+block linkedlist.insertbefore
+{
+	//linkedlist insertbefore <keygroup> <key> <node to insert before> <value> <loop backwards?>
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) in ",6,7,") do
+	{
+		//get keygroup and check if it exists
+		es_xgetargv ll.keygroup 2
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		if (server_var(ll.exists) = 1) do
+		{
+			//get key/list
+			es_xgetargv ll.key 3
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 1) do
+			{
+				//Get count for list if its 0 don't do anything
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				if (server_var(ll.count) != 0) do
+				{
+					es_xgetargv ll.node 4
+					if (server_var(ll.node) <= server_var(ll.count)) do
+					{
+						es_xgetargv ll.value 5
+												
+						//Get direction
+						es_xgetargv ll.backward 6
+						if (server_var(ll.backward) = 0) do
+						{
+							es_xsetinfo ll.prev -1
+							es_keygetvalue ll.start server_var(ll.keygroup) server_var(ll.key) ll.start
+							es_xcopy ll.next ll.start
+							es_keygetvalue ll.end server_var(ll.keygroup) server_var(ll.key) ll.end
+							es_xsetinfo ll.pointer 0
+							es_xdoblock corelib/linkedlist/linkedlist.insertbefore_loop_forward
+						}
+						else do
+						{
+							es_xcopy ll.pointer ll.count
+							es_xmath ll.pointer - 1
+							es_keygetvalue ll.start server_var(ll.keygroup) server_var(ll.key) ll.start
+							es_keygetvalue ll.prev server_var(ll.keygroup) server_var(ll.key) ll.end
+							es_xdoblock corelib/linkedlist/linkedlist.insertbefore_loop_backward
+						}
+					}
+					else do
+					{
+						es_dbgmsg -1 [linkedlist.insertbefore] node server_var(ll.node) does not exist
+					}
+				}
+				else do
+				{
+					es_dbgmsg -1 [linkedlist.insertbefore] the list server_var(ll.keygroup) server_var(ll.key) is empty or does not exist
+				}
+			}
+			else do
+			{
+				es_dbgmsg -1 [linkedlist.insertbefore] key server_var(ll.key) does not exist
+			}
+		}
+		else do
+		{
+			es_dbgmsg -1 [linkedlist.insertbefore] keygroup server_var(ll.keygroup) does not exists
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.insertbefore] incorrent number of parameters
+	}
+}
+block linkedlist.insertbefore_loop_forward
+{
+	//ll.counter is current node. ll.node is desired node value is to be inserted before
+	//ll.next is the address for the current node ll.prev is the address of the previous node
+	
+	if (server_var(ll.node) = server_var(ll.pointer)) do
+	{
+		//increment count
+		es_xmath ll.count + 1
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count server_var(ll.count)
+		
+		//find next empty space
+		es_keygetvalue ll.nextempty server_var(ll.keygroup) server_var(ll.key) ll.nextempty
+		
+		//get next next empty space, if there is any, and store it in the lists nextempty slot
+		es_format ll.format ll.%1 server_var(ll.nextempty)
+		es_keygetvalue ll.oldvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		isnull ll.isnull ll.oldvalue
+		if (server_var(ll.isnull) = 0) do
+		{
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.oldvalue)
+		}
+		else do
+		{
+			es_xcopy ll.nextnextempty ll.nextempty
+			es_xmath ll.nextnextempty + 1
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.nextnextempty)
+		}
+		
+		//store value in nextempty slot
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.value)
+		
+		//set next pointer for previous node
+		if (server_var(ll.prev) != -1) do
+		{
+			es_format ll.format ll.%1_next server_var(ll.prev)
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+		}
+		else do
+		{
+			//Set new node as start of list if it is the first node
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start server_var(ll.nextempty)
+		}
+		
+		//set previous pointer for new node
+		es_format ll.format ll.%1_prev server_var(ll.nextempty)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.prev)
+				
+		//set next pointer for new node
+		es_format ll.format ll.%1_next server_var(ll.nextempty)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.next)
+		
+		//Set prev poiner for next node
+		es_format ll.format ll.%1_prev server_var(ll.next)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+	}
+	else do
+	{
+		if (server_var(ll.next) != server_var(ll.end)) do
+		{
+			//Set old next as new prev
+			es_xcopy ll.prev ll.next
+			
+			//Get next node
+			es_format ll.format ll.%1_next server_var(ll.next)
+			es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+			
+			//Increment 
+			es_xmath ll.pointer + 1
+			es_xdoblock corelib/linkedlist/linkedlist.insertbefore_loop_forward
+		}
+	}
+}
+
+block linkedlist.foreach
+{
+	//linkedlist foreach <value var> <pointer var> <keygroup> <key> <command> [backwards]
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) in _7_8_) do
+	{
+		//get keygroup and check if it exists
+		es_xgetargv ll.keygroup 4
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		if (server_var(ll.exists) = 1) do
+		{
+			//get key/list
+			es_xgetargv ll.key 5
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 1) do
+			{
+				//Get count for list if its 0 don't do anything
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				if (server_var(ll.count) != 0) do
+				{
+					es_xgetargv ll.returnvar 2
+					es_xgetargv ll.pointervar 3
+					es_setinfo server_var(ll.pointervar) 0
+					
+					es_xgetargv ll.command 6
+					es alias ll.alias server_var(ll.command)
+					
+					//Get direction
+					es_xgetargv ll.backward 7
+					if (server_var(ll.backward) = 0) do
+					{
+						es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) ll.start
+						es_keygetvalue ll.end server_var(ll.keygroup) server_var(ll.key) ll.end
+						es_xsetinfo ll.pointer 0
+						es_xdoblock corelib/linkedlist/linkedlist.foreach_loop_forward
+					}
+					else do
+					{
+						es_xcopy ll.pointer ll.count
+						es_xmath ll.pointer - 1
+						es_keygetvalue ll.start server_var(ll.keygroup) server_var(ll.key) ll.start
+						es_keygetvalue ll.prev server_var(ll.keygroup) server_var(ll.key) ll.end
+						es_xdoblock corelib/linkedlist/linkedlist.foreach_loop_backward
+					}
+				}
+				else do
+				{
+					es_dbgmsg -1 [linkedlist.foreach] the list server_var(ll.keygroup) server_var(ll.key) is empty or does not exist
+				}
+			}
+			else do
+			{
+				es_dbgmsg -1 [linkedlist.foreach] key server_var(ll.key) does not exist
+			}
+		}
+		else do
+		{
+			es_dbgmsg -1 [linkedlist.foreach] keygroup server_var(ll.keygroup) does not exists
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.foreach] insufficient parameters
+	}
+}
+block linkedlist.foreach_loop_forward
+{
+	es_format ll.format ll.%1 server_var(ll.next)
+	es_keygetvalue server_var(ll.returnvar) server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+	es_copy server_var(ll.pointervar) ll.pointer
+	ll.alias
+	
+	if (server_var(ll.next) != server_var(ll.end)) do
+	{
+		es_format ll.format ll.%1_next server_var(ll.next)
+		es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		es_xmath ll.pointer + 1
+		es_xdoblock corelib/linkedlist/linkedlist.foreach_loop_forward
+	}
+}
+block linkedlist.foreach_loop_backward
+{
+	es_format ll.format ll.%1 server_var(ll.prev)
+	es_keygetvalue server_var(ll.returnvar) server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+	es_copy server_var(ll.pointervar) ll.pointer
+	ll.alias
+	
+	if (server_var(ll.prev) != server_var(ll.start)) do
+	{
+		es_format ll.format ll.%1_prev server_var(ll.prev)
+		es_keygetvalue ll.prev server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		es_xmath ll.pointer - 1
+		es_xdoblock corelib/linkedlist/linkedlist.foreach_loop_backward
+	}
+}
+block linkedlist.getvalue
+{
+	//command syntax: linkedlist getvalue <returnvar> <keygroup> <key> <node>
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) = 6) do
+	{
+		//get keygroup and check if it exists
+		es_xgetargv ll.keygroup 3
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		if (server_var(ll.exists) = 1) do
+		{
+			
+			//get key/list
+			es_xgetargv ll.key 4
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 1) do
+			{
+				
+				//Get count for list if its 0 don't do anything
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				if (server_var(ll.count) != 0) do
+				{
+					es_xgetargv ll.node 5
+					if (server_var(ll.node) <= server_var(ll.count)) do
+					{
+						es_xsetinfo ll.pointer 0
+						es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) ll.start
+						es_xdoblock corelib/linkedlist/linkedlist.getvalue_loop
+					}
+					else do
+					{
+						es_dbgmsg -1 [linkedlist.getvalue] node server_var(ll.node) does not exist
+					}
+					
+				}
+				else do
+				{
+					es_dbgmsg -1 [linkedlist.getvalue] the list server_var(ll.keygroup) server_var(ll.key) is empty or does not exist
+				}
+			}
+			else do
+			{
+				es_dbgmsg -1 [linkedlist.getvalue] key server_var(ll.key) does not exist
+			}
+		}
+		else do
+		{
+			es_dbgmsg -1 [linkedlist.getvalue] keygroup server_var(ll.keygroup) does not exists
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.getvalue] incorrent number of parameters
+	}
+	
+}
+block linkedlist.getvalue_loop
+{
+	if (server_var(ll.node) = server_var(ll.pointer)) do
+	{
+		es_format ll.format ll.%1 server_var(ll.next)
+		es_keygetvalue ll.value server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		
+		es_xgetargv ll.returnvar 2
+		es_setinfo server_var(ll.returnvar) server_var(ll.value)
+	}
+	else do
+	{
+		es_format ll.format ll.%1_next server_var(ll.next)
+		es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		es_xmath ll.pointer + 1
+		es_xdoblock corelib/linkedlist/linkedlist.getvalue_loop
+	}
+}
+block linkedlist.removebeginning
+{
+	//command syntax: linkedlist removebeginning <keygroup> <key> [var]
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) in _4_5_) do
+	{
+		//get keygroup
+
+		es_xsetinfo ll.keygroup 0
+		es_xgetargv ll.keygroup 2
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		
+		//if keygroup does not exist skip
+		if (server_var(ll.exists) != 0) do
+		{		
+			//get key, if it does not exist skip
+			es_xsetinfo ll.key 0
+			es_xgetargv ll.key 3
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) != 0) do
+			{
+				//Make sure list is not empty
+				
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				if (server_var(ll.count) != 0) do
+				{
+					//decrement count
+					es_xmath ll.count - 1
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count server_var(ll.count)
+					
+					//Set old first node as the next empty space. and point it to the previous empty space
+					//This is our linked list of empty slots
+					es_keygetvalue ll.nextempty server_var(ll.keygroup) server_var(ll.key) ll.nextempty
+					
+					es_keygetvalue ll.start server_var(ll.keygroup) server_var(ll.key) ll.start
+					
+					//Get value if told to
+					if (server_var(ll.argc) = 5) do
+					{
+						es_xgetargv ll.returnvar 4
+						es_format ll.format ll.%1 server_var(ll.start)
+						es_keygetvalue server_var(ll.returnvar) server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+					}
+					
+					es_format ll.format ll.%1 server_var(ll.start)
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+					
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.start)
+					
+					//Set new start node pointers
+					//First get new start node
+					es_format ll.format ll.%1_next server_var(ll.start)
+					es_keygetvalue ll.next server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+					
+					if (server_var(ll.next) != -1) do
+					{
+						es_format ll.format ll.%1_prev server_var(ll.next)
+						es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) -1
+					}
+					
+					//Set start pointer to new start
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start server_var(ll.next)
+					
+					if (server_var(ll.count) = 0) do
+					{
+						es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end -1
+					}
+					
+				}
+			}
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.removebeginning] incorrect number of parameters
+	}
+}
+block linkedlist.removeend
+{
+	//command syntax: linkedlist removeend <keygroup> <key> [var]
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) in _4_5_) do
+	{
+		//get keygroup
+		es_xsetinfo ll.keygroup 0
+		es_xgetargv ll.keygroup 2
+		es_exists ll.exists keygroup server_var(ll.keygroup)
+		
+		//if keygroup does not exist skip
+		if (server_var(ll.exists) != 0) do
+		{		
+			//get key, if it does not exist skip
+			es_xsetinfo ll.key 0
+			es_xgetargv ll.key 3
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) != 0) do
+			{
+				//Make sure list is not empty
+				
+				es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+				if (server_var(ll.count) != 0) do
+				{
+					//decrement count
+					es_xmath ll.count - 1
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count server_var(ll.count)
+					
+					//Set old end node as the next empty space. and point it to the previous empty space
+					//This is our linked list of empty slots
+					es_keygetvalue ll.nextempty server_var(ll.keygroup) server_var(ll.key) ll.nextempty
+					
+					es_keygetvalue ll.end server_var(ll.keygroup) server_var(ll.key) ll.end
+					
+					//Get value if told to
+					if (server_var(ll.argc) = 5) do
+					{
+						es_xgetargv ll.returnvar 4
+						es_format ll.format ll.%1 server_var(ll.end)
+						es_keygetvalue server_var(ll.returnvar) server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+					}
+					
+					es_format ll.format ll.%1 server_var(ll.end)
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+					
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.end)
+					
+					//Set new end node pointers
+					//First get new end slot
+					es_format ll.format ll.%1_prev server_var(ll.end)
+					es_keygetvalue ll.prev server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+					
+					if (server_var(ll.prev) != -1) do
+					{
+						//Set new end next pointer to -1
+						es_format ll.format ll.%1_next server_var(ll.prev)
+						es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) -1
+					}
+					
+					//Set end pointer to new end node
+					es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end server_var(ll.prev)
+					
+					if (server_var(ll.count) = 0) do
+					{
+						es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start -1
+					}
+					
+				}
+			}
+		}
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.removebeginning] incorrect number of parameters
+	}
+}
+block linkedlist.insertbeginning
+{
+	//command format command insertbeginning keygroup key value
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) = 5) do
+	{
+		//get keygroup
+		es_xgetargv ll.keygroup 2
+		es_xgetargv ll.key 3
+		
+		//Check if list exists, else create it
+		es_xsetinfo ll.count ""
+		es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+		isnull ll.isnull ll.count
+		if (server_var(ll.isnull) = 1) do
+		{
+		
+			es_exists ll.exists keygroup server_var(ll.keygroup)
+			//if keygroup does not exist create it
+			if (server_var(ll.exists) = 0) then es_xkeygroupcreate server_var(ll.keygroup)
+			
+			//key
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 0) then es_xkeycreate server_var(ll.keygroup) server_var(ll.key)
+			
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty 0
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count 0
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start -1
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end -1
+			
+		}
+		
+		//get input value
+		es_xsetinfo ll.value 0
+		es_xgetargv ll.value 4
+		
+		//increment count
+		es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+		es_xmath ll.count + 1
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count server_var(ll.count)
+		
+		//find next empty space
+		es_keygetvalue ll.nextempty server_var(ll.keygroup) server_var(ll.key) ll.nextempty
+		
+		//get next next empty space, if there is any, and store it in the lists nextempty slot
+		es_format ll.format ll.%1 server_var(ll.nextempty)
+		es_keygetvalue ll.oldvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		isnull ll.isnull ll.oldvalue
+		if (server_var(ll.isnull) = 0) do
+		{
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.oldvalue)
+		}
+		else do
+		{
+			es_xcopy ll.nextnextempty ll.nextempty
+			es_xmath ll.nextnextempty + 1
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.nextnextempty)
+		}
+		
+		//store value in nextempty
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.value)
+		
+		//set prev pointer for old beginning
+		es_keygetvalue ll.start server_var(ll.keygroup) server_var(ll.key) ll.start
+		if (server_var(ll.start) != -1) do
+		{
+			es_format ll.format ll.%1_prev server_var(ll.start)
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+		}
+		else do
+		{
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start 0
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end 0
+		}
+		
+		//set previous pointer to -1
+		es_format ll.format ll.%1_prev server_var(ll.nextempty)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) -1
+		
+		//set next pointer
+		es_format ll.format ll.%1_next server_var(ll.nextempty)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.start)
+		
+		//Set start pointer
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start server_var(ll.nextempty)
+		
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.insertbeginning] incorrect number of parameters
+	}
+}
+block linkedlist.insertend
+{
+	//command format: command subcommand keygroup key value
+	
+	es_xsetinfo ll.argc 0
+	es_xgetargc ll.argc
+	if (server_var(ll.argc) = 5) do
+	{
+		//get keygroup
+		es_xgetargv ll.keygroup 2
+		es_xgetargv ll.key 3
+		
+		//Check if list exists, else create it
+		es_xsetinfo ll.count ""
+		es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+		isnull ll.isnull ll.count
+		if (server_var(ll.isnull) = 1) do
+		{
+		
+			es_exists ll.exists keygroup server_var(ll.keygroup)
+			//if keygroup does not exist create it
+			if (server_var(ll.exists) = 0) then es_xkeygroupcreate server_var(ll.keygroup)
+			
+			//key
+			es_exists ll.exists key server_var(ll.keygroup) server_var(ll.key)
+			if (server_var(ll.exists) = 0) then es_xkeycreate server_var(ll.keygroup) server_var(ll.key)
+			
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty 0
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count 0
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start -1
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end -1
+			
+		}
+		
+		//get input value
+		es_xsetinfo ll.value 0
+		es_xgetargv ll.value 4
+		
+		//increment count
+		es_keygetvalue ll.count server_var(ll.keygroup) server_var(ll.key) ll.count
+		es_xmath ll.count + 1
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.count server_var(ll.count)
+		
+		//find next empty space
+		es_keygetvalue ll.nextempty server_var(ll.keygroup) server_var(ll.key) ll.nextempty
+		
+		//get next next empty space, if there is any, and store it in the lists nextempty slot
+		es_format ll.format ll.%1 server_var(ll.nextempty)
+		es_keygetvalue ll.oldvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format)
+		isnull ll.isnull ll.oldvalue
+		if (server_var(ll.isnull) = 0) do
+		{
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.oldvalue)
+		}
+		else do
+		{
+			es_xcopy ll.nextnextempty ll.nextempty
+			es_xmath ll.nextnextempty + 1
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.nextempty server_var(ll.nextnextempty)
+		}
+		
+		//store value in nextempty slot
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.value)
+		
+		//set next pointer for old end
+		es_keygetvalue ll.end server_var(ll.keygroup) server_var(ll.key) ll.end
+		if (server_var(ll.end) != -1) do
+		{
+			es_format ll.format ll.%1_next server_var(ll.end)
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.nextempty)
+		}
+		else do
+		{
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.start 0
+			es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end 0
+			
+		}
+		//set previous pointer
+		es_format ll.format ll.%1_prev server_var(ll.nextempty)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) server_var(ll.end)
+		
+		//set next pointer to -1
+		es_format ll.format ll.%1_next server_var(ll.nextempty)
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) server_var(ll.format) -1
+		
+		//Set end pointer
+		es_keysetvalue server_var(ll.keygroup) server_var(ll.key) ll.end server_var(ll.nextempty)
+		
+	}
+	else do
+	{
+		es_xdbgmsg -1 [linkedlist.insertend] incorrect number of parameters
+	}
+}
+
+block load
+{
+	es_xsetinfo ll.exists 0
+	es_xsetinfo ll.count 0
+	es_xsetinfo ll.keygroup 0
+	es_xsetinfo ll.key 0
+	es_xsetinfo ll.end 0
+	es_xsetinfo ll.start 0
+	es_xsetinfo ll.returnvar 0
+	es_xsetinfo ll.pointervar 0
+	es_xsetinfo ll.node 0
+	
+	es_xsetinfo ll.next 0
+	es_xsetinfo ll.prev 0
+	es_xsetinfo ll.nextnext 0
+	es_xsetinfo ll.nextempty 0
+	es_xsetinfo ll.nextnextempty 0
+	es_xsetinfo ll.oldvalue 0
+	es_xsetinfo ll.isnull 0
+	es_xsetinfo ll.value 0
+	es_xsetinfo ll.command 0
+	es_xsetinfo ll.backward 0
+	es_xsetinfo ll.pointer 0
+	
+	es_xsetinfo ll.version clc1
+	es_xexists ll.exists command linkedlist
+	if (server_var(ll.exists) = 0) then es_xregcmd linkedlist corelib/linkedlist/linkedlist "ichthys linked list command"
+	
+	es_keygroupcreate ll.commands
+	es_keycreate ll.commands insertend //linkedlist insertend <keygroup> <key> <value>
+	es_keycreate ll.commands insertbeginning //linkedlist insertbeginning <keygroup> <key> <value>
+	es_keycreate ll.commands removeend //linkedlist removeend <keygroup> <key> [var]
+	es_keycreate ll.commands removebeginning //linkedlist removebeginning <keygroup> <key> [var]
+	es_keycreate ll.commands getvalue //linkedlist getvalue <var> <keygroup> <key> <node>
+	es_keycreate ll.commands foreach //linkedlist foreach <value var> <pointer var> <keygroup> <key> <command> [backwards]
+	es_keycreate ll.commands insertbefore //linkedlist insertbefore <keygroup> <key> <node to insert before> <value>
+	es_keycreate ll.commands insertafter //linkedlist insertafter <keygroup> <key> <node to insert after> <value>
+	es_keycreate ll.commands removenode //linkedlist removenode <keygroup> <key> <node> [var]
+	es_keycreate ll.commands getlength //linkedlist getlength <var> <keygroup> <key>
+	es_keycreate ll.commands init //linkedlist init <keygroup> <key> //Will create keygroup and key if they dont exists
+}
+
+block unload
+{
+	es_xkeygroupdelete ll.commands
+}
+
+
+block tests
+{
+	//Test1
+	es_xkeygroupcreate testgroup
+	es_xkeydelete testgroup testkey
+	es_xkeycreate testgroup testkey
+	
+	linkedlist insertend testgroup testkey 1
+	linkedlist insertend testgroup testkey 2
+	linkedlist insertend testgroup testkey 3
+	linkedlist insertbeginning testgroup testkey 0
+	linkedlist insertbeginning testgroup testkey -1
+	linkedlist insertbeginning testgroup testkey -2
+	linkedlist insertend testgroup testkey 4
+	linkedlist insertend testgroup testkey 5
+	
+	linkedlist insertbefore testgroup testkey 0 -3
+	linkedlist insertafter testgroup testkey 0 -2.5
+	es_xsetinfo testlength 0
+	linkedlist getlength testlength testgroup testkey
+	if (server_var(testlength) = 10) do
+	{
+		es_log Linkedlist.test1 Passed
+	}
+	
+	es_xsetinfo testvar 0
+	es_xsetinfo testpointer 0
+	linkedlist foreach testvar testpointer testgroup testkey "if (server_var(testvar) = 3) then es_xsetinfo foundat server_var(testpointer)"
+	es linkedlist removenode testgroup testkey server_var(foundat)
+	
+	es_xkeygroupdelete test
+	es_xkeygroupcreate test
+	linkedlist foreach testvar testpointer testgroup testkey "es_keycreate test server_var(testvar)"
+	es_xsetinfo foundat "-1"
+	es_foreachkey testvar in test "if (server_var(testvar) = 3) then es_xsetinfo foundat server_var(testvar); if (server_var(testvar) = 3) then es_log foundat server_var(testvar)"
+	if (server_var(foundat) != "-1") do
+	{
+		es_xlog Test2 failed
+	}
+	else do
+	{
+		es_xlog Test2 passed
+	}
+	
+	//Test3
+	linkedlist removeend testgroup testkey
+	linkedlist removebeginning testgroup testkey
+	
+	linkedlist getvalue testvar testgroup testkey 0
+	if (server_var(testvar) != -2.5) do
+	{
+		es_log Test3a Failed value was server_var(testvar)
+	}
+	else do
+	{
+		es_log Test3a Passed
+	}
+	
+	linkedlist insertend testgroup testkey 8
+	linkedlist getlength testvar testgroup testkey
+	es_xmath testvar - 1
+	es linkedlist getvalue testvar testgroup testkey server_var(testvar)
+	if (server_var(testvar) != 8) do
+	{
+		es_log Test3b Failed: var was server_var(testvar)
+	}
+	else do
+	{
+		es_log Test3b Passed
+	}
+	
+
+}
+
+block testforeachlog
+{
+	linkedlist foreach testvar testpointer testgroup testkey "es_log server_var(testpointer) server_var(testvar)"
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

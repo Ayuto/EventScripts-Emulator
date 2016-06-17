@@ -1,0 +1,85 @@
+block load
+{
+  es_xdoblock corelib/queue/queuetest/test
+}
+
+block test
+{
+  profile begin ptest
+  es_xdoblock corelib/queue/queuetest/test1
+  es_xdoblock corelib/queue/queuetest/test2
+  profile end ptest
+  es_xlog Queue Test results:
+  es_log Entire test: server_var(ptest) seconds
+  es_log Test1: server_var(ptest1) seconds
+  es_log Test2: server_var(ptest2) seconds
+}
+
+block test1
+{
+  es_log Queue Test1, the output should be numbers from 1 to 9
+  profile begin ptest1
+  queue create test1
+  queue add test1 1
+  queue add test1 2
+  queue add test1 3
+  queue add test1 4
+  queue add test1 5
+  queue add test1 6
+  queue add test1 7
+  queue add test1 8
+  queue add test1 9
+  es_xsetinfo _test_1 0
+  queue items _test_1 test1
+  es_xsetinfo _test_2 0
+  while "server_var(_test_1) > 0" "queue get _test_2 test1; queue items _test_1 test1; es_log Value: server_var(_test_2) Left: server_var(_test_1)"
+  queue get _test_2 test1
+  if (server_var(_test_2) != "0") do
+  {
+    es_log *** Queue Test1 FAILED! server_var(_test_2) should have been 0 ***
+  }
+  es_keygetvalue _test_2 server_var(_queue_keygroup) queue items
+  if (server_var(_test_2) != 0) do
+  {
+    es_log *** Queue Test1 FAILED! server_var(_test_2) should have been 0 ***
+  }
+  queue delete test1
+  profile end ptest1
+}
+
+block test2
+{
+  es_log Queue Test2, the output should be numbers from 1 to 9 and A to E
+  profile begin ptest2
+  queue create test1
+  queue create test2
+  queue add test1 1
+  queue add test1 2
+  queue add test2 A
+  queue add test1 3
+  queue add test1 4
+  queue add test2 B
+  es_xsetinfo _test_1 0
+  queue items _test_1 test1
+  es_xsetinfo _test_2 0
+  while "server_var(_test_1) > 0" "queue get _test_2 test1; queue items _test_1 test1; es_log Value: server_var(_test_2) Left: server_var(_test_1)"
+  queue add test1 5
+  queue add test1 6
+  queue add test2 C
+  queue add test1 7
+  queue add test1 8
+  queue add test2 D
+  queue add test1 9
+  queue add test2 E
+  es_xsetinfo _test_1 0
+  queue items _test_1 test1
+  es_xsetinfo _test_2 0
+  while "server_var(_test_1) > 0" "queue get _test_2 test1; queue items _test_1 test1; es_log Value: server_var(_test_2) Left: server_var(_test_1)"
+  es_xsetinfo _test_1 0
+  queue items _test_1 test2
+  es_xsetinfo _test_2 0
+  while "server_var(_test_1) > 0" "queue get _test_2 test2; queue items _test_1 test2; es_log Value: server_var(_test_2) Left: server_var(_test_1)"
+  queue delete test1
+  queue delete test2
+  profile end ptest2
+}

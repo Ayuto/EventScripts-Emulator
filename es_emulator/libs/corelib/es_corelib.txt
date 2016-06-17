@@ -1,0 +1,1501 @@
+// EventScripts corelib
+//  This library is used and shared by other scripts.
+//  It includes tons of contributions from the EventScripts Community. Thanks!
+
+block load
+{
+  es_set es_corelib_ver "2.1.1.336"
+  es_makepublic es_corelib_ver
+
+  es_xset _tempcore 0 "Internal. Corelib temporary variable."
+  es_xset _exists 0 "Internal. Corelib temporary existence variable."
+  // register reserved commands
+  es_xdoblock corelib/reserved_commands
+
+ 
+  // register the "keygroupremove" command
+  es_xdoblock corelib/keygroupremove_register
+  // registers the "keymath" command
+  es_xdoblock corelib/keymath_register
+
+  // load the testlib early
+  es_xload corelib/testlib
+  es_doblock corelib/tests_create
+  
+
+  // register the "refcount" command
+  es_xdoblock corelib/refcount_register
+  // register the "while" command
+  es_xdoblock corelib/while_register
+  // register the "cheatexec" command
+  es_xdoblock corelib/cheatexec_register
+  // register the "getplayerinfo" command
+  es_xdoblock corelib/getplayerinfo_register
+  // register the "downloadable" command
+  es_xdoblock corelib/downloadable_register
+  // register the "getrandplayer" command
+  es_xdoblock corelib/randplayer_register
+  // register the "profilecmd" command
+  es_xdoblock corelib/profilecmd_register
+  // register the "isnull" command
+  es_xdoblock corelib/isnull_register
+
+  // register the "forcecase" command
+  es_xdoblock corelib/forcecase_register
+  // registers the "nearcoord" command
+  es_xdoblock corelib/nearcoord_register
+  
+
+  // load subscripts
+  es_xload corelib/interfaces
+  es_xload corelib/services
+  es_xload corelib/linkedlist
+  es_xload corelib/foreach
+  es_xload corelib/repeat
+  es_xload corelib/average
+  es_xload corelib/score
+  es_xload corelib/xalias
+  es_xload corelib/textlib
+  es_xload corelib/playergetset
+  es_xload corelib/keyfilter
+  es_xload corelib/uniqueid
+  es_xload corelib/getbotname
+  es_xload corelib/damage
+  es_xload corelib/playervar
+  es_xload corelib/timelib
+  es_xload corelib/sqlitelib
+  es_xload corelib/statlog
+  es_xload corelib/keygroupsort
+  es_xload corelib/keygrouprand
+  es_xload corelib/keyrand
+  es_xload corelib/exp
+  es_xload corelib/isnumerical
+  es_xload corelib/quickcmd
+  es_xload corelib/escinject
+  es_xload corelib/getplayercount
+  es_xload corelib/queue
+  es_xload corelib/vecmath
+  es_xload corelib/usermsglib
+  es_xload corelib/inrange
+  es_xload corelib/entitylib
+  es_xload corelib/es_install
+  es_xload corelib/es_checkversion
+  es_xload corelib/es_mexec
+  
+  // register the default interfaces and services
+  es_doblock corelib/default_interfaces
+  es_doblock corelib/default_services
+  
+  // requires interfaces to be loaded
+  es_xload corelib/clientcmd
+
+  // requires clientcmd to be loaded
+}
+
+block unload
+{
+  // unload subscripts
+  es_xunload corelib/clientcmd
+  es_xunload corelib/entitylib
+  es_xunload corelib/inrange
+  es_xunload corelib/usermsglib
+  es_xunload corelib/vecmath
+  es_xunload corelib/queue
+  es_xunload corelib/getplayercount
+  es_xunload corelib/escinject
+  es_xunload corelib/quickcmd
+  es_xunload corelib/isnumerical
+  es_xunload corelib/exp
+  es_xunload corelib/keyrand
+  es_xunload corelib/keygrouprand
+  es_xunload corelib/keygroupsort
+  es_xunload corelib/statlog
+  es_xunload corelib/timelib
+  es_xunload corelib/playervar
+  es_xunload corelib/damage
+  es_xunload corelib/getbotname
+  es_xunload corelib/uniqueid
+  es_xunload corelib/keyfilter
+  es_xunload corelib/playergetset
+  es_xunload corelib/textlib
+  es_xunload corelib/sqlitelib
+  es_xunload corelib/xalias
+  es_xunload corelib/score
+  es_xunload corelib/average
+  es_xunload corelib/repeat
+  es_xunload corelib/foreach
+  es_xunload corelib/linkedlist
+  es_xunload corelib/services
+  es_xunload corelib/interfaces
+  es_xunload corelib/testlib
+}
+
+block reserved_commands
+{
+  es_xregcmd "(" corelib/reserved "Reserved for EventScripts/corelib use"
+  es_xregcmd ")" corelib/reserved "Reserved for EventScripts/corelib use"
+  es_xregcmd "'" corelib/reserved "Reserved for EventScripts/corelib use"
+  es_xregcmd "{" corelib/reserved "Reserved for EventScripts/corelib use"
+  es_xregcmd "}" corelib/reserved "Reserved for EventScripts/corelib use"
+}
+
+block tests_create
+{
+  testsuite delete corelib
+  testsuite create corelib "Corelib Test Suite"
+}
+
+block default_interfaces
+{
+  interface register AuthorizationService |corelib/interfaces/AuthorizationService
+}
+
+block default_services
+{
+  services type auth requires AuthorizationService 1
+}
+
+// eventscripts_noisy reference count. Scripts that require noisy can be unloaded safely, so that is doesn't break other scripts which require noisy
+block noisy_on
+{
+  refcount increment eventscripts_noisy
+}
+block noisy_off
+{
+  refcount decrement eventscripts_noisy
+}
+
+
+block while_register
+{
+  // variables used by while
+  es_xset _whilestatement 0
+  es_xset _whilecmd 0
+  es_xset _whilecond 0
+  // check to see if while exists
+  es_xexists _exists command while
+  ifx false(_exists) do
+  {
+    es_xregcmd while corelib/while "Allows you to loop with a condition and a block."
+
+    testcase qcreate corelib whiletest "Tests while"
+    testcase addtest whiletest whiletest1 corelib/while_test "Test else cases"
+    stack create _whilestack
+  }
+}
+
+block while
+{
+  // get condition
+  // get command
+  // create alias self "if cond then command;self"
+  // create variable blah "if cond then command;es_commandv bla"
+  stack save _whilestack _whilestatement
+  stack save _whilestack _whilecmd
+  es_xgetargv _whilecond 1
+  ifx true(_whilecond) do
+  {
+    es_xgetargv _whilecmd 2
+    ifx true(_whilecmd) do
+    {
+      es_xformatv _whilecmd "%1;_whileloop" _whilecmd
+      es alias _whilecmd server_var(_whilecmd)
+      es_xformatv _whilestatement "if (%1) then _whilecmd" _whilecond
+      es alias _whileloop server_var(_whilestatement)
+      _whileloop
+    }
+  }
+  stack restore _whilestack _whilecmd
+  es alias _whilecmd server_var(_whilecmd)
+  stack restore _whilestack _whilestatement
+  es alias _whileloop server_var(_whilestatement)
+}
+
+// exists to test the while loop command, ignore
+// es_xdoblock corelib/while_test to test the while command
+
+block while_test
+{
+  profile begin while_test
+  
+  testlib begin wt1 "While test 1"
+  es_xset _while_test2 9
+  while "server_var(_while_test2) > 0" "es_xdoblock corelib/while_test2"
+  testlib fail_unless _while_test2 equalto 0
+  testlib end wt1
+
+  testlib begin wt1 "While test 1"
+  es_xset _while_test3 5
+  while "server_var(_while_test3) > 0" "es_xdoblock corelib/while_test3"
+  testlib fail_unless _while_test2 equalto 0
+  testlib fail_unless _while_test3 equalto 0
+  testlib end wt1
+
+  testlib begin wt1 "While test 1"
+  es_xset _while_test4 0
+  while "server_var(_while_test4) < 6" "es_xmath _while_test4 + 1"
+  testlib fail_unless _while_test4 equalto 6
+  testlib end wt1
+
+  profile end while_test 
+}
+
+// exists to test the while loop command, ignore
+block while_test2
+{
+  es_dbgmsg 1 _while_test2: server_var(_while_test2)
+  es_xmath _while_test2 - 1
+}
+
+// exists to test the while loop command, ignore
+block while_test3
+{
+  es_dbgmsg 1 _while_test3: server_var(_while_test3)
+  // call an inner while loop
+  es_xset _while_test2 4
+  while "server_var(_while_test2) > 0" "es_xdoblock corelib/while_test2"
+
+  es_xset _while_test2 5
+  while "server_var(_while_test2) > 0" "es_xdoblock corelib/while_test2"
+
+  es_xmath _while_test3 - 1
+}
+
+// called to register the cheatexec command
+block cheatexec_register
+{
+  // if the stack command isn't already registered
+  es_xexists _tempcore command cheatexec
+  if (server_var(_tempcore) = 0) do
+  {
+    // while variables
+    es_xset _cheatbak 0
+    es_xset _cheatuserid 0
+    es_xset _cheatcmd 0
+    es_xregcmd cheatexec corelib/cheatexec "Have player execute a cheat command"
+  }
+}
+
+block refcount_register
+{
+  es_xexists _tempcore command refcount
+  ifx false(_tempcore) do
+  {
+    es_xregcmd refcount corelib/refcount "Increase or decrease the reference count for variable or addon."
+  }
+
+  es_xexists _tempcore keygroup _refcount
+  ifx true(_tempcore) do
+  {
+    es_xkeygroupdelete _refcount
+  }
+  es_xkeygroupcreate _refcount
+
+  // register variables
+  es_xset _rc_ac 0
+  es_xset _rc_a1 0
+  es_xset _rc_a2 0
+  es_xset _rc_a3 0
+  es_xset _rc_key 0
+  es_xset _rc_count 0
+  es_xset _rc_old 0
+  es_xset _rc_a4 0
+}
+
+// refcount command v0.6
+// Submitted by Wonder
+// Syntax: refcount [command] <function> [var] <target> [silent]
+block refcount
+{
+  es_xgetargc _rc_ac
+  if (server_var(_rc_ac) > 2) do
+  {
+    es_xgetargv _rc_a1 1
+    if (server_var(_rc_a1) == variable) do
+    {
+      es_xgetargv _rc_a2 2
+      if (server_var(_rc_a2) == increment) do
+      {
+        es_xgetargv _rc_a3 3
+        es_exists _tempcore variable server_var(_rc_a3)
+        ifx true(_tempcore) do
+        {
+          es_xformatv _rc_key v%1 _rc_a3
+          es_exists _tempcore key _refcount server_var(_rc_key)
+          ifx false(_tempcore) do
+          {
+            es_keycreate _refcount server_var(_rc_key)
+            es_keysetvalue _refcount server_var(_rc_key) count 1
+            es_keysetvalue _refcount server_var(_rc_key) old_value server_var(server_var(_rc_a3))
+            es_xset _rc_count 1
+          }
+          else do
+          {
+            es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+            es_xmath _rc_count + 1
+            es_keysetvalue _refcount server_var(_rc_key) count server_var(_rc_count)
+          }
+          if (server_var(_rc_ac) > 4) do
+          {
+            es_xgetargv _rc_a4 4
+            ifx true(_rc_a4) do
+            {
+              es_forcevalue server_var(_rc_a3) 1
+            }
+            else do
+            {
+              es_set server_var(_rc_a3) 1
+            }
+          }
+          else do
+          {
+            es_set server_var(_rc_a3) 1
+          }
+          es_dbgmsg 1 [refcount] The reference count for server_var(_rc_a3) is now server_var(_rc_count)!
+        }
+        else do
+        {
+          es_dbgmsg 0 [refcount] The variable server_var(_rc_a3) does not exist!
+        }
+      }
+      else do
+      {
+        if (server_var(_rc_a2) == decrement) do
+        {
+          es_xgetargv _rc_a3 3
+          es_exists _tempcore variable server_var(_rc_a3)
+          ifx true(_tempcore) do
+          {
+            es_xformatv _rc_key v%1 _rc_a3
+            es_exists _tempcore key _refcount server_var(_rc_key)
+            ifx true(_tempcore) do
+            {
+              es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+              es_xmath _rc_count - 1
+              if (server_var(_rc_count) <= 0) do
+              {
+                es_xset _rc_count 0
+                es_keygetvalue _rc_old _refcount server_var(_rc_key) old_value
+                es_keydelete _refcount server_var(_rc_key)
+                if (server_var(_rc_ac) > 4) do
+                {
+                  es_xgetargv _rc_a4 4
+                  ifx true(_rc_a4) do
+                  {
+                    es_forcevalue server_var(_rc_a3) server_var(_rc_old)
+                  }
+                  else do
+                  {
+                    es_set server_var(_rc_a3) server_var(_rc_old)
+                  }
+                }
+                else do
+                {
+                  es_set server_var(_rc_a3) server_var(_rc_old)
+                }
+              }
+              else do
+              {
+                es_keysetvalue _refcount server_var(_rc_key) count server_var(_rc_count)
+                if (server_var(_rc_ac) > 4) do
+                {
+                  es_xgetargv _rc_a4 4
+                  ifx true(_rc_a4) do
+                  {
+                    es_forcevalue server_var(_rc_a3) 1
+                  }
+                  else do
+                  {
+                    es_set server_var(_rc_a3) 1
+                  }
+                }
+                else do
+                {
+                  es_set server_var(_rc_a3) 1
+                }
+              }
+              es_dbgmsg 1 [refcount] The reference count for server_var(_rc_a3) is now server_var(_rc_count)!
+            }
+            else do
+            {
+              es_dbgmsg 0 [refcount] There is no reference count for server_var(_rc_a3)!
+            }
+          }
+          else do
+          {
+            es_dbgmsg 0 [refcount] The variable server_var(_rc_a3) does not exist!
+          }
+        }
+        else do
+        {
+          if (server_var(_rc_a3) == count) do
+          {
+            if (server_var(_rc_ac) > 4) do
+            {
+              es_xgetargv _rc_a3 3
+              es_exists _tempcore variable server_var(_rc_a3)
+              ifx true(_tempcore) do
+              {
+                es_xgetargv _rc_a4 4
+                es_exists _tempcore variable server_var(_rc_a4)
+                ifx true(_tempcore) do
+                {
+                  es_xformatv _rc_key v%1 _rc_a4
+                  es_exists _tempcore key _refcount server_var(_rc_key)
+                  ifx true(_tempcore) do
+                  {
+                    es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+                    es_set server_var(_rc_a3) server_var(_rc_count)
+                    es_dbgmsg 1 [refcount] The reference count for server_var(_rc_a4) is server_var(_rc_count)!
+                  }
+                  else do
+                  {
+                    es_set server_var(_rc_a3) 0
+                    es_dbgmsg 0 [refcount] There is no reference count for server_var(_rc_a4)!
+                  }
+                }
+                else do
+                {
+                  es_dbgmsg 0 [refcount] The variable server_var(_rc_a4) does not exist!
+                }
+              } 
+              else do
+              {
+                es_dbgmsg 0 [refcount] The return variable server_var(_rc_a3) does not exist!
+              }
+            }
+            else do
+            {
+              es_xgetargv _rc_a3 3
+              es_exists _tempcore variable server_var(_rc_a3)
+              ifx true(_tempcore) do
+              {
+                es_xformatv _rc_key v%1 _rc_a3
+                es_exists _tempcore key _refcount server_var(_rc_key)
+                ifx true(_tempcore) do
+                {
+                  es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+                  es_dbgmsg 0 [refcount] The reference count for server_var(_rc_a3) is server_var(_rc_count)!
+                }
+                else do
+                {
+                  es_dbgmsg 0 [refcount] There is no reference count for server_var(_rc_a4)!
+                }
+              } 
+              else do
+              {
+                es_dbgmsg 0 [refcount] The variable server_var(_rc_a3) does not exist!
+              }
+            }
+          }
+          else do
+          {
+            es_dbgmsg 0 [refcount] The function server_var(_rc_a2) is not valid!
+          }
+        }
+      }
+    }
+    else do
+    {
+      if (server_var(_rc_a1) == addon) do
+      {
+        es_xgetargv _rc_a2 2
+        if (server_var(_rc_a2) == increment) do
+        {
+          es_xgetargv _rc_a3 3
+          es_xformatv _rc_key a%1 _rc_a3
+          es_xstring _rc_key replace \ ?
+          es_xstring _rc_key replace / :
+          es_exists _tempcore key _refcount server_var(_rc_key)
+          ifx false(_tempcore) do
+          {
+            es_keycreate _refcount server_var(_rc_key)
+            es_keysetvalue _refcount server_var(_rc_key) count 1
+            es_exists _tempcore script server_var(_rc_a3)
+            ifx true(_tempcore) do
+            {
+              es_keysetvalue _refcount server_var(_rc_key) old_value 1
+            }
+            else do
+            {
+              es_keysetvalue _refcount server_var(_rc_key) old_value 0
+            }
+            es_xset _rc_count 1
+          }
+          else do
+          {
+            es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+            es_xmath _rc_count + 1
+            es_keysetvalue _refcount server_var(_rc_key) count server_var(_rc_count)
+          }
+          es_load server_var(_rc_a3)
+          es_dbgmsg 1 [refcount] The reference count for addon server_var(_rc_a3) is now server_var(_rc_count)!
+        }
+        else do
+        {
+          if (server_var(_rc_a2) == decrement) do
+          {
+            es_xgetargv _rc_a3 3
+            es_xformatv _rc_key a%1 _rc_a3
+            es_xstring _rc_key replace \ ?
+            es_xstring _rc_key replace / :
+            es_exists _tempcore key _refcount server_var(_rc_key)
+            ifx true(_tempcore) do
+            {
+              es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+              es_xmath _rc_count - 1
+              if (server_var(_rc_count) <= 0) do
+              {
+                es_xset _rc_count 0
+                es_keygetvalue _rc_old _refcount server_var(_rc_key) old_value
+                ifx true(_rc_old) do
+                {
+                  es_load server_var(_rc_a3)
+                }
+                else do
+                {
+                  es_unload server_var(_rc_a3)
+                }
+                es_keydelete _refcount server_var(_rc_key)
+              }
+              else do
+              {
+                es_keysetvalue _refcount server_var(_rc_key) count server_var(_rc_count)
+                es_load server_var(_rc_a3)
+              }
+              es_dbgmsg 1 [refcount] The reference count for addon server_var(_rc_a3) is now server_var(_rc_count)!
+            }
+            else do
+            {
+              es_dbgmsg 0 [refcount] There is no reference count for addon server_var(_rc_a3)!
+            }
+          }
+          else do
+          {
+            if (server_var(_rc_a2) == count) do
+            {
+              if (server_var(_rc_ac) > 4) do
+              {
+                es_xgetargv _rc_a3 3
+                es_exists _tempcore variable server_var(_rc_a3)
+                ifx true(_tempcore) do
+                {
+                  es_xgetargv _rc_a4 4
+                  es_xformatv _rc_key a%1 _rc_a4
+                  es_xstring _rc_key replace "\" "?"
+                  es_xstring _rc_key replace "/" ":"
+                  es_exists _tempcore key _refcount server_var(_rc_key)
+                  ifx true(_tempcore) do
+                  {
+                    es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+                    es_set server_var(_rc_a3) server_var(_rc_count)
+                    es_dbgmsg 1 [refcount] The reference count for addon server_var(_rc_a4) is server_var(_rc_count)!
+                  }
+                  else do
+                  {
+                    es_set server_var(_rc_a3) 0
+                    es_dbgmsg 0 [refcount] There is no reference count for addon server_var(_rc_a4)!
+                  }
+                } 
+                else do
+                {
+                  es_dbgmsg 0 [refcount] The return variable server_var(_rc_a3) does not exist!
+                }
+              }
+              else do
+              {
+                es_xgetargv _rc_a3 3
+                es_xformatv _rc_key a%1 _rc_a3
+                es_xstring _rc_key replace "\" "?"
+                es_xstring _rc_key replace "/" ":"
+                es_exists _tempcore key _refcount server_var(_rc_key)
+                ifx true(_tempcore) do
+                {
+                  es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+                  es_dbgmsg 0 [refcount] The reference count for addon server_var(_rc_a3) is server_var(_rc_count)!
+                }
+                else do
+                {
+                  es_dbgmsg 0 [refcount] There is no reference count for addon server_var(_rc_a4)!
+                }
+              }
+            }
+            else do
+            {
+              es_dbgmsg 0 [refcount] The function server_var(_rc_a2) is not valid!
+            }
+          }
+        }
+      }
+      else do
+      {
+        // we must remain backwards-compatible
+        if (server_var(_rc_a1) == increment) do
+        {
+          es_xgetargv _rc_a2 2
+          es_exists _tempcore variable server_var(_rc_a2)
+          ifx true(_tempcore) do
+          {
+            es_xformatv _rc_key v%1 _rc_a2
+            es_exists _tempcore key _refcount server_var(_rc_key)
+            ifx false(_tempcore) do
+            {
+              es_keycreate _refcount server_var(_rc_key)
+              es_keysetvalue _refcount server_var(_rc_key) count 1
+              es_keysetvalue _refcount server_var(_rc_key) old_value server_var(server_var(_rc_a2))
+              es_xset _rc_count 1
+            }
+            else do
+            {
+              es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+              es_xmath _rc_count + 1
+              es_keysetvalue _refcount server_var(_rc_key) count server_var(_rc_count)
+            }
+            if (server_var(_rc_ac) > 3) do
+            {
+              es_xgetargv _rc_a3 3
+              ifx true(_rc_a3) do
+              {
+                es_forcevalue server_var(_rc_a2) 1
+              }
+              else do
+              {
+                es_set server_var(_rc_a2) 1
+              }
+            }
+            else do
+            {
+              es_set server_var(_rc_a2) 1
+            }
+            es_dbgmsg 1 [refcount] The reference count for server_var(_rc_a2) is now server_var(_rc_count)!
+          }
+          else do
+          {
+            es_dbgmsg 0 [refcount] The variable server_var(_rc_a2) does not exist!
+          }
+        }
+        else do
+        {
+          if (server_var(_rc_a1) == decrement) do
+          {
+            es_xgetargv _rc_a2 2
+            es_exists _tempcore variable server_var(_rc_a2)
+            ifx true(_tempcore) do
+            {
+              es_xformatv _rc_key v%1 _rc_a2
+              es_exists _tempcore key _refcount server_var(_rc_key)
+              ifx true(_tempcore) do
+              {
+                es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+                es_xmath _rc_count - 1
+                if (server_var(_rc_count) <= 0) do
+                {
+                  es_xset _rc_count 0
+                  es_keygetvalue _rc_old _refcount server_var(_rc_key) old_value
+                  es_keydelete _refcount server_var(_rc_key)
+                  if (server_var(_rc_ac) > 3) do
+                  {
+                    es_xgetargv _rc_a3 3
+                    ifx true(_rc_a3) do
+                    {
+                      es_forcevalue server_var(_rc_a2) server_var(_rc_old)
+                    }
+                    else do
+                    {
+                      es_set server_var(_rc_a2) server_var(_rc_old)
+                    }
+                  }
+                  else do
+                  {
+                    es_set server_var(_rc_a2) server_var(_rc_old)
+                  }
+                }
+                else do
+                {
+                  es_keysetvalue _refcount server_var(_rc_key) count server_var(_rc_count)
+                  if (server_var(_rc_ac) > 3) do
+                  {
+                    es_xgetargv _rc_a3 3
+                    ifx true(_rc_a3) do
+                    {
+                      es_forcevalue server_var(_rc_a2) 1
+                    }
+                    else do
+                    {
+                      es_set server_var(_rc_a2) 1
+                    }
+                  }
+                  else do
+                  {
+                    es_set server_var(_rc_a2) 1
+                  }
+                }
+                es_dbgmsg 1 [refcount] The reference count for server_var(_rc_a2) is now server_var(_rc_count)!
+              }
+              else do
+              {
+                es_dbgmsg 0 [refcount] There is no reference count for server_var(_rc_a2)!
+              }
+            }
+            else do
+            {
+              es_dbgmsg 0 [refcount] The variable server_var(_rc_a2) does not exist!
+            }
+          }
+          else do
+          {
+            if (server_var(_rc_a1) == count) do
+            {
+              if (server_var(_rc_ac) > 3) do
+              {
+                es_xgetargv _rc_a2 2
+                es_exists _tempcore variable server_var(_rc_a2)
+                ifx true(_tempcore) do
+                {
+                  es_xgetargv _rc_a3 3
+                  es_exists _tempcore variable server_var(_rc_a3)
+                  ifx true(_tempcore) do
+                  {
+                    es_xformatv _rc_key v%1 _rc_a3
+                    es_exists _tempcore key _refcount server_var(_rc_key)
+                    ifx true(_tempcore) do
+                    {
+                      es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+                      es_set server_var(_rc_a2) server_var(_rc_count)
+                      es_dbgmsg 1 [refcount] The reference count for server_var(_rc_a3) is server_var(_rc_count)!
+                    }
+                    else do
+                    {
+                      es_set server_var(_rc_a2) 0
+                      es_dbgmsg 0 [refcount] There is no reference count for server_var(_rc_a3)!
+                    }
+                  }
+                  else do
+                  {
+                    es_dbgmsg 0 [refcount] The variable server_var(_rc_a4) does not exist!
+                  }
+                } 
+                else do
+                {
+                  es_dbgmsg 0 [refcount] The return variable server_var(_rc_a3) does not exist!
+                }
+              }
+              else do
+              {
+                es_xgetargv _rc_a2 2
+                es_exists _tempcore variable server_var(_rc_a2)
+                ifx true(_tempcore) do
+                {
+                  es_xformatv _rc_key v%1 _rc_a2
+                  es_exists _tempcore key _refcount server_var(_rc_key)
+                  ifx true(_tempcore) do
+                  {
+                    es_keygetvalue _rc_count _refcount server_var(_rc_key) count
+                    es_dbgmsg 0 [refcount] The reference count for server_var(_rc_a2) is server_var(_rc_count)!
+                  }
+                  else do
+                  {
+                    es_dbgmsg 0 [refcount] There is no reference count for server_var(_rc_a2)!
+                  }
+                } 
+                else do
+                {
+                  es_dbgmsg 0 [refcount] The variable server_var(_rc_a2) does not exist!
+                }
+              }
+            }
+            else do
+            {
+              es_dbgmsg 0 [refcount] The command server_var(_rc_a1) is not valid!
+            }
+          }
+        }
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [refcount] Syntax: refcount [command] <function> [var] <target> [silent]
+  }
+}
+
+block refcounttest
+{
+  profile begin refcount_variable_inc
+  refcount variable increment sv_cheats
+  profile end refcount_variable_inc
+
+  profile begin refcount_variable_count
+  refcount variable count sv_cheats
+  profile end refcount_variable_count
+
+  profile begin refcount_variable_dec
+  refcount variable decrement sv_cheats
+  profile end refcount_variable_dec
+
+  profile begin refcount_addon_inc
+  refcount addon increment servermail
+  profile end refcount_addon_inc
+
+  profile begin refcount_addon_count
+  refcount addon count servermail
+  profile end refcount_addon_count
+
+  profile begin refcount_addon_dec
+  refcount addon decrement servermail
+  profile end refcount_addon_dec
+
+  profile begin refcount_inc
+  refcount increment sv_cheats
+  profile end refcount_inc
+
+  profile begin refcount_count
+  refcount count sv_cheats
+  profile end refcount_count
+
+  profile begin refcount_dec
+  refcount decrement sv_cheats
+  profile end refcount_dec
+}
+
+block cheatexec
+{
+  // first argument is userid
+  es_xgetargv _cheatuserid 1
+  // second argument is command
+  es_xgetargv _cheatcmd 2
+  es_xcopy _cheatbak sv_cheats
+  es_xforcevalue sv_cheats 1
+  es_sexec server_var(_cheatuserid) server_var(_cheatcmd)
+  es_forcevalue sv_cheats server_var(_cheatbak)
+}
+
+// called to register the getplayerinfo command
+block getplayerinfo_register
+{
+  // if the stack command isn't already registered
+  es_xexists _tempcore command getplayerinfo
+  if (server_var(_tempcore) = 0) do
+  {
+    // while variables
+    es_xset _playerinfo_var 0
+    es_xset _playerinfo_userid 0
+    es_xset _playerinfo_info 0
+    es_xregcmd getplayerinfo corelib/getplayerinfo "Return specific information about a player"
+  }
+}
+
+block getplayerinfo
+{
+  es_xgetargv _playerinfo_var 1
+  es_xgetargv _playerinfo_userid 2
+  es_xgetargv _playerinfo_info 3
+  es_exists _tempcore variable server_var(_playerinfo_var)
+  ifx true(_tempcore) do
+  {
+    es_exists _tempcore userid server_var(_playerinfo_userid)
+    ifx true(_tempcore) do
+    {
+      es_createplayerlist _getplayerinfo server_var(_playerinfo_userid)
+      esnq es_xkeygetvalue server_var(_playerinfo_var) _getplayerinfo server_var(_playerinfo_userid) server_var(_playerinfo_info)
+      es_xkeygroupdelete _getplayerinfo
+    }
+    else do
+    {
+      es_dbgmsg 0 getplayerinfo: server_var(_playerinfo_userid) player does not exist!
+      es_copy server_var(_playerinfo_var) _tempcore
+    }
+  }
+  else do
+  {
+    es_dbgmsg 0 getplayerinfo: server_var(_playerinfo_var) variable does not exist!
+  }
+}
+
+// called to register the downloadable command
+block downloadable_register
+{
+  // if the stack command isn't already registered
+  es_xexists _tempcore command downloadable
+  if (server_var(_tempcore) = 0) do
+  {
+    es_xregcmd downloadable corelib/downloadable "Specifies a file that should be marked as required for client download"
+  }
+}
+
+block downloadable
+{
+  es_xgetargv _tempcore 1
+  ifx true(_tempcore) do
+  {
+    ifx true(eventscripts_currentmap) do
+    {
+      es_stringtable downloadables server_var(_tempcore)
+    }
+    else do
+    {
+      es_xdbgmsg 1 downloadable: You can only add downloadables if a map was loaded
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 downloadable: Please specifify a file path for the downloadable
+  }
+}
+
+
+block randplayer_register
+{
+  // if the getrandplayer command isn't already registered
+  es_xexists _tempcore command getrandplayer
+  if (server_var(_tempcore) = 0) do
+  {
+    es_xset _rndp_num 0
+    es_xset _rndp_arg1 0
+    es_xset _rndp_arg2 0
+    es_xset _rndp_argc 0
+    es_xset _rndp_id 0
+    es_xregcmd getrandplayer corelib/randomplayer "Returns a random player using a filter you specify"
+  }
+}
+
+// Random Player Command by Venjax
+// Usage: randplayer <var> <filter>
+// <var> returns random userid based on filter
+// uses foreach filters
+block randomplayer
+{
+  es_xset _rndp_cnt 0
+  es_xgetargv _rndp_arg1 1
+  es_xgetargv _rndp_arg2 2
+  es_xgetargc _rndp_argc
+  if (server_var(_rndp_argc) < 3) do
+  {
+    es_xdbgmsg 0 Syntax: getrandplayer <var> <indentifier>
+  }
+  else do
+  {
+    es_xkeygroupcreate _rndp_kg
+    es foreach player _rndp_id server_var(_rndp_arg2) "es_doblock corelib/randgather"
+    es_rand _rndp_num 1 server_var(_rndp_cnt)
+    es_exists _rndp_argc key _rndp_kg server_var(_rndp_num) rnd_userid
+    ifx true(_rndp_argc) do
+    {
+      es_keygetvalue server_var(_rndp_arg1) _rndp_kg server_var(_rndp_num) rnd_userid
+      es_xkeygroupdelete _rndp_kg
+    }
+    else do
+    {
+      es_xdbgmsg 0 Warning: getrandplayer failed: No user on specified filter
+    }
+  }
+}
+
+block randgather
+{
+  es_xmath _rndp_cnt + 1
+  es_keycreate _rndp_kg server_var(_rndp_cnt)
+  es_keysetvalue _rndp_kg server_var(_rndp_cnt) rnd_userid server_var(_rndp_id)
+}
+
+block randtest
+{
+  es_xset _rndp_tst 0
+  es_xset _rndp_tst1 0
+  es_xset _rndp_tval 0
+  es_xset _rndp_prof 0
+  es_xcreateplayerlist _rndp_test
+  getrandplayer _rndp_tst #all
+  es_exists _rndp_tst1 key _rndp_test server_var(_rndp_tst)
+  if (server_var(_rndp_tst1) = 1) do
+  {
+    es_msg PASS: Randplayer <var> #all results: server_var(_rndp_tst) and this is a valid userid
+  }
+  else do
+  {
+    es_msg FAIL: Randplayer <var> #all results: server_var(_rndp_tst) and is not a valid userid
+  }
+  getrandplayer _rndp_tst #t
+  es_exists _rndp_tst1 key _rndp_test server_var(_rndp_tst)
+  if (server_var(_rndp_tst1) = 1) do
+  {
+    es_keygetvalue _rndp_tval _rndp_test server_var(_rndp_tst) teamid
+    if (server_var(_rndp_tval) = 2) do
+    {
+       es_msg PASS: Randplayer <var> #t results: server_var(_rndp_tst) and this is a valid userid on Terrorists team
+    }
+    else do
+    {
+      es_msg FAIL: Randplayer <var> #t results: server_var(_rndp_tst) and is not a valid userid on Terrorists team
+    }
+  }
+  else do
+  {
+    es_msg FAIL: Randplayer <var> #t results: server_var(_rndp_tst) and is not a valid userid
+  }
+  es_xkeygroupdelete _rndp_test
+}
+
+
+block profilecmd_register
+{
+  es_xexists _tempcore command profilecmd
+  if (server_var(_tempcore) = 0) do
+  {
+    es_xset _prfc_arg1 0
+    es_xset _prfc_arg2 0
+    es_regcmd profilecmd corelib/profilecmd "Runs a command and gives you a relative performance value. (Relative because some overhead is introduced)"
+  }
+}
+
+// Usage: profilecmd <var> "cmd"
+// <var> returns profile time
+block profilecmd
+{
+  es_xgetargv _prfc_arg1 1
+  es_xgetargv _prfc_arg2 2
+  es profile begin server_var(_prfc_arg1)
+  es_commandv _prfc_arg2
+  es profile end server_var(_prfc_arg1)
+}
+
+block profilecmd_test
+{
+  es_xset myvarx 0
+  alias mathp es_mathparse myvarx myvarx+1
+  alias mathx es_math myvarx + 1
+  profilecmd myvar mathp
+  profilecmd myvar mathx
+  //profilecmd myvar echo Hello
+  //profilecmd myvar2 es_msg Hello
+}
+
+
+block isnull_register
+{
+  es_xexists _tempcore command isnull
+  if (server_var(_tempcore) = 0) do
+  {
+    //Register command
+    es_xregcmd isnull "corelib/isnull" "Syntax: isnull <return var> <variable to check>"
+  }
+}
+
+// isnull <returnvar> <var-to-check>
+// submitted by ichthys
+block isnull
+{
+  //es isnull <returnvar> <var to check>
+  es_xset _isnullvar 0
+  es_xgetargv _isnullvar 2
+  es_xset _coretemp 0
+  //Check if test variable exists
+  es_exists _coretemp variable server_var(_isnullvar)
+  if (server_var(_coretemp) != 0) do
+  {
+    //Get return variable
+    es_xset _isnullreturnvar 0
+    es_xgetargv _isnullreturnvar 1
+    es_xset _isnulltemp 0
+    //Copy value to check
+    es_copy _isnulltemp server_var(_isnullvar)
+    if (server_var(_isnulltemp) = 0) do
+    {
+      //it is either 0 or null
+      //Add to value, if it doesn't change it must be null
+      es_xcopy _tempcore eventscripts_debug 
+      es_xset eventscripts_debug -1 
+      es_xmath _isnulltemp + 1 
+      es_xcopy eventscripts_debug _tempcore
+      if (server_var(_isnulltemp) = 1) then es_xset server_var(_isnullreturnvar) 0
+      if (server_var(_isnulltemp) = 0) then es_xset server_var(_isnullreturnvar) 1
+    }
+    else do
+    {
+      //It's not null
+      es_set server_var(_isnullreturnvar) 0
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [isnull] error: test variable not found
+  }
+}
+
+// called to register the keygroupremove command
+block keygroupremove_register
+{
+  // if the keygroupremove command isn't already registered
+  es_xexists _tempcore command keygroupremove
+  ifx false(_tempcore) do
+  {
+    es_xregcmd keygroupremove corelib/keygroupremove "Removes an existing keygroup from memory without error. (Usefull for keygroup deletes on mapchange)"
+  }
+}
+
+// By [NATO]Hunter
+// removes a keygroup without spamming console
+block keygroupremove
+{
+  es_xgetargv _tempcore 1
+  ifx true(_tempcore) do
+  {
+    es_exists _exists keygroup server_var(_tempcore)
+    ifx true(_exists) do
+    {
+      es_keygroupdelete server_var(_tempcore)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 keygroupremove: Please specifify a keygroup for keygroupremove
+  }
+}
+
+block forcecase_register
+{
+  // if the getrandplayer command isn't already registered
+  es_xexists _tempcore command forcecase
+  ifx false(_tempcore) do
+  {
+    es_xset _fcase_arg1 0
+    es_xset _fcase_arg2 0
+    es_xset _fcase_temp 0
+    es_xregcmd forcecase corelib/forcecase "Returns a string in upper or lower case"
+    testcase qcreate corelib fcasetest "Tests forcecase"
+    testcase addtest fcasetest fcasetest1 corelib/forcecase_testlib "Test forcecase upper and lower"
+  }
+}
+
+// By [NATO]Hunter
+// Force a string to upper or lower case
+// Usage: forcecase <var> <upper/lower>
+// <var> returns the string in new case that was stored in <var>
+block forcecase
+{
+  es_xgetargv _fcase_arg1 1
+  ifx true(_fcase_arg1) do
+  {
+    es_xgetargv _fcase_arg2 2
+    if (server_var(_fcase_arg2) = "lower") do
+    {
+      es_copy _fcase_temp server_var(_fcase_arg1)
+      es_xstring _fcase_temp replace "A" "a"
+      es_xstring _fcase_temp replace "B" "b"
+      es_xstring _fcase_temp replace "C" "c"
+      es_xstring _fcase_temp replace "D" "d"
+      es_xstring _fcase_temp replace "E" "e"
+      es_xstring _fcase_temp replace "F" "f"
+      es_xstring _fcase_temp replace "G" "g"
+      es_xstring _fcase_temp replace "H" "h"
+      es_xstring _fcase_temp replace "I" "i"
+      es_xstring _fcase_temp replace "J" "j"
+      es_xstring _fcase_temp replace "K" "k"
+      es_xstring _fcase_temp replace "L" "l"
+      es_xstring _fcase_temp replace "M" "m"
+      es_xstring _fcase_temp replace "N" "n"
+      es_xstring _fcase_temp replace "O" "o"
+      es_xstring _fcase_temp replace "P" "p"
+      es_xstring _fcase_temp replace "Q" "q"
+      es_xstring _fcase_temp replace "R" "r"
+      es_xstring _fcase_temp replace "S" "s"
+      es_xstring _fcase_temp replace "T" "t"
+      es_xstring _fcase_temp replace "U" "u"
+      es_xstring _fcase_temp replace "V" "v"
+      es_xstring _fcase_temp replace "W" "w"
+      es_xstring _fcase_temp replace "X" "x"
+      es_xstring _fcase_temp replace "Y" "y"
+      es_xstring _fcase_temp replace "Z" "z"
+      es_set server_var(_fcase_arg1) server_var(_fcase_temp)
+    }
+    else do
+    {
+      if (server_var(_fcase_arg2) = "upper") do
+      {
+        es_copy _fcase_temp server_var(_fcase_arg1)
+        es_xstring _fcase_temp replace "a" "A"
+        es_xstring _fcase_temp replace "b" "B"
+        es_xstring _fcase_temp replace "c" "C"
+        es_xstring _fcase_temp replace "d" "D"
+        es_xstring _fcase_temp replace "e" "E"
+        es_xstring _fcase_temp replace "f" "F"
+        es_xstring _fcase_temp replace "g" "G"
+        es_xstring _fcase_temp replace "h" "H"
+        es_xstring _fcase_temp replace "i" "I"
+        es_xstring _fcase_temp replace "j" "J"
+        es_xstring _fcase_temp replace "k" "K"
+        es_xstring _fcase_temp replace "l" "L"
+        es_xstring _fcase_temp replace "m" "M"
+        es_xstring _fcase_temp replace "n" "N"
+        es_xstring _fcase_temp replace "o" "O"
+        es_xstring _fcase_temp replace "p" "P"
+        es_xstring _fcase_temp replace "q" "Q"
+        es_xstring _fcase_temp replace "r" "R"
+        es_xstring _fcase_temp replace "s" "S"
+        es_xstring _fcase_temp replace "t" "T"
+        es_xstring _fcase_temp replace "u" "U"
+        es_xstring _fcase_temp replace "v" "V"
+        es_xstring _fcase_temp replace "w" "W"
+        es_xstring _fcase_temp replace "x" "X"
+        es_xstring _fcase_temp replace "y" "Y"
+        es_xstring _fcase_temp replace "z" "Z"
+        es_set server_var(_fcase_arg1) server_var(_fcase_temp)
+      }
+      else do
+      {
+        es_xdbgmsg 0 forcecase: Invalid arguments for forcecase. Syntax: forcecase <var> <upper/lower>
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 forcecase: Invalid arguments for forcecase. Syntax: forcecase <var> <upper/lower>
+  }
+}
+
+block forcecase_testlib
+{
+  testlib begin upper "Testing whether or not forcecase upper works"
+  es_xset _fcase_test "Hello my Name is Hunter, I am from Germany. I am living in a city called Oberhausen"
+  forcecase _fcase_test upper
+  testlib fail_unless _fcase_test equalto "HELLO MY NAME IS HUNTER, I AM FROM GERMANY. I AM LIVING IN A CITY CALLED OBERHAUSEN"
+  testlib end
+
+  testlib begin lower "Testing whether or not forcecase lower works"
+  es_xset _fcase_test "Hello my Name is Hunter, I am from Germany. I am living in a city called Oberhausen"
+  forcecase _fcase_test lower
+  testlib fail_unless _fcase_test equalto "hello my name is hunter, i am from germany. i am living in a city called oberhausen"
+  testlib end
+}
+block forcecase_test1
+{
+  es_xset _fcase_test "Hello my Name is Hunter, I am from Germany. I am living in a city called Oberhausen"
+  profile begin _fcase_profile
+  forcecase _fcase_test upper
+  profile end _fcase_profile
+  if (server_var(_fcase_test) != "HELLO MY NAME IS HUNTER, I AM FROM GERMANY. I AM LIVING IN A CITY CALLED OBERHAUSEN") do
+  {
+    es_xlog FAIL : forcecase upper test failed!
+  }
+}
+block forcecase_test2
+{
+  es_xset _fcase_test "Hello my Name is Hunter, I am from Germany. I am living in a city called Oberhausen"
+  profile begin _fcase_profile
+  forcecase _fcase_test lower
+  profile end _fcase_profile
+  if (server_var(_fcase_test) != "hello my name is hunter, i am from germany. i am living in a city called oberhausen") do
+  {
+    es_xlog FAIL : forcecase lower test failed!
+  }
+}
+
+block keymath_register
+{
+   es_xset _tempcore 0
+   es_xexists _tempcore command "keymath"
+   if (server_var(_tempcore) = 0) do
+   {
+      //Register command
+      es_xregcmd keymath "corelib/keymath" "Syntax: keymath [keygroup] <key> <keyvalue> <operator> [value] (see es_math for operators)"
+      es_xset _keymathkeygroupvar 0
+      es_xset _keymathkeyvar 0
+      es_xset _keymathkeyvaluevar 0
+      es_xset _keymathoperatorvar 0
+      es_xset _keymathvaluevar 0
+      es_xset _keymathargs 0
+      es_xset _keymathmathvar 0
+      es_xset keymathtimer 0
+   }
+}
+
+block keymath
+{
+   es_xgetargc _keymathargs
+   if (server_var(_keymathargs) < 4) do
+   {
+      es_xgetargs _tempcore
+      echo keymath: Format is:
+      echo "  keymath [keygroup] <key> <keyvalue> <operator> [value]"
+      ifx false(_tempcore) do
+      {
+         es_format _tempcore "Your line was: %1" server_var(_tempcore)
+         es_xstring _tempcore replace 0 "(null)"
+         es echo server_var(_tempcore)
+      }
+      else do
+      {
+         es echo Your line was: server_var(_tempcore)
+      }
+   }
+   else do
+   {
+      es_xgetargv _keymathkeygroupvar 1
+      es_xgetargv _keymathkeyvar 1
+      es_exists _tempcore keygroup server_var(_keymathkeygroupvar)
+      ifx false(_tempcore) do
+      {
+         es_exists _tempcore key server_var(_keymathkeyvar)
+         ifx false(_tempcore) do
+         {
+            echo [keymath Error] Unable to find the keygroup/key!
+            es_xgetargs _tempcore
+            es echo Your line was: server_var(_tempcore)
+         }
+         else do
+         {
+            es_xdoblock corelib/keymath_key
+         }
+      }
+      else do
+      {
+         es_xdoblock corelib/keymath_keygroup
+      }
+   }
+}
+
+block keymath_keygroup
+{
+   es_xgetargv _keymathkeyvar 2
+   es_xgetargv _keymathkeyvaluevar 3
+   es_keygetvalue _keymathmathvar server_var(_keymathkeygroupvar) server_var(_keymathkeyvar) server_var(_keymathkeyvaluevar)
+   es_xgetargv _keymathoperatorvar 4
+   if (server_var(_keymathargs) = 6) do
+   {
+      es_xgetargv _keymathvaluevar 5
+      es_math _keymathmathvar server_var(_keymathoperatorvar) server_var(_keymathvaluevar)
+      es_keysetvalue server_var(_keymathkeygroupvar) server_var(_keymathkeyvar) server_var(_keymathkeyvaluevar) server_var(_keymathmathvar)
+   }
+   else do
+   {
+      es_math _keymathmathvar server_var(_keymathoperatorvar)
+      es_keysetvalue server_var(_keymathkeygroupvar) server_var(_keymathkeyvar) server_var(_keymathkeyvaluevar) server_var(_keymathmathvar)
+   }
+}
+
+block keymath_key
+{
+   es_xgetargv _keymathkeyvaluevar 2
+   es_keygetvalue _keymathmathvar server_var(_keymathkeyvar) server_var(_keymathkeyvaluevar)
+   es_xgetargv _keymathoperatorvar 3
+   if (server_var(_keymathargs) = 5) do
+   {
+      es_xgetargv _keymathvaluevar 4
+      es_math _keymathmathvar server_var(_keymathoperatorvar) server_var(_keymathvaluevar)
+      es_keysetvalue server_var(_keymathkeyvar) server_var(_keymathkeyvaluevar) server_var(_keymathmathvar)
+   }
+   else do
+   {
+      es_math _keymathmathvar server_var(_keymathoperatorvar) server_var(_keymathvaluevar)
+      es_keysetvalue server_var(_keymathkeyvar) server_var(_keymathkeyvaluevar) server_var(_keymathmathvar)
+   }
+}
+
+
+// nearcoord command v0.2
+// Submitted by Wonder
+block nearcoord_register
+{
+  es_xset _tempcore 0
+  es_xexists _tempcore command nearcoord
+  if (server_var(_tempcore) < 1) do
+  {
+    es_xregcmd nearcoord corelib/nearcoord "Loops through matching players in range of a set of coordinates."
+  }
+  es_xset _nc_ac 0
+  es_xset _nc_a1 0
+  es_xset _nc_a3 0
+  es_xset _nc_a6 0
+  es_xset _nc_lx 0
+  es_xset _nc_rx 0
+  es_xset _nc_a4 0
+  es_xset _nc_a7 0
+  es_xset _nc_ly 0
+  es_xset _nc_ry 0
+  es_xset _nc_a5 0
+  es_xset _nc_a8 0
+  es_xset _nc_lz 0
+  es_xset _nc_rz 0
+  es_xset _nc_a2 0
+  es_xset _nc_a9 0
+  es_xset __nc_id 0
+  es_xset _nc_ux 0
+  es_xset _nc_uy 0
+  es_xset _nc_uz 0
+}
+block nearcoord
+{
+  es_xgetargc _nc_ac
+  if (server_var(_nc_ac) > 9) do
+  {
+    es_xgetargv _nc_a1 1
+    es_xset _tempcore 0
+    es_exists _tempcore variable server_var(_nc_a1)
+    if (server_var(_tempcore) > 0) do
+    {
+      es_xgetargv _nc_a3 3
+      es_xgetargv _nc_a6 6
+      es_xcopy _nc_lx _nc_a3
+      es_math _nc_lx - server_var(_nc_a6)
+      es_xcopy _nc_rx _nc_a3
+      es_math _nc_rx + server_var(_nc_a6)
+      es_xgetargv _nc_a4 4
+      es_xgetargv _nc_a7 7
+      es_xcopy _nc_ly _nc_a4
+      es_math _nc_ly - server_var(_nc_a7)
+      es_xcopy _nc_ry _nc_a4
+      es_math _nc_ry + server_var(_nc_a7)
+      es_xgetargv _nc_a5 5
+      es_xgetargv _nc_a8 8
+      es_xcopy _nc_lz _nc_a5
+      es_math _nc_lz - server_var(_nc_a8)
+      es_xcopy _nc_rz _nc_a5
+      es_math _nc_rz + server_var(_nc_a8)
+      es_xgetargv _nc_a2 2
+      es_xgetargv _nc_a9 9
+      es foreach player __nc_id server_var(_nc_a2) "es_xdoblock corelib/nearcoord_checkcoords"
+      alias __nearcoord_cmd
+    }
+    else do
+    {
+      es_xdbgmsg 0 [nearcoord] CVAR does not exist.
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [nearcoord] Syntax error. nearcoord <cvar for userid> <identifier> <x coord> <y coord> <z coord> <x range> <y range> <z range> <"command to execute">
+  }
+}
+
+block nearcoord_checkcoords
+{
+  es_getplayerlocation _nc_ux _nc_uy _nc_uz server_var(__nc_id)
+  if (server_var(_nc_ux) >= server_var(_nc_lx)) do
+  {
+    if (server_var(_nc_ux) <= server_var(_nc_rx)) do
+    {
+      if (server_var(_nc_uy) >= server_var(_nc_ly)) do
+      {
+        if (server_var(_nc_uy) <= server_var(_nc_ry)) do
+        {
+          if (server_var(_nc_uz) >= server_var(_nc_lz)) do
+          {
+            if (server_var(_nc_uz) <= server_var(_nc_rz)) do
+            {
+              es server_var(_nc_a1) server_var(__nc_id)
+              es alias __nearcoord_cmd server_var(_nc_a9)
+              __nearcoord_cmd
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+block nearcoord_test
+{
+  // nearcoord <cvar for userid> <identifier> <x coord> <y coord> <z coord> <x range> <y range> <z range> <"command to execute">
+  alias xxx "es_msg server_var(playerv) Hello!"
+  profilecmd nc_test "nearcoord playerv #all 0 0 0 3000 3000 3000 xxx"
+}

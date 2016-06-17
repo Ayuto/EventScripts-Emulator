@@ -1,0 +1,134 @@
+// damage corelib command, version 2 for ES 1.5
+// usage:
+//   damage <target user> <damage> <damage type> <source userid>
+//     target user = the player(s) to be hurt,
+//       supports foreach player flags, if preceeded with !, makes source userid immune, eg. !#all
+//     damage = the amount of damage to do to player
+//     damage type = (OPTIONAL) the type of the damage (number or "explosion")
+//     source userid = (OPTIONAL) the player that causes the damage
+//       REQUIRED when using user flags! Otherwise a random user gets credit...
+//
+// DAMAGE TYPES (if not "explosion")
+// 0 		GENERIC
+// 1 		CRUSH
+// 2 		BULLET
+// 4 		SLASH
+// 8 		BURN
+// 16 		FREEZE
+// 32 		FALL   (recommended for CSS!)
+// 64 		BLAST
+// 128 		CLUB
+// 256 		SHOCK
+// 512 		SONIC
+// 1024 	ENERGYBEAM
+// 16384 	DROWN
+// 32768 	PARALYSE
+// 65536 	NERVEGAS
+// 131072 	POISON
+// 262144 	RADIATION
+// 524288 	DROWNRECOVER
+// 1048576 	CHEMICAL
+// 2097152 	SLOWBURN
+// 4194304 	SLOWFREEZE
+//
+block load
+{
+  es_xdoblock corelib/damage/damage_register
+}
+
+block damage_register
+{
+  // damage variables
+  es_xset _core_dmg_args 0
+  es_xset _core_dmg_exists 0
+  es_xset _core_dmg_output 0
+  es_xset _core_dmg_pending 0
+  es_xset _core_dmg_active 0
+  es_xset _core_dmg_c1 0
+  es_xset _core_dmg_c2 0
+  es_xset _core_dmg_player 0
+  es_xexists _core_dmg_exists command damage
+  if (server_var(_core_dmg_exists) == 0) do
+  {
+    es_xregcmd damage corelib/damage/command "Cause damage to a player."
+  }
+} 
+
+block command
+{
+  es_xgetargc _core_dmg_args
+  if (server_var(_core_dmg_args) < 3) do
+  {
+    es_xdbgmsg 0 "usage:"
+    es_xdbgmsg 0 " damage <userid> <damage> [<type> [<source>]]"
+  }
+  else do
+  {
+    es_xset _core_dmg_target 0
+    es_xset _core_dmg_damage 0
+    es_xset _core_dmg_damagetype 32
+    es_xset _core_dmg_pendarg 1
+    es_xgetargv _core_dmg_damage 2
+    es_xgetargv _core_dmg_target 1
+    es_xset _core_dmg_source 0
+    if (server_var(_core_dmg_args) >= 6) do
+    {
+      es_xgetargv _core_dmg_pendarg 5
+      es_xmath _core_dmg_pendarg + 1
+    }
+    if (server_var(_core_dmg_args) >= 5) do
+    {
+      es_xgetargv _core_dmg_source 4
+    }
+    if (server_var(_core_dmg_args) >= 4) do
+    {
+      es_xgetargv _core_dmg_damagetype 3
+    }
+    es_xdoblock corelib/damage/dodamage
+  }
+}
+
+block dodamage
+{
+  es_xcopy _core_dmg_c1 _core_dmg_target
+  es_xcopy _core_dmg_c2 _core_dmg_target
+  es_xstring _core_dmg_c1 section 0 1
+  if (server_var(_core_dmg_c1) == "!") do
+  {
+    es_strlen _tempcore server_var(_core_dmg_c2)
+    es_string _core_dmg_c2 section 1 server_var(_tempcore)
+  }
+  es foreach player _core_dmg_player server_var(_core_dmg_c2) "es_xdoblock corelib/damage/marktarget"
+  ifx false(_core_dmg_source) do
+  {
+    es_getuserid _core_dmg_source server_var(_core_dmg_target)
+    ifx false(_core_dmg_source) do
+    {
+      getrandplayer _core_dmg_source #all
+    }
+  }
+  if (server_var(_core_dmg_c1) == "!") do
+  {
+    es_fire server_var(_core_dmg_source) !self addoutput "targetname mrhuman"
+  }
+  ifx false(_core_dmg_active) do
+  {
+    // es_give server_var(_core_dmg_source) point_hurt
+    es_xtrick entity point_hurt
+    es_xset _core_dmg_active 1
+    es_xdelayed 0 es_xset _core_dmg_active 0
+    es_fire server_var(_core_dmg_source) point_hurt Kill
+  }
+  es_xformatv _core_dmg_output "Damage %1" _core_dmg_damage
+  es_fire server_var(_core_dmg_source) point_hurt addoutput server_var(_core_dmg_output)
+  es_xformatv _core_dmg_output "DamageType %1" _core_dmg_damagetype
+  es_fire server_var(_core_dmg_source) point_hurt addoutput server_var(_core_dmg_output)
+  es_fire server_var(_core_dmg_source) point_hurt addoutput "DamageTarget mrdamage"
+  es_fire server_var(_core_dmg_source) point_hurt Hurt
+  es_fire server_var(_core_dmg_source) player addoutput "targetname mrhuman"
+}
+
+block marktarget
+{
+  es_fire server_var(_core_dmg_player) !self addoutput "targetname mrdamage"
+}

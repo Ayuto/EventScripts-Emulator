@@ -1,0 +1,157 @@
+block load
+{
+  es_xdoblock corelib/playervar/playervar_register
+}
+
+block playervar_register
+{
+  // variables used by playervar
+  es_xset _playervar_argc 0
+  es_xset _playervar_arg1 0
+  es_xset _playervar_player 0
+  es_xset _playervar_id 0
+  es_xset _playervar_userid 0
+  es_xset _playervar_infoname 0
+  es_xset _playervar_value 0
+  es_xset _playervar_outputvar 0
+  // check to see if playervar exists
+  es_xexists _exists command playervar
+  ifx false(_exists) do
+  {
+    es_xregcmd playervar corelib/playervar/playervar
+  }
+  // Create testcase
+  testcase qcreate corelib playervartest "Tests playervar"
+	testcase addtest playervartest playervar corelib/playervar/playervar_test "Playervar test"
+}
+
+block playervar
+{
+  es_xgetargc _playervar_argc
+  if (server_var(_playervar_argc) >= 5) do
+  {
+    es_xgetargv _playervar_arg1 1
+    if (server_var(_playervar_arg1) = set) do
+    {
+      es_xdoblock corelib/playervar/set
+    }
+    else do
+    {
+      if (server_var(_playervar_arg1) = get) do
+      {
+        es_xdoblock corelib/playervar/get
+      }
+      else do
+      {
+        if (server_var(_playervar_arg1) = exists) do
+        {
+          es_xdoblock corelib/playervar/exists
+        }
+        else do
+        {
+          es_xdbgmsg 0 playervar: Incorrect sub-command to playervar. Syntax: playervar <set/get/exists> [var] <player> <var-name> [value]
+        }
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 playervar: Not enough arguments. Syntax: playervar <set/get/exists> [var] <player> <var-name> [value]
+  }
+}
+
+block set
+{
+  es_xgetargv _playervar_player 2
+  es_getuserid _playervar_userid server_var(_playervar_player)
+  es_exists _tempcore userid server_var(_playervar_userid)
+  ifx true(_tempcore) do
+  {
+    es_xgetargv _playervar_infoname 3
+    es_xgetargv _playervar_value 4
+    es uniqueid _playervar_id server_var(_playervar_userid) 1
+    es_format _playervar_id "PLAYERVAR_%1_%2" server_var(_playervar_id) server_var(_playervar_infoname)
+    es_xstring _playervar_id replace STEAM_
+    es_xstring _playervar_id replace ":" "-"
+    es_set server_var(_playervar_id) server_var(_playervar_value)
+  }
+  else do
+  {
+    es_dbgmsg 0 playervar set: The specified player does not exist: server_var(_playervar_player) Syntax: playervar <set/get/exists> [var] <player> <var-name> [value]
+  }
+}
+
+block get
+{
+  es_xgetargv _playervar_player 3
+  es_getuserid _playervar_userid server_var(_playervar_player)
+  es_exists _tempcore userid server_var(_playervar_userid)
+  ifx true(_tempcore) do
+  {
+    es_xgetargv _playervar_outputvar 2
+    es_xgetargv _playervar_infoname 4
+    es uniqueid _playervar_id server_var(_playervar_userid) 1
+    es_format _playervar_id "PLAYERVAR_%1_%2" server_var(_playervar_id) server_var(_playervar_infoname)
+    es_xstring _playervar_id replace STEAM_
+    es_xstring _playervar_id replace ":" "-"
+    es es_exists _tempcore variable server_var(_playervar_id)
+    ifx true(_tempcore) do
+    {
+      es_set server_var(_playervar_outputvar) server_var(server_var(_playervar_id))
+    }
+    else do
+    {
+      es_dbgmsg 0 playervar get: The specified info-name does not exist: server_var(_playervar_infoname) Syntax: playervar <set/get/exists> [var] <player> <var-name> [value]
+    }
+  }
+  else do
+  {
+    es_dbgmsg 0 playervar get: The specified player does not exist: server_var(_playervar_player) Syntax: playervar <set/get/exists> [var] <player> <var-name> [value]
+  }
+}
+
+block exists
+{
+  es_xgetargv _playervar_player 3
+  es_getuserid _playervar_userid server_var(_playervar_player)
+  es_exists _tempcore userid server_var(_playervar_userid)
+  ifx true(_tempcore) do
+  {
+    es_xgetargv _playervar_outputvar 2
+    es_xgetargv _playervar_infoname 4
+    es uniqueid _playervar_id server_var(_playervar_userid) 1
+    es_format _playervar_id "PLAYERVAR_%1_%2" server_var(_playervar_id) server_var(_playervar_infoname)
+    es_xstring _playervar_id replace STEAM_
+    es_xstring _playervar_id replace ":" "-"
+    es_exists server_var(_playervar_outputvar) variable server_var(_playervar_id)
+  }
+  else do
+  {
+    es_dbgmsg 0 playervar exists: The specified player does not exist: server_var(_playervar_player) Syntax: playervar <set/get/exists> [var] <player> <var-name> [value]
+  }
+}
+
+block playervar_test
+{
+  // (Mattie) Changed these to warnings because we're holding-off
+  //   on adding "live tests" to the testsuites.
+  testlib begin pv1 "Ensure there are players in the server"
+  es_xset _playervar_tpcount 0
+  es_xgetplayercount _playervar_tpcount
+  testlib warn_unless _playervar_tpcount greaterthan 0
+  testlib end
+  testlib begin pv2 "playervar test - Making sure player's retain a value when set, then getting it"
+  es_xset _playervar_tuserid 0
+  es_xset _playervar_tvalue 15
+  es_xset _playervar_treturn 0
+  es_xgetuserid _playervar_tuserid
+  es playervar set server_var(_playervar_tuserid) testvalue server_var(_playervar_tvalue)
+  es playervar get _playervar_treturn server_var(_playervar_tuserid) testvalue
+  testlib warn_unless _playervar_treturn equalto 15
+  testlib end
+  testlib begin pv3 "playervar test - subcommand: exists"
+  es_xset _playervar_treturn 0
+  es playervar exists _playervar_treturn server_var(_playervar_tuserid) testvalue
+  testlib warn_unless _playervar_treturn equalto 1
+  testlib end
+}

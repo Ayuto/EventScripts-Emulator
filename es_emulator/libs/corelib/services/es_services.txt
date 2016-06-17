@@ -1,0 +1,229 @@
+block load
+{
+  es_xregcmd "services" corelib/services/services_cmd "Defines a one-of-a-kind service that requires a specific interface"
+  es_xregcmd ":" corelib/services/services_proxy "Invoke a service command"
+  es_xkeygroupcreate _global-services
+  es_xkeycreate _global-services _metadata
+  es_xkeysetvalue _global-services _metadata quantity 0
+
+  es_xset _sarg1 0
+  es_xset _sarg2 0
+  es_xset _sarg3 0
+  es_xset _sarg4 0
+  es_xset _sarg5 0
+  es_xset _stemp 0
+  
+  testcase qcreate corelib services "Tests services"
+  testcase addtest services services1 corelib/services/test "Test services"
+}
+
+block unload
+{
+  es_keygroupdelete _global-services
+}
+
+block test
+{
+  testlib begin s1 "corelib services: setuptest"
+  es_set myvar 0
+  interface getversion myvar TestInterface
+  testlib fail_unless myvar equalto 1
+  testlib end
+
+  testlib begin s2 "corelib services: empty test"
+  es_set myvar 0
+  services getregistered myvar woogledoogle
+  testlib fail_unless myvar equalto 0
+  testlib end
+
+  // This test is not very useful anymore. Now that we have
+  //  default services, the count will be > 0.
+  testlib begin s3 "corelib services: default service count"
+  es_set myvar 0
+  services getlist _test_s_1
+  es_foreachkey _tempcore in _test_s_1 "es_math myvar + 1"
+  es_keygroupdelete _test_s_1  
+  testlib fail_unless myvar >= 0
+  testlib end
+
+  testlib begin s4 "corelib services: register one type, is it there?"
+  es_set myvar 0
+  services type _test requires TestInterface 1
+  services getlist _test_s_2
+  es_foreachkey _tempcore in _test_s_2 "es_math myvar + 1"
+  es_keygroupdelete _test_s_2  
+  testlib fail_unless myvar greaterthan 0
+  testlib end
+
+//services isregistered myvar auth
+  testlib begin s5 "corelib services: check for empty isregistered"
+  es_set myvar 0
+  services isregistered myvar _test
+  testlib fail_unless myvar equalto 0
+  testlib end
+
+//services register auth myauth
+  testlib begin s6 "corelib services: invocation stuff"
+  es_set myvar 0
+  //es_xregcmd __test_proxy corelib/services/test_proxy "IGNORE: TEST COMMAND"
+  interface instance __test_proxy is "Testing a service command"
+  interface instance __test_proxy provides mycommand
+  interface instance __test_proxy provides mycommand2
+  interface instance __test_proxy implements TestInterface version 1
+  interface instance __test_proxy invokes "corelib/services/test_proxy"
+  services register _test __test_proxy
+  services getregistered myvar _test
+  es echo server_var(myvar)
+  testlib fail_unless myvar notequalto 0
+  testlib end
+
+  testlib begin s7 "corelib services: invocation test"
+  es_set myvar 0
+  :_test myCommand2 hello we are happy
+  es echo server_var(myvar)
+  testlib fail_unless myvar equalto "myCommand2"
+  testlib end
+
+
+// :auth isauthorized <output-var> <user-identifier> <action-name> <action-level>
+//services getlist mykeygroup
+
+}
+
+block test_proxy
+{
+  es_set myvar server_var(testinterface_command)
+  es_dbgmsg -1  test_proxy: server_var(testinterface_command) - server_var(testinterface2) - server_var(testinterface3) - server_var(testinterface4)
+}
+
+// :auth isauthorized <output-var> <user-identifier> <action-name> <action-level>
+block services_proxy
+{
+  es_xset _slength 0
+  es_xset _slength2 0
+  es_xset _sargs 0
+  es_xgetargv _sarg1 1
+  es_xgetargs _sargs 
+  es_strlen _slength server_var(_sarg1)
+  es_strlen _slength2 server_var(_sargs)
+  es services getregistered _stemp server_var(_sarg1)
+  ifx true(_stemp) do
+  {
+    es_string _sargs section server_var(_slength) server_var(_slength2)
+    es_formatv _sargs "%1 %2" _stemp _sargs
+    es_commandv _sargs
+  }
+  else do
+  {
+    es_xgetargv _sarg1 1
+    es_dbgmsg 0 No provider is registered for server_var(_sarg1)
+  }
+}
+
+
+//services getregistered myvar auth
+block getregistered
+{
+  es_xgetargv _sarg2 2
+  es_xgetargv _sarg3 3
+  es_keygetvalue server_var(_sarg2) _global-services server_var(_sarg3) current-provider
+}
+// get the version of a particular registered interface
+block services_cmd
+{
+  es_xgetargv _sarg1 1
+  es_xset _sblock 0
+  es_xformatv _sblock "corelib/services/%1" _sarg1
+  es_doblock server_var(_sblock)
+}
+
+//services type auth requires AuthorizationService 1
+block type
+{
+  es_xgetargv _sarg2 2
+  es_xgetargv _sarg4 4
+  es_xgetargv _sarg5 5
+  keymath _global-services _metadata quantity + 1
+  es_keycreate _global-services server_var(_sarg2)
+  es_keysetvalue _global-services server_var(_sarg2) interface server_var(_sarg4)
+  es_keysetvalue _global-services server_var(_sarg2) version-min server_var(_sarg5)
+  es_keysetvalue _global-services server_var(_sarg2) current-provider 0
+}
+ 
+//services register auth myauth
+block register
+{
+  // if there is someone already registered, error out
+  // otherwise, ensure that 
+  // 
+  es_xgetargv _sarg2 2
+  es_xgetargv _sarg3 3
+  es_keygetvalue _sarg1 _global-services server_var(_sarg2) interface
+  es interface getinstanceinfo _stemp server_var(_sarg3) implements
+  if (server_var(_sarg1) equalto server_var(_stemp)) do
+  {
+     es_keysetvalue _global-services server_var(_sarg2) current-provider server_var(_sarg3)
+  }
+  else do
+  {
+     es_dbgmsg 0 server_var(_sarg3) does not implement server_var(_sarg1).
+  }
+}
+
+//services unregister auth
+block unregister
+{
+  es_xdbgmsg -1 "not yet implemented"
+}
+
+//services list
+block list
+{
+  es_xdbgmsg -1 "not yet implemented"
+}
+
+//services getlist mykeygroup
+block getlist
+{
+  es_xgetargv _sarg2 2
+  es_keygroupcopy _global-services server_var(_sarg2)
+  es_keydelete server_var(_sarg2) _metadata
+}
+
+//services isregistered myvar auth
+block isregistered
+{
+  es_xgetargv _sarg2 2
+  es_xgetargv _sarg3 3
+  es_keygetvalue _stemp _global-services server_var(_sarg3) current-provider
+  ifx true(_stemp) do
+  {
+    es_set server_var(_sarg2) 1
+  }
+  else do
+  {
+    es_set server_var(_sarg2) 0  
+  }
+}
+
+// interfaces are defined through a keygroup
+//   if you claim you support an interface, you have to provide a command-string for each one.
+//   if you do not, the interface will not be installed.
+"_global-services"
+{
+      "_metadata"
+      {
+        "quantity" "2"
+      }
+      "auth"
+      {
+        interface "AuthorizationService"
+        version-min "1"
+        current-provider "myauth"
+      }
+      "playerpref"
+      {
+        interface "PlayerPreferenceService"
+        version-min "1"
+      }
+}

@@ -1,0 +1,76 @@
+// This interface is intended to be used with the Authorization
+//   service that is registered by corelib. This is the first default
+//   'service' added to EventScripts. Any console command that claims to 
+//   implement this interface can be registered as the "auth" service and
+//   will be shared by all scripts.
+AuthorizationService
+{
+    _metadata
+    {
+      version 1
+      name "Authorization Service Interface"
+      description "Provides generic authorization methods used to authorize players and capabilities."
+    }
+    _constants
+    {
+      // these constants are used typically for default level specification
+      "AUTHSERVICE_ROOT" "0"
+      "AUTHSERVICE_ADMIN" "1"
+      "AUTHSERVICE_POWERUSER" "2"
+      "AUTHSERVICE_IDENTIFIED" "4"
+      "AUTHSERVICE_UNRESTRICTED" "128"
+      
+      // this value is returned when a method fails.
+      "AUTHSERVICE_FAIL" "-1"
+    }
+    
+    // Methods
+
+    // When a script loads and it needs a new capability, it calls this function
+    //   to notify the authorization service that it may need to ask for this
+    //   capability.
+    // e.g. in your script load:
+    // es :auth registerCapability "some_capability" server_var(AUTHSERVICE_ADMIN)
+    "registerCapability"
+    {
+      "1" "auth_commandname"
+      "2" "auth_capability"
+      // see _constants for the possible values for this.
+      "3" "auth_recommendedlevel"
+    }
+    // This is likely the most commonly called method here. A script can call this
+    //   and it will return a 1 or 0 depending on whether the user is authorized
+    //   for the capability.
+    // :auth isUseridAuthorized <auth_responsevarname> auth_userid <auth_capability>
+    // es :auth isUseridAuthorized myvar event_var(userid) "some_capability"  
+    "isUseridAuthorized"
+    {
+      "1" "auth_commandname"
+      "2" "auth_responsevarname"
+      "3" "auth_userid"
+      "4" "auth_capability"
+    } 
+    // This function returns some semi-unique identifier for a current userid
+    //   that can be used to check authorization while a user is offline.
+    //   This may very often be a steamid/uniqueid or somesuch identifier.
+    // :auth getOfflineIdentifier <aauth_outputvarname> <auth_userid>
+    // es :auth getOfflineIdentifier myvar event_var(userid) 
+    "getOfflineIdentifier"
+    {
+      "1" "auth_commandname"
+      "2" "auth_outputvarname"
+      "3" "auth_userid"
+    }
+    // This function is like isUseridAuthorized, but requires an offline ID
+    //   from the getOfflineIdentifier function. Typically isUseridAuthorized
+    //   is just a wrapper to getOfflineIdentifier followed by isIdAuthorized.
+    // :auth isIdAuthorized <aauth_outputvarname> <auth_identifier>
+    // es :auth isIdAuthorized myvar server_var(myidentifier) 
+    "isIdAuthorized"
+    {
+      "1" "auth_commandname"
+      "2" "auth_responsevarname"
+      "3" "auth_identifier"
+      "4" "auth_capability"
+    } 
+}

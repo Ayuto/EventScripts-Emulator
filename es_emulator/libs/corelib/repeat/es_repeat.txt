@@ -1,0 +1,368 @@
+block load
+{
+  es_xdoblock corelib/repeat/repeat_register
+}
+
+block repeat_register
+{
+  // variables used by repeat
+  es_xset _repeat_argc 0
+  es_xset _repeat_arg1 0
+  es_xset _repeat_arg2 0
+  es_xset _repeat_arg3 0
+  es_xset _repeat_arg4 0
+  es_xset _repeat_format 0
+  es_xset _repeat_status 0
+  es_xset _repeat_interval 0
+  es_xset _repeat_limit 0
+  es_xset _repeat_count 0
+  es_xset _repeat_command 0
+  es_xset _repeat_name 0
+  es_xset _repeat_id 0
+  es_xset _repeat_init 0
+  es_xset _repeat_temp1 0
+  // check to see if repeat exists
+  es_xexists _exists command repeat
+  if (server_var(_exists) = 0) do
+  {
+    es_xregcmd repeat corelib/repeat/repeat "Creates a pausable loop, with a set interval and command execution limit"
+  }
+  es_xexists _exists keygroup repeat
+  if (server_var(_exists) = 0) do
+  {
+    es_xkeygroupcreate repeat
+  }
+  // Create testcase
+  //testcase qcreate corelib repeattest "Tests repeat"
+  //testcase addtest repeattest repeat corelib/repeat/repeat_test "Repeat test"
+}
+
+// Originally submitted by SumGuy14 with code by Chun
+block repeat
+{
+  es_xgetargv _repeat_arg1 1
+  es_xformatv _repeat_format "corelib/repeat/%1" _repeat_arg1
+  es_exists _exists block server_var(_repeat_format)
+  ifx true(_exists) do
+  {
+    es_doblock server_var(_repeat_format)
+  }
+  else do
+  {
+    es_xdbgmsg 0 repeat: Invalid subcommand
+  }
+}
+
+block create
+{
+  es_xgetargc _repeat_argc
+  if (server_var(_repeat_argc) > 3) do
+  {
+    es_xgetargv _repeat_arg2 2
+    es_exists _exists key repeat server_var(_repeat_arg2)
+    ifx true(_exists) do
+    {
+      es_keygetvalue _repeat_temp1 repeat server_var(_repeat_arg2) id
+      es repeat delete server_var(_repeat_arg2)
+    }
+    else do
+    {
+      es_xset _repeat_temp1 0
+    }
+    es_xgetargv _repeat_arg3 3
+    es_keycreate repeat server_var(_repeat_arg2)
+    es_keysetvalue repeat server_var(_repeat_arg2) command server_var(_repeat_arg3)
+    es_keysetvalue repeat server_var(_repeat_arg2) interval 0
+    es_keysetvalue repeat server_var(_repeat_arg2) limit 0
+    es_keysetvalue repeat server_var(_repeat_arg2) count 0
+    es_keysetvalue repeat server_var(_repeat_arg2) status 1
+    es_keysetvalue repeat server_var(_repeat_arg2) id server_var(_repeat_temp1)
+  }
+  else do
+  {
+    es_xdbgmsg 0 repeat: Not enough arguments. Syntax: repeat create <name> <command>
+  }
+}
+
+block start
+{
+  es_xgetargc _repeat_argc
+  if (server_var(_repeat_argc) > 3) do
+  {
+    es_xgetargv _repeat_arg2 2
+    es_exists _exists key repeat server_var(_repeat_arg2)
+    ifx true(_exists) do
+    {
+      es_xgetargv _repeat_arg3 3
+      es_xgetargv _repeat_arg4 4
+      es_keygetvalue _repeat_status repeat server_var(_repeat_arg2) status
+      if (server_var(_repeat_status) >= 2) do
+      {
+        es repeat stop server_var(_repeat_arg2)
+      }
+      es_keysetvalue repeat server_var(_repeat_arg2) interval server_var(_repeat_arg3)
+      es_keysetvalue repeat server_var(_repeat_arg2) limit server_var(_repeat_arg4)
+      es_keysetvalue repeat server_var(_repeat_arg2) count 0
+      es_keysetvalue repeat server_var(_repeat_arg2) status 2
+      es_keygetvalue _repeat_id repeat server_var(_repeat_arg2) id
+      es_xmath _repeat_id + 1
+      es_keysetvalue repeat server_var(_repeat_arg2) id server_var(_repeat_id)
+      es_xcopy _repeat_name _repeat_arg2
+      es_xset _repeat_init 1
+      es_xdoblock corelib/repeat/repeat_loop
+    }
+    else do
+    {
+      es_dbgmsg 0 repeat start: Doesn't exist: server_var(_repeat_arg2)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 repeat: Not enough arguments supplied to repeat start. Syntax: repeat start <name> <interval> [number-of-times]
+  }
+}
+
+block pause
+{
+  es_xgetargc _repeat_argc
+  if (server_var(_repeat_argc) > 2) do
+  {
+    es_xgetargv _repeat_arg2 2
+    es_exists _exists key repeat server_var(_repeat_arg2)
+    ifx true(_exists) do
+    {
+      es_keygetvalue _repeat_status repeat server_var(_repeat_arg2) status
+      if (server_var(_repeat_status) = 2) do
+      {
+        es_keysetvalue repeat server_var(_repeat_arg2) status 3
+        es_keygetvalue _repeat_id repeat server_var(_repeat_arg2) id
+        es_xformatv _repeat_id "_repeat_%1_%2" _repeat_arg2 _repeat_id
+        es alias server_var(_repeat_id) ""
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 repeat pause: Doesn't exist: server_var(_repeat_arg2)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 repeat: Not enough arguments supplied to repeat pause. Syntax: repeat pause <name>
+  }
+}
+
+block resume
+{
+  es_xgetargc _repeat_argc
+  if (server_var(_repeat_argc) > 2) do
+  {
+    es_xgetargv _repeat_arg2 2
+    es_exists _exists key repeat server_var(_repeat_arg2)
+    ifx true(_exists) do
+    {
+      es_keygetvalue _repeat_status repeat server_var(_repeat_arg2) status
+      if (server_var(_repeat_status) = 3) do
+      {
+        es_keysetvalue repeat server_var(_repeat_arg2) status 2
+        es_keygetvalue _repeat_id repeat server_var(_repeat_arg2) id
+        es_xmath _repeat_id + 1
+        es_keysetvalue repeat server_var(_repeat_arg2) id server_var(_repeat_id)
+        es_xcopy _repeat_name _repeat_arg2
+        es_xset _repeat_init 1
+        es_xdoblock corelib/repeat/repeat_loop
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 repeat resume: Doesn't exist: server_var(_repeat_arg2)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 repeat: Not enough arguments supplied to repeat resume. Syntax: repeat resume <name>
+  }
+}
+
+block stop
+{
+  es_xgetargc _repeat_argc
+  if (server_var(_repeat_argc) > 2) do
+  {
+    es_xgetargv _repeat_arg2 2
+    es_exists _exists key repeat server_var(_repeat_arg2)
+    ifx true(_exists) do
+    {
+      es_keygetvalue _repeat_status repeat server_var(_repeat_arg2) status
+      if (server_var(_repeat_status) >= 2) do
+      {
+        es_keygetvalue _repeat_id repeat server_var(_repeat_arg2) id
+        es_xformatv _repeat_format "_repeat_%1_%2" _repeat_arg2 _repeat_id
+        es alias server_var(_repeat_format) ""
+        es_keysetvalue repeat server_var(_repeat_arg2) interval 0
+        es_keysetvalue repeat server_var(_repeat_arg2) limit 0
+        es_keysetvalue repeat server_var(_repeat_arg2) count 0
+        es_keysetvalue repeat server_var(_repeat_arg2) status 1
+      }
+      else do
+      {
+        if (server_var(_repeat_status) = 1) do
+        {
+          es_dbgmsg 0 repeat stop: Not running: server_var(_repeat_arg2)
+        }
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 repeat stop: Doesn't exist: server_var(_repeat_arg2)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 repeat: Not enough arguments supplied to repeat stop. Syntax: repeat stop <name>
+  }
+}
+
+block delete
+{
+  es_xgetargc _repeat_argc
+  if (server_var(_repeat_argc) > 2) do
+  {
+    es_xgetargv _repeat_arg2 2
+    es_exists _exists key repeat server_var(_repeat_arg2)
+    ifx true(_exists) do
+    {
+      es_keygetvalue _repeat_status repeat server_var(_repeat_arg2) status
+      if (server_var(_repeat_status) >= 2) do
+      {
+        es repeat stop server_var(_repeat_arg2)
+      }
+      es_keydelete repeat server_var(_repeat_arg2)
+    }
+    else do
+    {
+      es_dbgmsg 0 repeat delete: Doesn't exist: server_var(_repeat_arg2)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 repeat: Not enough arguments supplied to repeat delete. Syntax: repeat delete <name>
+  }
+}
+
+block status
+{
+  es_xgetargc _repeat_count
+  if (server_var(_repeat_count) > 3) do
+  {
+    es_xgetargv _repeat_arg2 2
+    es_xgetargv _repeat_arg3 3
+    es_exists _exists key repeat server_var(_repeat_arg3)
+    ifx true(_exists) do
+    {
+      es_keygetvalue server_var(_repeat_arg2) repeat server_var(_repeat_arg3) status
+    }
+    else do
+    {
+      es_set server_var(_repeat_arg2) 0
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 repeat: Not enough arguments supplied to repeat status. Syntax: repeat status <var> <name>
+  }
+}
+
+block repeat_loop
+{
+  es_exists _exists key repeat server_var(_repeat_name)
+  ifx true(_exists) do
+  {
+    es_keygetvalue _repeat_interval repeat server_var(_repeat_name) interval
+    es_keygetvalue _repeat_command repeat server_var(_repeat_name) command
+    es_keygetvalue _repeat_limit repeat server_var(_repeat_name) limit
+    es_keygetvalue _repeat_count repeat server_var(_repeat_name) count
+    es_keygetvalue _repeat_id repeat server_var(_repeat_name) id
+    ifx true(_repeat_limit) do
+    {
+      es_xmath _repeat_count + 1
+      es_keysetvalue repeat server_var(_repeat_name) count server_var(_repeat_count)
+    }
+    ifx true(_repeat_init) do
+    {
+      es_xset _repeat_count 0
+      es_keysetvalue repeat server_var(_repeat_name) count 0
+    }
+    ifx false(_repeat_limit) do
+    {
+      es_xset _repeat_count -1
+    }
+    if (server_var(_repeat_count) < server_var(_repeat_limit)) do
+    {
+      es_xformatv _repeat_format "_repeat_%1_%2" _repeat_name _repeat_id
+      es alias server_var(_repeat_format) "es_xset _repeat_init 0;es_xdoblock corelib/repeat/repeat_loop"
+      ifx true(_repeat_interval) do
+      {
+        es_delayed server_var(_repeat_interval) es_xset _repeat_name server_var(_repeat_name)
+        es_delayed server_var(_repeat_interval) server_var(_repeat_format)
+      }
+      else do
+      {
+        es server_var(_repeat_format)
+      }
+    }
+    ifx false(_repeat_init) do
+    {
+      es alias _repeat_command_alias server_var(_repeat_command)
+      _repeat_command_alias
+    }
+    if (server_var(_repeat_count) >= server_var(_repeat_limit)) do
+    {
+      es repeat status _exists server_var(_repeat_name)
+      ifx true(_exists) do
+      {
+        es repeat stop server_var(_repeat_name)
+      }
+    }
+  }
+}
+
+block repeat_test
+{
+  testlib begin repeat1 "repeat test - testing to make sure it is executing the correct amount of times"
+  es_xset _repeat_tcount 0
+  repeat create _test "es_xmath _repeat_tcount + 1"
+  repeat start _test 0 5
+  testlib fail_unless _repeat_tcount equalto 5
+  testlib end
+  testlib begin repeat2 "repeat test - testing recreation and restarting the loop"
+  es_xset _repeat_tcount 0
+  repeat create _test "es_xmath _repeat_tcount + 1"
+  repeat create _test "es_xmath _repeat_tcount + 2"
+  repeat start _test 0.1 10
+  repeat start _test 0 10
+  testlib fail_unless _repeat_tcount equalto 20
+  testlib end
+  testlib begin repeat3 "repeat test - subcommand: status, for an imaginery repeat"
+  es_xset _repeat_treturn 0
+  repeat status _repeat_treturn _imaginery
+  testlib fail_unless _repeat_treturn equalto 0
+  testlib end
+  testlib begin repeat4 "repeat test - subcommand: status, for an existing repeat not running"
+  es_xset _repeat_treturn 0
+  repeat status _repeat_treturn _test
+  testlib fail_unless _repeat_treturn equalto 1
+  testlib end
+  testlib begin repeat5 "repeat test - subcommand: status, for a running repeat"
+  es_xset _repeat_treturn 0
+  repeat start _test 0.1 5
+  repeat status _repeat_treturn _test
+  testlib fail_unless _repeat_treturn equalto 2
+  testlib end
+  testlib begin repeat6 "repeat test - subcommand: status, for a paused repeat"
+  es_xset _repeat_treturn 0
+  repeat pause _test
+  repeat status _repeat_treturn _test
+  testlib fail_unless _repeat_treturn equalto 3
+  testlib end
+  repeat delete _test
+}

@@ -1,0 +1,58 @@
+// es_diag.txt v0.21 by Mattie
+// Diag script for helping to diagnose problems with ES
+//   Output will appear in three locations to help get it:
+//      addons\eventscripts\diag\es_diagnostics_db.txt
+//      cfg\events\es_diagnostics_db.txt   (maybe)
+//      cfg\es_diagnostics_db.txt          (maybe)
+//      logs\lmmddxxx.log                  (based on today's date -- one of the newest log files)
+
+
+block load
+{
+     
+     es_doblock diag/runtests
+}
+
+block runtests
+{
+	log on
+	es_log Running diagnostics...
+	es_setinfo eventscripts_debug 1
+	es_setinfo eventscripts_debuglog 1
+	es_keygroupdelete Diagnostics
+	es_keygroupcreate Diagnostics
+	es_keycreate Diagnostics variables
+	es_keysetvalue Diagnostics variables eventscripts_ver server_var(eventscripts_ver)
+	es_keysetvalue Diagnostics variables eventscripts_lasterror server_var(eventscripts_lasterror)
+	es_keysetvalue Diagnostics variables mattie_eventscripts server_var(mattie_eventscripts)
+	es_keysetvalue Diagnostics variables eventscripts_noisy server_var(eventscripts_noisy)
+	es_keysetvalue Diagnostics variables eventscripts_subdirectory server_var(eventscripts_subdirectory)
+	es_keysetvalue Diagnostics variables eventscripts_datadirectory server_var(eventscripts_datadirectory)
+	es_keysetvalue Diagnostics variables eventscripts_timeformat server_var(eventscripts_timeformat)
+	es_keysetvalue Diagnostics variables eventscripts_cflags server_var(eventscripts_cflags)
+	es_keysetvalue Diagnostics variables eventscripts_autocreate server_var(eventscripts_autocreate)
+	es_keysetvalue Diagnostics variables eventscripts_exec-cmd server_var(eventscripts_exec-cmd)
+	es_keysetvalue Diagnostics variables eventscripts_currentmap server_var(eventscripts_currentmap)
+	es_keysetvalue Diagnostics variables eventscripts_protectrcon server_var(eventscripts_protectrcon)
+	es_keysetvalue Diagnostics variables eventscripts_escapechars server_var(eventscripts_escapechars)
+	es_keysetvalue Diagnostics variables eventscripts_eiface server_var(eventscripts_eiface)
+	es_keysetvalue Diagnostics variables eventscripts_lastgive server_var(eventscripts_lastgive)
+	es_keysetvalue Diagnostics variables eventscripts_serverdll server_var(eventscripts_serverdll)
+	es_keysetvalue Diagnostics variables eventscripts_bot-cexec server_var(eventscripts_bot-cexec)
+	es_keysetvalue Diagnostics variables eventscripts_chatevent server_var(eventscripts_chatevent)
+	es_keysetvalue Diagnostics variables eventscripts_maxmsg server_var(eventscripts_maxmsg)
+	es_keysetvalue Diagnostics variables mani_admin_plugin_version server_var(mani_admin_plugin_version)
+	es_keysetvalue Diagnostics variables est_version server_var(est_version)
+	es_keygroupsave Diagnostics |diag
+	es_keygroupsave Diagnostics
+	es_keygroupdelete Diagnostics
+	es_createscriptlist diag-scripts
+	es_keygroupdelete diag-scripts
+	es_log Done with diagnostics.
+	es_setinfo eventscripts_debug 0
+	es_setinfo eventscripts_debuglog 0
+	log on
+	es_xsoon es_unload diag
+}
+
+

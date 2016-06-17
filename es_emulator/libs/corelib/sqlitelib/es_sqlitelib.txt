@@ -1,0 +1,836 @@
+// SQLite Lib
+// started by [NATO]Hunter
+// v0.9.3
+//
+// sqlx create <db-name> <db-table>
+// sqlx delete <db-name> <db-table>
+// sqlx keycreate <db-name> <db-table> <key-name> [key-time]
+// sqlx keyexists <var> <db-name> <db-table> <key-name>
+// sqlx keydelete <db-name> <db-table> <key-name> [key-time]
+// sqlx keyprune <db-name> <db-table> <key-condition> <key-time> [key-limit]
+// sqlx keysetvalue <db-name> <db-table> <key-name> <var-name> <var-value>
+// sqlx keygetvalue <var> <db-name> <db-table> <key-name> <var-name>
+// sqlx keysettime <db-name> <db-table> <key-name> [key-time]
+// sqlx keygettime <var> <db-name> <db-table> <key-name>
+// sqlx keysort <db-name> <db-table> <var-name> <ASC/DESC>
+// sqlx keyfilter <db-name> <db-table> <var-name> <NOT/ONLY> <var-value>
+// sqlx foreachkey <var> <db-name> <db-table> <command>
+// sqlx foreachval <var> <db-name> <db-table> <key-name> <command>
+//
+
+block load
+{
+  es_xset _tempcore 0
+  es_xexists _tempcore command sqlx
+  ifx false(_tempcore) do
+  {
+    es_xregcmd sqlx corelib/sqlitelib/sqlx "Holds some extended sqlite commands."
+  
+    es_xset _sqlx_arg1 0
+    es_xset _sqlx_arg2 0
+    es_xset _sqlx_arg3 0
+    es_xset _sqlx_arg4 0
+    es_xset _sqlx_arg5 0
+    es_xset _sqlx_arg6 0
+    es_xset _sqlx_arg7 0
+    es_xset _sqlx_argc 0
+    es_xset _sqlx_farg1 0
+    es_xset _sqlx_farg2 0
+    es_xset _sqlx_farg3 0
+    es_xset _sqlx_farg4 0
+    es_xset _sqlx_farg5 0
+    es_xset _sqlx_farg6 0
+    es_xset _sqlx_farg7 0
+    es_xset _sqlx_fargc 0
+    es_xset _sqlx_block 0
+    es_xset _sqlx_exists 0
+    es_xset _sqlx_query 0
+    es_xset _sqlx_index 0
+    es_xset _sqlx_count 0
+    es_xset _sqlx_temp 0
+    es_xset _sqlx_temp2 0
+    es_xset _sqlx_ftemp 0
+    es_xset _sqlx_resultgroup 0
+    es_xset _sqlx_profile 0
+  }
+  stack create _sqlx_foreachkey
+  stack create _sqlx_foreachval
+  keygroupremove _sqlx_result
+
+  testcase qcreate corelib sqlxtest "Tests sqlx"
+  testcase addtest sqlxtest sqlxtest1 corelib/sqlitelib/sqlx_test "Tests sqlx"
+}
+block unload
+{
+  keygroupremove _sqlx_result
+  stack delete _sqlx_foreachkey
+  stack delete _sqlx_foreachval
+}
+
+block sqlx
+{
+  es_xgetargv _sqlx_arg1 1
+  es_xformatv _sqlx_block "corelib/sqlitelib/sqlx_cmd_%1" _sqlx_arg1
+  es_exists _sqlx_exists block server_var(_sqlx_block)
+  ifx true(_sqlx_exists) do
+  {
+    es_doblock server_var(_sqlx_block)
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Invalid subcommand for sqlx
+  }
+}
+
+block sqlx_cmd_create
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 3) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+  
+    es_xformatqv _sqlx_query "CREATE TABLE IF NOT EXISTS sqlx_%1_key (_sqlx_keyname VARCHAR(255) UNIQUE,_sqlx_keytime TIMESTAMP,_sqlx_keysort INT(11));CREATE TABLE IF NOT EXISTS sqlx_%1_var (_sqlx_keyname VARCHAR(255),_sqlx_varname VARCHAR(255),_sqlx_varvalue TEXT,_sqlx_temp PRIMARY KEY);" _sqlx_arg3
+    es_sql query server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_query)
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx create. Syntax: sqlx create <db-name> <db-table>
+  }
+}
+
+block sqlx_cmd_delete
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 3) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+  
+    es_xformatqv _sqlx_query "DROP TABLE IF EXISTS sqlx_%1_key;DROP TABLE IF EXISTS sqlx_%1_var;" _sqlx_arg3
+    es_sql query server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_query)
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx delete. Syntax: sqlx delete <db-name> <db-table>
+  }
+}
+
+block sqlx_cmd_keycreate
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 4) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    ifx false(_sqlx_arg5) do
+    {
+      es_xgettime _sqlx_arg5
+    }
+    es_xformatv _sqlx_query "REPLACE INTO sqlx_%1_key(_sqlx_keyname,_sqlx_keytime,_sqlx_keysort) VALUES('%2','%3','99999999999');" _sqlx_arg3 _sqlx_arg4 _sqlx_arg5
+    es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keycreate. Syntax: sqlx keycreate <db-name> <db-table> <key-name> [key-time]
+  }
+}
+
+block sqlx_cmd_keyexists
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 5) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    es_set server_var(_sqlx_arg2) 0
+
+    es_xformatqv _sqlx_query "SELECT * FROM sqlx_%1_key WHERE _sqlx_keyname='%2'" _sqlx_arg4 _sqlx_arg5
+    es_sql query server_var(_sqlx_arg3) _sqlx_result server_var(_sqlx_query)
+    es_exists server_var(_sqlx_arg2) key _sqlx_result 1
+    es_xkeygroupdelete _sqlx_result
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keyexists. Syntax: sqlx keyexists <var> <db-name> <db-table> <key-name>
+  }
+}
+
+block sqlx_cmd_keydelete
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 4) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    ifx true(_sqlx_arg5) do
+    {
+      es_xformatqv _sqlx_query "SELECT _sqlx_keyname FROM sqlx_%1_key WHERE _sqlx_keyname='%2' AND _sqlx_keytime<'%3';" _sqlx_arg3 _sqlx_arg4 _sqlx_arg5
+      es_sql query server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_query)
+      es_xforeachkey _sqlx_temp in _sqlx_result "es_xdoblock corelib/sqlitelib/sqlx_block_keydelete"
+      es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+      es_xkeygroupdelete _sqlx_result
+    }
+    else do
+    {
+      es_xformatqv _sqlx_query "DELETE FROM sqlx_%1_key WHERE _sqlx_keyname='%2';DELETE FROM sqlx_%1_var WHERE _sqlx_keyname='%2';" _sqlx_arg3 _sqlx_arg4
+      es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keydelete. Syntax: sqlx keydelete <db-name> <db-table> <key-name> [key-time]
+  }
+}
+
+block sqlx_block_keydelete
+{
+  es_keygetvalue server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_temp) _sqlx_keyname
+  es_xformatqv _sqlx_query "%1;DELETE FROM sqlx_%2_key WHERE _sqlx_keyname='%3';DELETE FROM sqlx_%2_var WHERE _sqlx_keyname='%3';" _sqlx_query _sqlx_arg3 _sqlx_arg4
+}
+
+block sqlx_cmd_keyprune
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 3) do
+  {
+    es_xset _sqlx_exists 0
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    es_xgetargv _sqlx_arg6 6
+
+    ifx false(_sqlx_arg5) do
+    {
+      es_xgettime _sqlx_arg5
+    }
+    ifx true(_sqlx_arg6) do
+    {
+      es_xformatv _sqlx_arg6 " LIMIT %1" _sqlx_arg6
+    }
+    es_xformatqv _sqlx_query "SELECT _sqlx_keyname FROM sqlx_%1_key WHERE _sqlx_keytime#'%2'%3" _sqlx_arg3 _sqlx_arg5 _sqlx_arg6
+    if (server_var(_sqlx_arg4) in "==|=|<|>") do
+    {
+      es_string _sqlx_query replace "#" server_var(_sqlx_arg4)
+      es_sql query server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_query)
+      es_xset _sqlx_query 0
+      es_xforeachkey _sqlx_temp in _sqlx_result "es_xdoblock corelib/sqlitelib/sqlx_block_keyprune"
+      ifx true(_sqlx_query) do
+      {
+        es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+      }
+      es_xkeygroupdelete _sqlx_result
+    }
+    else do
+    {
+      ifx false(_sqlx_arg4) do
+      {
+        es_xstring _sqlx_query replace "#" "<"
+        ifx true(_sqlx_query) do
+        {
+          es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+        }
+      }
+      else do
+      {
+        es_xdbgmsg 0 sqlx: Invalid condition for sqlx keyprune. Conditions: < > =
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keyprune. Syntax: sqlx keyprune <db-name> <db-table> <key-condition> <key-time> [key-limit]
+  }
+}
+
+block sqlx_block_keyprune
+{
+  es_keygetvalue _sqlx_temp _sqlx_result server_var(_sqlx_temp) _sqlx_keyname
+  ifx true(_sqlx_query) do
+  {
+    es_xformatv _sqlx_query "%1;DELETE FROM sqlx_%2_key WHERE _sqlx_keyname='%3';DELETE FROM sqlx_%2_var WHERE _sqlx_keyname='%3';" _sqlx_query _sqlx_arg3 _sqlx_temp
+  }
+  else do
+  {
+    es_xformatv _sqlx_query "DELETE FROM sqlx_%1_key WHERE _sqlx_keyname='%2';DELETE FROM sqlx_%1_var WHERE _sqlx_keyname='%2';" _sqlx_arg3 _sqlx_temp
+  }
+}
+
+block sqlx_cmd_keysetvalue
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 6) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    es_xgetargv _sqlx_arg6 6
+    
+    es_xformatqv _sqlx_query "REPLACE INTO sqlx_%1_var(_sqlx_keyname,_sqlx_varname,_sqlx_varvalue,_sqlx_temp) VALUES('%4','%2','%3','%4-%2');" _sqlx_arg3 _sqlx_arg5 _sqlx_arg6 _sqlx_arg4
+    es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keysetvalue. Syntax: sqlx keysetvalue <db-name> <db-table> <key-name> <var-name> <var-value>
+  }
+}
+
+block sqlx_cmd_keygetvalue
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 6) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    es_xgetargv _sqlx_arg6 6
+    es_set server_var(_sqlx_arg2) 0
+
+    es_xformatqv _sqlx_query "SELECT _sqlx_varvalue FROM sqlx_%1_var WHERE _sqlx_keyname='%2' AND _sqlx_varname='%3';" _sqlx_arg4 _sqlx_arg5 _sqlx_arg6
+    es_sql queryvalue server_var(_sqlx_arg3) server_var(_sqlx_arg2) server_var(_sqlx_query)
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keygetvalue. Syntax: sqlx keygetvalue <var> <db-name> <db-table> <key-name> <var-name>
+  }
+}
+
+block sqlx_cmd_keysettime
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 4) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    if (server_var(_sqlx_arg5) == 0) do
+    {
+      es_xgettime _sqlx_arg5
+    }
+    es_xformatqv _sqlx_query "UPDATE sqlx_%1_key SET _sqlx_keytime='%2' WHERE _sqlx_keyname='%3';" _sqlx_arg3 _sqlx_arg5 _sqlx_arg4
+    es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keysettime. Syntax: sqlx keysettime <db-name> <db-table> <key-name> [key-time]
+  }
+}
+
+block sqlx_cmd_keygettime
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) > 4) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    es_set server_var(_sqlx_arg2) 0
+
+    es_xformatqv _sqlx_query "SELECT _sqlx_keytime FROM sqlx_%1_key WHERE _sqlx_keyname='%2';" _sqlx_arg4 _sqlx_arg5
+    es_sql queryvalue server_var(_sqlx_arg3) server_var(_sqlx_arg2) server_var(_sqlx_query)
+    es_xkeygroupdelete _sqlx_result
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keygettime. Syntax: sqlx keygettime <var> <db-name> <db-table> <key-name>
+  }
+}
+
+block sqlx_cmd_foreachkey
+{
+  es_xgetargc _sqlx_fargc
+  if (server_var(_sqlx_fargc) >= 5) do
+  {
+    stack save _sqlx_foreachkey _sqlx_resultgroup
+    stack save _sqlx_foreachkey _sqlx_farg2
+    stack save _sqlx_foreachkey _sqlx_farg5
+    stack save _sqlx_foreachkey _sqlx_ftemp
+
+    es_xmath _sqlx_index + 1
+    es_xformatv _sqlx_resultgroup "_sqlx_result%1" _sqlx_index
+
+    es_xgetargv _sqlx_farg2 2
+    es_xgetargv _sqlx_farg3 3
+    es_xgetargv _sqlx_farg4 4
+    es_xgetargv _sqlx_farg5 5
+    es_set server_var(_sqlx_farg2) 0
+
+    es_xformatqv _sqlx_query "SELECT _sqlx_keyname FROM sqlx_%1_key ORDER BY _sqlx_keysort ASC;" _sqlx_farg4
+    es_sql query server_var(_sqlx_farg3) server_var(_sqlx_resultgroup) server_var(_sqlx_query)
+    es_foreachkey _sqlx_ftemp in server_var(_sqlx_resultgroup) "es_xdoblock corelib/sqlitelib/sqlx_block_foreachkey"
+    es_keygroupdelete server_var(_sqlx_resultgroup)
+    
+    stack restore _sqlx_foreachkey _sqlx_ftemp
+    stack restore _sqlx_foreachkey _sqlx_farg5
+    stack restore _sqlx_foreachkey _sqlx_farg2
+    stack restore _sqlx_foreachkey _sqlx_resultgroup
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx foreachkey. Syntax: sqlx foreachkey <var> <db-name> <db-table> <command>
+  }
+}
+
+block sqlx_block_foreachkey
+{
+  es_keygetvalue server_var(_sqlx_farg2) server_var(_sqlx_resultgroup) server_var(_sqlx_ftemp) _sqlx_keyname
+  es_xcommandv _sqlx_farg5
+}
+
+block sqlx_cmd_foreachval
+{
+  es_xgetargc _sqlx_fargc
+  if (server_var(_sqlx_fargc) >= 6) do
+  {
+    stack save _sqlx_foreachval _sqlx_resultgroup
+    stack save _sqlx_foreachval _sqlx_farg2
+    stack save _sqlx_foreachval _sqlx_farg6
+    stack save _sqlx_foreachval _sqlx_ftemp
+
+    es_xmath _sqlx_index + 1
+    es_xformatv _sqlx_resultgroup "_sqlx_result%1" _sqlx_index
+  
+    es_xgetargv _sqlx_farg2 2
+    es_xgetargv _sqlx_farg3 3
+    es_xgetargv _sqlx_farg4 4
+    es_xgetargv _sqlx_farg5 5
+    es_xgetargv _sqlx_farg6 6
+    es_set server_var(_sqlx_farg2) 0
+
+    es_xformatqv _sqlx_query "SELECT _sqlx_varname FROM sqlx_%1_var WHERE _sqlx_keyname='%2';" _sqlx_farg4 _sqlx_farg5
+    es_sql query server_var(_sqlx_farg3) server_var(_sqlx_resultgroup) server_var(_sqlx_query)
+    es_foreachkey _sqlx_ftemp in server_var(_sqlx_resultgroup) "es_xdoblock corelib/sqlitelib/sqlx_block_foreachval"
+    es_keygroupdelete server_var(_sqlx_resultgroup)
+    
+    stack restore _sqlx_foreachval _sqlx_ftemp
+    stack restore _sqlx_foreachval _sqlx_farg6
+    stack restore _sqlx_foreachval _sqlx_farg2
+    stack restore _sqlx_foreachval _sqlx_resultgroup
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx foreachval. Syntax: sqlx foreachval <var> <db-name> <db-table> <key-name> <command>
+  }
+}
+
+block sqlx_block_foreachval
+{
+  es_keygetvalue server_var(_sqlx_farg2) server_var(_sqlx_resultgroup) server_var(_sqlx_ftemp) _sqlx_varname
+  es_xcommandv _sqlx_farg6
+}
+
+block sqlx_cmd_keysort
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) >= 5) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    es_xset _sqlx_count 0
+    
+    if (server_var(_sqlx_arg5) == "ASC") do
+    {
+      es_xformatqv _sqlx_query "SELECT * FROM sqlx_%1_var WHERE _sqlx_varname='%2' ORDER BY _sqlx_varvalue ASC;" _sqlx_arg3 _sqlx_arg4
+      es_sql query server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_query)
+      es_xset _sqlx_query 0
+      es_xforeachkey _sqlx_temp in _sqlx_result "es_xdoblock corelib/sqlitelib/sqlx_block_keysort"
+      ifx true(_sqlx_query) do
+      {
+        es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+      }
+      es_xkeygroupdelete _sqlx_result
+    }
+    else do
+    {
+      if (server_var(_sqlx_arg5) == "DESC") do
+      {
+        es_xformatqv _sqlx_query "SELECT * FROM sqlx_%1_var WHERE _sqlx_varname='%2' ORDER BY _sqlx_varvalue DESC;" _sqlx_arg3 _sqlx_arg4
+        es_sql query server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_query)
+        es_xset _sqlx_query 0
+        es_xforeachkey _sqlx_temp in _sqlx_result "es_xdoblock corelib/sqlitelib/sqlx_block_keysort"
+        ifx true(_sqlx_query) do
+        {
+          es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+        }
+        es_xkeygroupdelete _sqlx_result
+      }
+      else do
+      {
+        es_xdbgmsg 0 sqlx: No correct sort order for sqlx keysort. Must be ASC or DESC. Syntax: sqlx keysort <db-name> <db-table> <var-name> <ASC/DESC>
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keysort. Syntax: sqlx keysort <db-name> <db-table> <var-name> <ASC/DESC>
+  }
+}
+
+block sqlx_block_keysort
+{
+  es_keygetvalue _sqlx_temp _sqlx_result server_var(_sqlx_temp) _sqlx_keyname
+  es_xmath _sqlx_count + 1
+  ifx true(_sqlx_query) do
+  {
+    es_xformatv _sqlx_query "%1;UPDATE sqlx_%2_key SET _sqlx_keysort='%3' WHERE _sqlx_keyname='%4';" _sqlx_query _sqlx_arg3 _sqlx_count _sqlx_temp
+  }
+  else do
+  {
+    es_xformatv _sqlx_query "UPDATE sqlx_%1_key SET _sqlx_keysort='%2' WHERE _sqlx_keyname='%3';" _sqlx_arg3 _sqlx_count _sqlx_temp
+  }
+}
+
+block sqlx_cmd_keyfilter
+{
+  es_xgetargc _sqlx_argc
+  if (server_var(_sqlx_argc) >= 6) do
+  {
+    es_xgetargv _sqlx_arg2 2
+    es_xgetargv _sqlx_arg3 3
+    es_xgetargv _sqlx_arg4 4
+    es_xgetargv _sqlx_arg5 5
+    es_xgetargv _sqlx_arg6 6
+    
+    if (server_var(_sqlx_arg5) == "NOT") do
+    {
+      es_xset _sqlx_filter 0
+      es_xformatqv _sqlx_query "SELECT sqlx_%1_key._sqlx_keyname AS _sqlx_keyname, sqlx_%1_var._sqlx_varvalue AS _sqlx_varvalue FROM sqlx_%1_key LEFT OUTER JOIN sqlx_%1_var ON (sqlx_%1_key._sqlx_keyname=sqlx_%1_var._sqlx_keyname AND sqlx_%1_var._sqlx_varname='%2');" _sqlx_arg3 _sqlx_arg4
+      es_sql query server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_query)
+      es_xset _sqlx_query 0
+      es_xforeachkey _sqlx_temp in _sqlx_result "es_xdoblock corelib/sqlitelib/sqlx_block_keyfilter"
+      ifx true(_sqlx_query) do
+      {
+        es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+      }
+      es_xkeygroupdelete _sqlx_result
+    }
+    else do
+    {
+      if (server_var(_sqlx_arg5) == "ONLY") do
+      {
+        es_xset _sqlx_filter 1
+        es_xformatqv _sqlx_query "SELECT sqlx_%1_key._sqlx_keyname AS _sqlx_keyname, sqlx_%1_var._sqlx_varvalue AS _sqlx_varvalue FROM sqlx_%1_key LEFT OUTER JOIN sqlx_%1_var ON (sqlx_%1_key._sqlx_keyname=sqlx_%1_var._sqlx_keyname AND sqlx_%1_var._sqlx_varname='%2');" _sqlx_arg3 _sqlx_arg4
+        es_sql query server_var(_sqlx_arg2) _sqlx_result server_var(_sqlx_query)
+        es_xset _sqlx_query 0
+        es_xforeachkey _sqlx_temp in _sqlx_result "es_xdoblock corelib/sqlitelib/sqlx_block_keyfilter"
+        ifx true(_sqlx_query) do
+        {
+          es_sql query server_var(_sqlx_arg2) server_var(_sqlx_query)
+        }
+        es_xkeygroupdelete _sqlx_result
+      }
+      else do
+      {
+        es_xdbgmsg 0 sqlx: No correct filter type for sqlx keyfilter. Must be ASC or DESC. Syntax: sqlx keyfilter <db-name> <db-table> <var-name> <NOT/ONLY> <var-value>
+      }
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 sqlx: Not enough parameters for sqlx keyfilter. Syntax: sqlx keyfilter <db-name> <db-table> <var-name> <NOT/ONLY> <var-value>
+  }
+}
+
+block sqlx_block_keyfilter
+{
+  es_keygetvalue _sqlx_temp2 _sqlx_result server_var(_sqlx_temp) _sqlx_varvalue
+  es_keygetvalue _sqlx_temp _sqlx_result server_var(_sqlx_temp) _sqlx_keyname
+  ifx true(_sqlx_filter) do
+  {
+    if (server_var(_sqlx_temp2) != server_var(_sqlx_arg6)) do
+    {
+      ifx true(_sqlx_query) do
+      {
+        es_xformatv _sqlx_query "%1;DELETE FROM sqlx_%2_key WHERE _sqlx_keyname='%3';DELETE FROM sqlx_%2_var WHERE _sqlx_keyname='%3';" _sqlx_query _sqlx_arg3 _sqlx_temp
+      }
+      else do
+      {
+        es_xformatv _sqlx_query "DELETE FROM sqlx_%1_key WHERE _sqlx_keyname='%2';DELETE FROM sqlx_%1_var WHERE _sqlx_keyname='%2';" _sqlx_arg3 _sqlx_temp
+      }
+    }
+  }
+  else do
+  {
+    if (server_var(_sqlx_temp2) == server_var(_sqlx_arg6)) do
+    {
+      ifx true(_sqlx_query) do
+      {
+        es_xformatv _sqlx_query "%1;DELETE FROM sqlx_%2_key WHERE _sqlx_keyname='%3';DELETE FROM sqlx_%2_var WHERE _sqlx_keyname='%3';" _sqlx_query _sqlx_arg3 _sqlx_temp
+      }
+      else do
+      {
+        es_xformatv _sqlx_query "DELETE FROM sqlx_%1_key WHERE _sqlx_keyname='%2';DELETE FROM sqlx_%1_var WHERE _sqlx_keyname='%2';" _sqlx_arg3 _sqlx_temp
+      }
+    }
+  }
+}
+
+block sqlx_test
+{
+  es_sql close sqlx_test
+  es_sql open sqlx_test |corelib/sqlitelib
+
+  es_xset myvar 0
+
+  sqlx delete sqlx_test TEST
+  sqlx create sqlx_test TEST
+
+  testlib begin create1 "Testing whether or not keycreate/keyprune/keyexists works 1"
+  es_xset myvar 0
+  sqlx keycreate sqlx_test TEST blub 1000
+  sqlx keyprune sqlx_test TEST <
+  sqlx keyexists myvar sqlx_test TEST blub
+  testlib fail_unless myvar equalto 0
+  testlib end
+
+  testlib begin create2 "Testing whether or not keycreate/keyprune/keyexists works 2"
+  es_xset myvar 0
+  sqlx keycreate sqlx_test TEST blub 1000
+  sqlx keyprune sqlx_test TEST < 2000
+  sqlx keyexists myvar sqlx_test TEST blub
+  testlib fail_unless myvar equalto 0
+  testlib end
+
+  testlib begin create3 "Testing whether or not keycreate/keyexists works 1"
+  es_xset myvar 0
+  sqlx keycreate sqlx_test TEST blub
+  sqlx keyexists myvar sqlx_test TEST blub
+  testlib fail_unless myvar equalto 1
+  testlib end
+
+  testlib begin set1 "Testing whether or not keysetvalue/keygetvalue works 1"
+  es_xset myvar 0
+  sqlx keysetvalue sqlx_test TEST blub var1 value1
+  sqlx keygetvalue myvar sqlx_test TEST blub var1
+  testlib fail_unless myvar equalto value1
+  testlib end
+
+  testlib begin set2 "Testing whether or not keysetvalue/keygetvalue works 2"
+  es_xset myvar 0
+  sqlx keysetvalue sqlx_test TEST blub var2 value2
+  sqlx keygetvalue myvar sqlx_test TEST blub var2
+  testlib fail_unless myvar equalto value2
+  testlib end
+
+  testlib begin set3 "Testing whether or not keysetvalue/keygetvalue works 3"
+  es_xset myvar 0
+  sqlx keysetvalue sqlx_test TEST blub var3 value3
+  sqlx keygetvalue myvar sqlx_test TEST blub var3
+  testlib fail_unless myvar equalto value3
+  testlib end
+
+  testlib begin settime1 "Testing whether or not keysettime/keyprune/keyexists works 1"
+  es_xset myvar 0
+  sqlx keysettime sqlx_test TEST blub 5000
+  sqlx keyprune sqlx_test TEST < 7000
+  sqlx keyexists myvar sqlx_test TEST blub
+  testlib fail_unless myvar equalto 0
+  testlib end
+  
+  testlib begin get1 "Testing whether or not keygetvalue works 1"
+  es_xset myvar 0
+  sqlx keygetvalue myvar sqlx_test TEST blub var1
+  testlib fail_unless myvar notequalto value1
+  testlib end
+
+  testlib begin get2 "Testing whether or not keygetvalue works 2"
+  es_xset myvar 0
+  sqlx keygetvalue myvar sqlx_test TEST blub var2
+  testlib fail_unless myvar notequalto value2
+  testlib end
+
+  testlib begin get3 "Testing whether or not keygetvalue works 3"
+  es_xset myvar 0
+  sqlx keygetvalue myvar sqlx_test TEST blub var3
+  testlib fail_unless myvar notequalto value3
+  testlib end
+  
+  sqlx delete sqlx_test TEST
+  sqlx create sqlx_test TEST
+  
+  sqlx keycreate sqlx_test TEST a 1000
+  sqlx keysetvalue sqlx_test TEST a var1 value1
+  sqlx keysetvalue sqlx_test TEST a var2 value2
+  sqlx keysetvalue sqlx_test TEST a var3 value3
+
+  sqlx keycreate sqlx_test TEST b 2000
+  sqlx keysetvalue sqlx_test TEST b var1 value1
+  sqlx keysetvalue sqlx_test TEST b var2 value2
+  sqlx keysetvalue sqlx_test TEST b var3 value3
+
+  sqlx keycreate sqlx_test TEST c 3000
+  sqlx keysetvalue sqlx_test TEST c var1 value1
+  sqlx keysetvalue sqlx_test TEST c var2 value2
+  sqlx keysetvalue sqlx_test TEST c var3 value3
+
+  testlib begin foreachkey1 "Testing whether or not foreachkey works 1"
+  es_xset myvar 0
+  sqlx foreachkey _tempcore sqlx_test TEST "es_xmath myvar + 1"
+  testlib fail_unless myvar equalto 3
+  testlib end
+
+  testlib begin exists1 "Testing whether or not exists works 1"
+  es_xset myvar 0
+  sqlx keyexists myvar sqlx_test TEST b
+  testlib fail_unless myvar equalto 1
+  testlib end
+
+  testlib begin exists1 "Testing whether or not exists works 1"
+  es_xset myvar 0
+  sqlx keydelete sqlx_test TEST b
+  sqlx keyexists myvar sqlx_test TEST b
+  testlib fail_unless myvar equalto 0
+  testlib end
+
+  testlib begin foreachval1 "Testing whether or not foreachval works 1"
+  es_xset myvar 0
+  sqlx foreachval _tempcore sqlx_test TEST a "es_xmath myvar + 1"
+  testlib fail_unless myvar equalto 3
+  testlib end
+
+  sqlx delete sqlx_test TEST
+  sqlx create sqlx_test TEST
+  
+  sqlx keycreate sqlx_test TEST a 1000
+  sqlx keysetvalue sqlx_test TEST a var1 1
+  sqlx keysetvalue sqlx_test TEST a var2 3
+
+  sqlx keycreate sqlx_test TEST b 2000
+  sqlx keysetvalue sqlx_test TEST b var1 2
+  sqlx keysetvalue sqlx_test TEST b var2 2
+
+  sqlx keycreate sqlx_test TEST c 3000
+  sqlx keysetvalue sqlx_test TEST c var1 3
+  sqlx keysetvalue sqlx_test TEST c var2 1
+
+  testlib begin keysort1 "Testing whether or not keysort works 1"
+  es_xset myvar 0
+  sqlx keysort sqlx_test TEST var1 ASC
+  sqlx foreachkey _tempcore sqlx_test TEST "es_xformatv myvar %1%2 myvar _tempcore"
+  testlib fail_unless myvar equalto 0abc
+  testlib end
+
+  testlib begin keysort2 "Testing whether or not keysort works 2"
+  es_xset myvar 0
+  sqlx keysort sqlx_test TEST var1 DESC
+  sqlx foreachkey _tempcore sqlx_test TEST "es_xformatv myvar %1%2 myvar _tempcore"
+  testlib fail_unless myvar equalto 0cba
+  testlib end
+
+  testlib begin keysort3 "Testing whether or not keysort works 3"
+  es_xset myvar 0
+  sqlx keysort sqlx_test TEST var2 ASC
+  sqlx foreachkey _tempcore sqlx_test TEST "es_xformatv myvar %1%2 myvar _tempcore"
+  testlib fail_unless myvar equalto 0cba
+  testlib end
+
+  testlib begin keysort4 "Testing whether or not keysort works 4"
+  es_xset myvar 0
+  sqlx keysort sqlx_test TEST var2 DESC
+  sqlx foreachkey _tempcore sqlx_test TEST "es_xformatv myvar %1%2 myvar _tempcore"
+  testlib fail_unless myvar equalto 0abc
+  testlib end
+
+  sqlx delete sqlx_test TEST
+  sqlx create sqlx_test TEST
+  
+  sqlx keycreate sqlx_test TEST a 1000
+  sqlx keysetvalue sqlx_test TEST a var1 yes
+
+  sqlx keycreate sqlx_test TEST b 2000
+  sqlx keysetvalue sqlx_test TEST b var1 no
+
+  sqlx keycreate sqlx_test TEST c 3000
+  sqlx keysetvalue sqlx_test TEST c var1 yes
+
+  testlib begin keyfilter1 "Testing whether or not keyfilter works 1"
+  es_xset myvar 0
+  sqlx keyfilter sqlx_test TEST var1 ONLY yes
+  sqlx foreachkey _tempcore sqlx_test TEST "es_xformatv myvar %1%2 myvar _tempcore"
+  testlib fail_unless myvar equalto 0ac
+  testlib end
+  
+  sqlx delete sqlx_test TEST
+  sqlx create sqlx_test TEST
+  
+  sqlx keycreate sqlx_test TEST a 1000
+  sqlx keysetvalue sqlx_test TEST a var1 yes
+
+  sqlx keycreate sqlx_test TEST b 2000
+  sqlx keysetvalue sqlx_test TEST b var1 no
+
+  sqlx keycreate sqlx_test TEST c 3000
+  sqlx keysetvalue sqlx_test TEST c var1 yes
+
+  testlib begin keyfilter2 "Testing whether or not keyfilter works 2"
+  es_xset myvar 0
+  sqlx keyfilter sqlx_test TEST var1 NOT yes
+  sqlx foreachkey _tempcore sqlx_test TEST "es_xformatv myvar %1%2 myvar _tempcore"
+  testlib fail_unless myvar equalto 0b
+  testlib end
+
+  es_sql close sqlx_test
+}
+
+block sqlx_profile
+{
+  es_sql close sqlx_profile
+  es_sql open sqlx_profile |corelib/sqlitelib
+  
+  profilecmd _sqlx_profile "sqlx create sqlx_profile TEST"
+  
+  profilecmd _sqlx_profile "sqlx keycreate sqlx_profile TEST blub 1000"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub var1 value1"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub var2 value2"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub var3 value3"
+  profilecmd _sqlx_profile "sqlx keyprune sqlx_profile TEST"
+  profilecmd _sqlx_profile "sqlx keydelete sqlx_profile TEST blub"
+  
+  profilecmd _sqlx_profile "sqlx keycreate sqlx_profile TEST blub"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub var1 value1"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub var2 value2"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub var3 value3"
+  profilecmd _sqlx_profile "sqlx keygetvalue _sqlxcore sqlx_profile TEST blub var1"
+  profilecmd _sqlx_profile "sqlx keygetvalue _sqlxcore sqlx_profile TEST blub var2"
+  profilecmd _sqlx_profile "sqlx keygetvalue _sqlxcore sqlx_profile TEST blub var3"
+  profilecmd _sqlx_profile "sqlx keydelete sqlx_profile TEST blub"
+  
+  profilecmd _sqlx_profile "sqlx keycreate sqlx_profile TEST blub1"
+  profilecmd _sqlx_profile "sqlx keycreate sqlx_profile TEST blub2"
+  profilecmd _sqlx_profile "sqlx keycreate sqlx_profile TEST blub3"
+  profilecmd _sqlx_profile "sqlx keycreate sqlx_profile TEST blub4"
+  profilecmd _sqlx_profile "sqlx keycreate sqlx_profile TEST blub4"
+  profilecmd _sqlx_profile "sqlx foreachkey _sqlx_profile1 sqlx_profile TEST clear"
+  
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub1 var1 4"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub1 var2 2"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub1 var3 3"
+  profilecmd _sqlx_profile "sqlx foreachval _sqlx_profile1 sqlx_profile TEST blub1 clear"
+  
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub2 var1 3"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub3 var1 2"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub4 var1 1"
+  profilecmd _sqlx_profile "sqlx keysort sqlx_profile TEST var1 DESC"
+  
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub2 var2 1"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub3 var2 2"
+  profilecmd _sqlx_profile "sqlx keysetvalue sqlx_profile TEST blub4 var2 1"
+  profilecmd _sqlx_profile "sqlx keyfilter sqlx_profile TEST var2 ONLY 2"
+  
+  profilecmd _sqlx_profile "sqlx delete sqlx_profile TEST"
+  
+  es_sql close sqlx_profile
+}

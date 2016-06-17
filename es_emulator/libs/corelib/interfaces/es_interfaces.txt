@@ -1,0 +1,404 @@
+block load
+{
+  es_xregcmd "interface" corelib/interfaces/instance_cmd "Associates console commands with interfaces (instances) and registers interfaces"
+  es_xkeygroupcreate _i_interface-definitions
+  es_xkeycreate _i_interface-definitions _metadata
+  es_xkeysetvalue _i_interface-definitions _metadata quantity 0
+  es_xkeycreate _i_interface-definitions definition_keygroups
+
+  es_xkeygroupcreate _i_interface-instances
+  es_xkeycreate _i_interface-instances _metadata
+  es_xkeysetvalue _i_interface-instances _metadata quantity 0
+  es_xset _iarg0 0
+  es_xset _iarg1 0
+  es_xset _iarg2 0
+  es_xset _iarg3 0
+  es_xset _iarg4 0
+  es_xset _iproxy0 0
+  es_xset _iproxy1 0
+  es_xset _iproxyiface 0
+  es_xset _iinvoked 0
+  es_xset _iexists 0
+  stack create _iproxy  
+  testcase qcreate corelib interfaces "Tests interfaces"
+  testcase addtest interfaces interfaces1 corelib/interfaces/test "Test interfaces"
+}
+
+block unload
+{
+  es_keygroupdelete _i_interface-definitions
+  es_keygroupdelete _i_interface-instance
+  stack delete _iproxy
+}
+
+block test
+{
+  testlib begin i1 "corelib interfaces"
+  es_set myvar 0
+  interface register TestInterface |corelib/interfaces/TestInterface
+  interface getversion myvar TestInterface
+  testlib fail_unless myvar equalto 1
+  testlib end i1	
+
+  testlib begin i2 "corelib empty interface list -- no longer a failure"
+  es_set myvar 0
+  interface getinstancelist _test_i_empty
+  es_foreachkey _tempcore in _test_i_empty "es_math myvar + 1"
+  es_keygroupdelete _test_i_empty
+  // only fail if this is the first time we've run this test
+  if (server_var(_i2_testcase_run) < 1) then testlib fail_unless myvar equalto 0
+  es_xset _i2_testcase_run 1
+  testlib end i2
+
+  testlib begin i3 "corelib interface not loaded"
+  es_set myvar 0
+  interface instance test1 is "Testing an interface command"
+  interface instance test1 provides mycommand
+  interface instance test1 provides mycommand2
+  interface instance test1 implements TestInterface version 1
+  interface getinstanceinfo myvar test1 implements
+  testlib fail_unless myvar equalto "TestInterface"
+  testlib end i3
+
+  testlib begin i4 "corelib existing interface list"
+  es_set myvar 0
+  interface getinstancelist _test_i_full
+  es_foreachkey _tempcore in _test_i_full "es_math myvar + 1"
+  es_keygroupdelete _test_i_full  
+  testlib fail_unless myvar greaterthan 0
+  testlib end i4
+
+  testlib begin i5 "corelib interface invokes"
+  es_set myvar 0
+  interface instance test1 invokes corelib/interfaces/interface_test_invoke
+  interface getinstanceinfo myvar test1 invokes
+  testlib fail_unless myvar equalto "corelib/interfaces/interface_test_invoke"
+  testlib end i5
+
+  testlib begin i6 "corelib interface invoke success"
+  es_set _test_i_invoke 0
+  test1 myCommand whatever hello whatever2 hello2
+  testlib fail_unless _test_i_invoke equalto "success"
+  testlib end
+
+  testlib begin i7 "corelib interface invoke state preservation"
+  es_set testinterface_command "grrr"
+  test1 myCommand whatever hello whatever2 hello2
+  testlib fail_unless testinterface_command equalto "grrr"
+  testlib end
+  
+  testlib begin i8 "corelib interfaces: constants"
+  //interface register TestInterface |corelib/interfaces/TestInterface
+  testlib fail_unless TESTINTERFACE_CONSTANT1 equalto one
+  testlib fail_unless TESTINTERFACE_CONSTANT2 equalto two
+  testlib end i1	
+
+  //interface getversion myvar AuthorizationService
+  //interface instance myauth is "Mattie's Special Authentication Service"
+  //interface instance myauth provides isauthorized
+  //interface instance myauth implements AuthorizationService version 1
+  
+  //interface getinstancelist mykeygroup
+  //interface getinstanceinfo myvar myauth implements
+}
+
+block interface_test_invoke
+{
+  es_xset _test_i_invoke "success"
+  es_dbgmsg -1 test_invoke: server_var(testinterface_command) - server_var(testinterface2xx) - server_var(testinterface3) - server_var(testinterface4)
+}
+
+      
+// get the version of a particular registered interface
+block getversion
+{
+  es_xgetargv _iarg2 2
+  es_xgetargv _iarg3 3
+  es_keygetvalue server_var(_iarg2) _i_interface-definitions definition_keygroups server_var(_iarg3)
+  es_keygetvalue server_var(_iarg2) server_var(server_var(_iarg2)) _metadata version
+}
+
+//interface register AuthorizationService |mattieauth
+//interface getversion myvar AuthorizationService
+//interface instance myauth is "Mattie's Special Authentication Service"
+block instance_cmd
+{
+  es_xgetargv _iarg1 1
+  es_xset _iblock 0
+  if (server_var(_iarg1) == "instance") do
+  {
+    es_xgetargv _iarg3 3
+    es_xformatv _iblock "corelib/interfaces/instance_%1" _iarg3
+    es_doblock server_var(_iblock)
+  }
+  else do
+  {
+    es_xformatv _iblock "corelib/interfaces/%1" _iarg1
+    es_doblock server_var(_iblock)
+  }
+}
+
+// create an instance of an interface and store its name
+//interface instance myauth is "Mattie's Special Authentication Service"
+block instance_is
+{
+  es_xgetargv _iarg2 2
+  es_exists _iexists key _i_interface-instances server_var(_iarg2)
+  ifx false(_iexists) do
+  {
+    es_xgetargv _iarg4 4
+    keymath _i_interface-instances _metadata quantity + 1
+    es_keycreate _i_interface-instances server_var(_iarg2)
+    es_keysetvalue _i_interface-instances server_var(_iarg2) name server_var(_iarg4)
+  }
+  else do
+  {
+    es_xdbgmsg 0 "Multiple implementation not yet supported and this interface already exists."
+  }
+}
+
+// specifies the block invoked by the specified interface
+//interface instance myauth invokes "templates\examples\testauthorization"
+block instance_invokes
+{
+  es_xgetargv _iarg2 2
+  es_exists _iexists key _i_interface-instances server_var(_iarg2)
+  ifx true(_iexists) do
+  {
+    es_xgetargv _iarg4 4
+    es_keysetvalue _i_interface-instances server_var(_iarg2) "invokes" server_var(_iarg4)
+    es_keygetvalue _iexists _i_interface-instances server_var(_iarg2) name
+    es_regcmd server_var(_iarg2) corelib/interfaces/interface_proxy server_var(_iexists)
+  }
+  else do
+  {
+    es_xdbgmsg 0 "You must use 'is' on an interface instance before 'invokes'."
+  }
+}
+
+// identify which methods the instance provides
+block instance_provides
+{
+  es_xdbgmsg 1 Not Yet Implemented: "provides"
+}
+
+// finalize the instance and identify which interface it implements
+//interface instance myauth implements AuthorizationService version 1
+block instance_implements
+{
+  es_xgetargv _iarg2 2
+  es_exists _iexists key _i_interface-instances server_var(_iarg2)
+  ifx true(_iexists) do
+  {
+    es_xgetargv _iarg4 4
+    es_keysetvalue _i_interface-instances server_var(_iarg2) implements server_var(_iarg4)
+  }
+  else do
+  {
+    es_xdbgmsg 0 "Multiple implementation not yet supported and this interface already exists."
+  }
+}
+
+block getinstancelist
+{
+  es_xgetargv _iarg2 2
+  es_keygroupcopy _i_interface-instances server_var(_iarg2)
+  es_keydelete server_var(_iarg2) _metadata
+}
+// interface getinstanceinfo myvar myauth implements
+block getinstanceinfo
+{
+ es_xgetargv _iarg2 2
+ es_xgetargv _iarg3 3
+ es_xgetargv _iarg4 4
+ es_keygetvalue server_var(_iarg2) _i_interface-instances server_var(_iarg3) server_var(_iarg4)
+}
+
+//interface register AuthorizationService |mattieauth
+block register
+{
+  es_xgetargv _iarg2 2
+  es_xgetargv _iarg3 3
+  es_keygroupload server_var(_iarg2) server_var(_iarg3)
+  es_xset _i_corename 0
+  es_exists _i_corename keygroup server_var(_iarg2)
+  ifx true(_i_corename) do
+  {
+    es_formatv _i_corename "_i_%1" _iarg2
+    es_keygrouprename server_var(_iarg2) server_var(_i_corename)
+    keymath _i_interface-definitions _metadata quantity + 1
+    es_keysetvalue _i_interface-definitions definition_keygroups server_var(_iarg2) server_var(_i_corename)
+    // loop through and register any constants
+    es_foreachval _i_constant in server_var(_i_corename) _constants "es_doblock corelib/interfaces/register_constants"
+  }
+  else do
+  {
+    es_xdbgmsg 0 "Error loading interface."
+  }
+}
+
+block register_constants
+{
+  es_set server_var(_i_constant) 0
+  es_keygetvalue server_var(_i_constant) server_var(_i_corename) _constants server_var(_i_constant)
+}
+
+block interface_proxy
+{
+  es_doblock corelib/interfaces/interface_stack_up
+  es_xgetargv _iinvoked 0
+  es interface getinstanceinfo _iinvoked server_var(_iinvoked) "invokes"
+  es_doblock server_var(_iinvoked)
+  es_doblock corelib/interfaces/interface_stack_down
+}
+
+block interface_stack_up
+{
+  // get the instance name
+  es_xgetargv _iproxy0 0
+  // get the method name
+  es_xgetargv _iproxy1 1
+  // get the interface name
+  es interface getinstanceinfo _iproxyiface server_var(_iproxy0) implements
+  es_keygetvalue _iproxyiface _i_interface-definitions definition_keygroups server_var(_iproxyiface)
+  //es_keygetvalue server_var(_iarg2) server_var(server_var(_iarg2)) _metadata version
+  es_foreachval _iproxymethod in server_var(_iproxyiface) server_var(_iproxy1) "es_doblock corelib/interfaces/interface_stack_up_loop"
+}
+
+block interface_stack_up_loop
+{
+  es_xset _istackup 0
+  es_keygetvalue _istackup server_var(_iproxyiface) server_var(_iproxy1) server_var(_iproxymethod)
+  // This next line creates the individual variables for the first time.
+  //  It's either this, or we have a plethora of variables around forever even if never invoked.
+  //  Not sure which is better. We'll try this for now. (Mattie)
+  es_set server_var(_istackup) server_var(server_var(_istackup))
+  es stack save _iproxy server_var(_istackup)
+  stack save _iproxy _istackup
+  es_getargv server_var(_istackup) server_var(_iproxymethod)
+}
+
+// push onto the stack the existing variables used by the interface
+block interface_stack_down
+{
+  // get the instance name
+  es_xgetargv _iproxy0 0
+  // get the method name
+  es_xgetargv _iproxy1 1
+  // get the interface name
+  es interface getinstanceinfo _iproxyiface server_var(_iproxy0) implements
+  es_keygetvalue _iproxyiface _i_interface-definitions definition_keygroups server_var(_iproxyiface)
+  es_foreachval _iproxymethod in server_var(_iproxyiface) server_var(_iproxy1) "es_doblock corelib/interfaces/interface_stack_down_loop"
+}
+
+block interface_stack_down_loop
+{
+  es_xset _istackdown 0
+  stack restore _iproxy _istackdown 
+  es stack restore _iproxy server_var(_istackdown)
+}
+
+
+// TODO: Remove the text below. Since this is outside a block, ES ignores it.
+//   Sorry for the mess! The below may be helpful in understanding some of the schema.
+
+// interfaces are defined through a keygroup
+//   if you claim you support an interface, you have to provide a command-string for each one.
+//   if you do not, the interface will not be installed.
+
+"_i_interface-definitions"
+{
+    "_metadata"
+    {
+      "quantity" "2"
+    }
+    "definition_keygroups"
+    {
+      "AuthorizationService" "_i_AuthorizationService"
+      "PlayerPreferenceService" "_i_PlayerPreferenceService"
+    }
+}
+
+"_i_interface-instances"
+{
+    "_metadata"
+    {
+        "quantity" "2"
+    }
+
+    "myauth"
+    {
+      "implements" "AuthorizationService"
+      "invokes" "somescript/someblock"
+    }
+}
+
+"_global-services"
+{
+      "_metadata"
+      {
+        "quantity" "2"
+      }
+      "auth"
+      {
+        interface "AuthorizationService"
+        version-min "1"
+      }
+      "playerpref"
+      {
+        interface "PlayerPreferenceService"
+        version-min "1"
+      }
+}
+
+
+
+AuthorizationService
+{
+    _metadata
+    {
+      version 1
+      name "Authorization Service Interface"
+      description "Provides generic authorization methods used to authenticate players."
+    }
+    _constants
+    {
+      "AUTHSERVICE_ROOT" "0"
+      "AUTHSERVICE_ADMIN" "1"
+      "AUTHSERVICE_POWERUSER" "2"
+      "AUTHSERVICE_IDENTIFIED" "4"
+      "AUTHSERVICE_UNRESTRICTED" "128"
+    }
+    "isAuthorized"
+    {
+      "1" "auth_command"
+      "2" "auth_response-var"
+      "3" "auth_user-identifier"
+      "4" "auth_capability"
+    } 
+    "registerCapability"
+    {
+      "1" "auth_command"
+      "2" "auth_capability"
+      // see _constants for the possible values for this.
+      "3" "auth_recommendedlevel"
+    }
+}
+
+interface getversion myvar AuthorizationService
+interface instance myauth is "Mattie's Special Authentication Service"
+interface instance myauth provides isauthorized
+// ...
+interface instance myauth implements AuthorizationService version 1
+interface register AuthorizationService |mattieauth
+interface getinstancelist mykeygroup
+interface getinstanceinfo myvar myauth implements
+
+services register auth myauth
+services unregister auth
+services list
+services getlist mykeygroup
+services isregistered myvar auth
+services getregistered myvar auth
+
+

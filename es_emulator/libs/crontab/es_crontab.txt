@@ -1,0 +1,1077 @@
+// Crontab
+// v1.2.3
+//
+// Submitted by cagemonkey
+// See Wikipedia page for details:
+// http://en.wikipedia.org/wiki/Crontab
+
+
+block load
+{
+	es_xdoblock crontab/crontab_register
+}
+
+// Format:
+// ------------- minute (0 - 59)
+// | ----------- hour (0 - 23)
+// | | --------- day of month (1 - 31)
+// | | | ------- month (1 - 12)
+// | | | | ----- day of week (0 - 6) (Sunday=0)
+// | | | | |
+// * * * * * command to be executed enclosed in quotes
+//
+// Examples:
+//=================================================================
+//  8am-5pm <command> every 20 mins during weekdays.
+//  <command> every hour on Saturday and Sunday.
+//  6pm-7am <command> every hour during weekdays.
+//  <command> at 18:05 every weekday.
+//  <command> every 2 minutes
+//  <command> every 3 hours between 6pm-6am on weekdays
+//=================================================================
+// crontab 0,20,40 8-17 * * 1-5 "<command>"
+// crontab 0 * * * 0,6 "<command>"
+// crontab 0 18-7 * * 1-5 "<command>"
+// crontab 5 18 * * 1-5 "<command>"
+// crontab */2 * * * * "<command>"
+// crontab 0 18-6/3 * * 1-5 "<command>"
+
+// SHORTCUTS
+// Entry       Description             Equivalent To
+//--------------------------------------------------
+// #yearly     Run once a year         0 0 1 1 *
+// #annually   (same as #yearly)       0 0 1 1 *
+// #monthly    Run once a month        0 0 1 * *
+// #weekly     Run once a week         0 0 * * 0
+// #daily      Run once a day          0 0 * * *
+// #midnight   (same as #daily)        0 0 * * *
+// #hourly     Run once an hour        0 * * * *
+//=================================================================
+// Example:
+// crontab #daily "es_xlog This command will run once every day."
+// crontab #hourly "es_xlog This command will run once every hour."
+
+// OTHER INFO & COMMANDS
+// Executing crontab with no variables gives a list of current loaded crontab jobs.
+// Unless a name is given, jobs are automatically assigned a unique job name upon creation.
+// This is output to server_var(_crontab_job_name) for sripters to use to check the status of their crontabs and to unload them.
+//
+// crontab del <job name>
+//  -- remove a job from the current crontab list of jobs.
+//
+// crontab search <type> <job name or command to search for>
+//  -- search the crontab database for a cronjob matching the command or job name given. Commands MUST be enclosed in quotes.
+//  -- Types: job, command
+//
+// crontab backup
+//  -- stores a backup copy of the current database
+//
+// crontab restore
+//  -- restores database to previous backup
+//
+// OPTIONAL SYNTAX
+// crontab * * * * * "es_xlog This will run every minute." test_minute
+//  -- creates a new job called 'test_minute' which executes every minute.
+//
+// crontab */2 * * * * "es_xlog This will run every other minute." test_minute 1
+//  -- this will overwrite 'test_minute' with a new job.
+//
+//
+// The job database is searchable, too.  Here's a sample:
+//	"crontab"
+//	{
+//		"jobs"
+//		{
+//			"total"		"3" // Total number of active jobs, calculated at job creation and deletion
+//			"rname"		"2" // Used to create unique keys and job names, does not reset
+//		}
+//		"crontab_0"
+//		{
+//			"name"		"crontab_0"
+//			"time"		"* * * * *"
+//			"command"		"es_log [Crontab] - This command is executed every minute."
+//			"timestamp"		"27 07 12 12 2"
+//		}
+//		"crontab_1"
+//		{
+//			"name"		"crontab_1"
+//			"time"		"_0,_2,_4,_6,_8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58 * * * *"
+//			"command"		"es_log [Crontab] - This command is executed every 2 minutes."
+//			"timestamp"		"26 07 12 12 2"
+//		}
+//    "test_minute"
+//		{
+//			"name"		"test_minute"
+//			"time"		"* * * * *"
+//			"command"		"es_log [Crontab] - This command is executed every minute."
+//			"timestamp"		"27 07 12 12 2"
+//		}
+//	}
+//
+
+// COMMON MISTAKES:
+// Below are some examples of common errors:
+//
+// # Prepare for the daylight savings time shift
+// 59 1 1-7 4 0 "shift_my_times"
+//
+// At first glance it might look like this will run the script shift_my_times at 1:59am on the first Sunday of April.
+// This, however, is not correct.
+// Unlike all of the other fields the third and fifth fields are actually an OR operation.
+// So it will run at 1:59am each day from the April 1st to April 7th in addition to every remaining Sunday in April.
+//
+// Another common error is putting a cron job to be run every two hours:
+//
+// # adds date to a log file
+// * 0,2,4,6,8,10,12,14,16,18,20,22 * * * "es_log server_var(mydate)"
+//
+// The above will schedule the cron job to be run every minute of every even hour in the day.
+// The correct way of specifying a cron job would be to:
+//
+// # runs the date command every even hour at the top of the hour
+// 0 0,2,4,6,8,10,12,14,16,18,20,22 * * * "es_log server_var(mydate)"
+//
+// # an even better way
+// 0 */2 * * * "es_log server_var(mydate)"
+//
+
+
+block crontab_register
+{
+  // variables used by crontab
+	es_xset _crontab_arg_count 0
+	es_xset _crontab_arg_1 0
+	es_xset _crontab_arg_1_min 0
+	es_xset _crontab_arg_1_max 59
+	es_xset _crontab_arg_2 0
+	es_xset _crontab_arg_2_min 0
+	es_xset _crontab_arg_2_max 23
+	es_xset _crontab_arg_3 0
+	es_xset _crontab_arg_3_min 1
+	es_xset _crontab_arg_3_max 31
+	es_xset _crontab_arg_4 0
+	es_xset _crontab_arg_4_min 1
+	es_xset _crontab_arg_4_max 12
+	es_xset _crontab_arg_5 0
+	es_xset _crontab_arg_5_min 0
+	es_xset _crontab_arg_5_max 6
+	es_xset _crontab_arg_6 0
+	es_xset _crontab_arg_7 0
+	es_xset _crontab_arg_8 0
+	es_xset _crontab_exists 0
+	es_xset _crontab_server_time 0
+	es_xset _crontab_current_time 0
+	es_xset _crontab_job_total 0
+	es_xset _crontab_job_name 0
+	es_xset _crontab_job_time 0
+	es_xset _crontab_job_timestamp 0
+	es_xset _crontab_job_command 0
+	es_xset _crontab_new_command 0
+	es_xset _crontab_tmp_arg_num 0
+	es_xset _crontab_tmp_arg_min 0
+	es_xset _crontab_tmp_arg_max 0
+	es_xset _crontab_arg_token 0
+	es_xset _crontab_arg_token2 0
+	es_xset _crontab_arg_token_inc 0
+	es_xset _crontab_arg_token_total 0
+	es_xset _crontab_arg_token_write 0
+	es_xset _crontab_job_minutes 0
+	es_xset _crontab_job_hours 0
+	es_xset _crontab_job_days 0
+	es_xset _crontab_job_months 0
+	es_xset _crontab_job_dow 0
+	es_xset _crontab_server_minutes 0
+	es_xset _crontab_server_hours 0
+	es_xset _crontab_server_days 0
+	es_xset _crontab_server_months 0
+	es_xset _crontab_server_dow 0
+	es_xset _crontab_tmp 0
+	es_xset _crontab_tmp2 0
+	es_xset _crontab_tmp_key 0
+	
+	// Load database for use
+	keygroupremove crontab
+	es_xkeygroupload crontab |crontab
+	
+	// create database if it's not already there
+	es_xexists _crontab_exists key crontab jobs
+	if (server_var(_crontab_exists) = 0) do
+	{
+		es_xkeycreate crontab jobs
+		es_xkeysetvalue crontab jobs total 0
+		es_xkeysetvalue crontab jobs rname 0
+	}
+	
+	// if the crontab command isn't already registered
+	es_xexists _crontab_exists command crontab
+	if (server_var(_crontab_exists) = 0) do
+	{
+		es_xregcmd crontab crontab/crontab "Adds crontab commands similar to Linux, Syntax: crontab * * * * * <command>"
+	}
+	es_xlog [Crontab] - Program started.
+	// start gettime block to execute crontab command from database
+	es_xdoblock crontab/gettime
+	
+	// Timer for server startup conditions
+	es_xset _crontab_startup 1
+	es_xdelayed 10 es_xset _crontab_startup 0
+}
+
+block gettime
+{
+	// Get current server time in crontab format
+	gettime _crontab_server_time "%M %H %d %m %w"
+	es_token _crontab_server_minutes server_var(_crontab_server_time) 1
+	es_token _crontab_server_hours server_var(_crontab_server_time) 2
+	es_token _crontab_server_days server_var(_crontab_server_time) 3
+	es_token _crontab_server_months server_var(_crontab_server_time) 4
+	es_token _crontab_server_dow server_var(_crontab_server_time) 5
+	
+	// Publish current time
+	es_xformatv _crontab_current_time "%1:%2" _crontab_server_hours _crontab_server_minutes
+	es_makepublic _crontab_current_time
+	
+	// Convert times with leading zeros to leading underscores
+	es_set _crontab_server_minutes server_var(_crontab_server_minutes)
+	es_set _crontab_server_hours server_var(_crontab_server_hours)
+	es_set _crontab_server_days server_var(_crontab_server_days)
+	es_set _crontab_server_months server_var(_crontab_server_months)
+	if (server_var(_crontab_server_minutes) < 10) then es_xformatv _crontab_server_minutes "_%1" _crontab_server_minutes
+	if (server_var(_crontab_server_hours) < 10) then es_xformatv _crontab_server_hours "_%1" _crontab_server_hours
+	if (server_var(_crontab_server_days) < 10) then es_xformatv _crontab_server_days "_%1" _crontab_server_days
+	if (server_var(_crontab_server_months) < 10) then es_xformatv _crontab_server_months "_%1" _crontab_server_months
+	
+	// Check database and execute commands if needed
+	es_dbgmsg 1 [Crontab] - Processing crontab for time: server_var(_crontab_server_time)
+	es_xforeachkey _crontab_tmp_key in crontab "es_xdoblock crontab/check"
+	// Perform this block again every 60 seconds
+	es_xdelayed 59 es_xdoblock crontab/gettime
+}
+
+event es_map_start
+{
+	ifx false(_crontab_startup) do
+	{
+		// Process events that may have been missed during map change
+		gettime _crontab_server_time "%M %H %d %m %w"
+		es_token _crontab_server_minutes server_var(_crontab_server_time) 1
+		es_token _crontab_server_hours server_var(_crontab_server_time) 2
+		es_token _crontab_server_days server_var(_crontab_server_time) 3
+		es_token _crontab_server_months server_var(_crontab_server_time) 4
+		es_token _crontab_server_dow server_var(_crontab_server_time) 5
+		es_set _crontab_server_minutes server_var(_crontab_server_minutes)
+		es_set _crontab_server_hours server_var(_crontab_server_hours)
+		es_set _crontab_server_days server_var(_crontab_server_days)
+		es_set _crontab_server_months server_var(_crontab_server_months)
+	
+		es_xmath _crontab_server_minutes - 1
+		if (server_var(_crontab_server_minutes) < 0) do
+		{
+			es_xset _crontab_server_minutes 59
+			es_xmath _crontab_server_hours - 1
+			if (server_var(_crontab_server_hours) < 0) do
+			{
+				es_xset _crontab_server_hours 23
+				es_xmath _crontab_server_days - 1
+				es_xmath _crontab_server_dow - 1
+				if (server_var(_crontab_server_dow) < 0) then es_xset _crontab_server_dow 6
+				if (server_var(_crontab_server_days) < 1) do
+				{
+					es_xmath _crontab_server_months - 1
+					if (server_var(_crontab_server_months) < 0) then es_xset _crontab_server_months 12
+				}
+			}
+		}
+		if (server_var(_crontab_server_minutes) < 10) then es_xformatv _crontab_server_minutes "_%1" _crontab_server_minutes
+		if (server_var(_crontab_server_hours) < 10) then es_xformatv _crontab_server_hours "_%1" _crontab_server_hours
+		if (server_var(_crontab_server_days) < 10) then es_xformatv _crontab_server_days "_%1" _crontab_server_days
+		if (server_var(_crontab_server_months) < 10) then es_xformatv _crontab_server_months "_%1" _crontab_server_months
+		
+		es_xformatv _crontab_server_time "%1 %2 %3 %4 %5" _crontab_server_minutes _crontab_server_hours _crontab_server_days _crontab_server_months _crontab_server_dow
+		es_string _crontab_server_time replace "_" "0"
+		
+		// Check database and execute commands if needed
+		es_dbgmsg 1 [Crontab] - Processing crontab for time: server_var(_crontab_server_time)
+		es_xforeachkey _crontab_tmp_key in crontab "es_xdoblock crontab/check"
+		
+		// start gettime block to execute crontab command from database
+		es_xdoblock crontab/gettime
+	}
+	else do
+	{
+		es_xdelayed 59 es_xdoblock crontab/gettime
+	}
+}
+
+block crontab
+{
+	// Get argument count
+	es_xgetargc _crontab_arg_count
+	// If no arguments given, print job list & syntax help
+	if (server_var(_crontab_arg_count) == 1) do
+	{
+		es_xkeygetvalue _crontab_job_total crontab jobs total
+		if (server_var(_crontab_job_total) > 0) do
+		{
+			es_dbgmsg 0 [Crontab] Total jobs running: server_var(_crontab_job_total)
+			es_xdbgmsg 0 [Crontab] Job listing:
+			es_xdbgmsg 0 ---------------------------------------------
+			//es_xset _crontab_job_count 0
+			es_xforeachkey _crontab_tmp_key in crontab "es_xdoblock crontab/printjobs"
+		}
+		else do
+		{
+			es_xdbgmsg 0 [Crontab] - No jobs exist.
+		}
+		es_xdbgmsg 0 ---------------------------------------------
+		es_xdbgmsg 0 [Crontab] - Syntax: crontab M h d m w <command> [job name] [overwrite]
+		es_xdbgmsg 0 [Crontab] - Minutes 0-59, hours 0-23, days 1-31, months 1-12, day of the week 0-6 (0=Sunday)
+		es_xdbgmsg 0 [Crontab] - Optional: [job name] - no spaces, [overwrite] - 0=no 1=yes
+		es_xdbgmsg 0 [Crontab] - <command> MUST be enclosed in quotes.
+		es_xdbgmsg 0 [Crontab] - Syntax: crontab del <job name>  Deletes job
+		es_xdbgmsg 0 [Crontab] - Syntax: crontab run <job name>  Executes job now and updates timestamp
+		es_xdbgmsg 0 [Crontab] - Syntax: crontab search <type> <job name or command to search for>  Searches database for a cronjob match, <type> = 'job' or 'command'
+		es_xdbgmsg 0 [Crontab] - Syntax: crontab backup  Creates a backup of the current crontab database.
+		es_xdbgmsg 0 [Crontab] - Syntax: crontab restore  Restores the crontab database from a previous backup.
+		es_xdbgmsg 0 [Crontab] - See en.wikipedia.org/wiki/Crontab for more help and complete list of options
+	}
+	else do
+	{
+		// Get arguments
+		es_xset _crontab_arg_1 0
+		es_xset _crontab_arg_2 0
+		es_xset _crontab_arg_3 0
+		es_xset _crontab_arg_4 0
+		es_xset _crontab_arg_5 0
+		es_xset _crontab_arg_6 0
+		es_xset _crontab_arg_7 0
+		es_xset _crontab_arg_8 0
+		es_xgetargv _crontab_arg_1 1
+		es_xgetargv _crontab_arg_2 2
+		es_xgetargv _crontab_arg_3 3
+		es_xgetargv _crontab_arg_4 4
+		es_xgetargv _crontab_arg_5 5
+		es_xgetargv _crontab_arg_6 6
+		es_xgetargv _crontab_arg_7 7
+		es_xgetargv _crontab_arg_8 8
+		
+
+		if (server_var(_crontab_arg_1) == "#yearly") do
+		{
+			ifx false(_crontab_arg_5) do
+			{
+				ifx false(_crontab_arg_4) do
+				{
+					ifx false(_crontab_arg_3) do
+					{
+						ifx false(_crontab_arg_2) do
+						{
+							es_xdbgmsg 0 [Crontab] - Not enough arguments. Type 'crontab' for syntax.
+						}
+						else do
+						{
+							es crontab 0 0 1 1 * server_var(_crontab_arg_2)
+						}
+					}
+					else do
+					{
+						es crontab 0 0 1 1 * server_var(_crontab_arg_2) server_var(_crontab_arg_3)
+					}
+				}
+				else do
+				{
+					es crontab 0 0 1 1 * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4)
+				}
+			}
+			else do
+			{
+				es crontab 0 0 1 1 * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4) server_var(_crontab_arg_5)
+			}
+		}
+		else do
+		{
+			if (server_var(_crontab_arg_1) == "#annually") do
+			{
+				ifx false(_crontab_arg_5) do
+				{
+					ifx false(_crontab_arg_4) do
+					{
+						ifx false(_crontab_arg_3) do
+						{
+							ifx false(_crontab_arg_2) do
+							{
+								es_xdbgmsg 0 [Crontab] - Not enough arguments. Type 'crontab' for syntax.
+							}
+							else do
+							{
+								es crontab 0 0 1 1 * server_var(_crontab_arg_2)
+							}
+						}
+						else do
+						{
+							es crontab 0 0 1 1 * server_var(_crontab_arg_2) server_var(_crontab_arg_3)
+						}
+					}
+					else do
+					{
+						es crontab 0 0 1 1 * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4)
+					}
+				}
+				else do
+				{
+					es crontab 0 0 1 1 * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4) server_var(_crontab_arg_5)
+				}
+			}
+			else do
+			{
+				if (server_var(_crontab_arg_1) == "#monthly") do
+				{
+					ifx false(_crontab_arg_5) do
+					{
+						ifx false(_crontab_arg_4) do
+						{
+							ifx false(_crontab_arg_3) do
+							{
+								ifx false(_crontab_arg_2) do
+								{
+									es_xdbgmsg 0 [Crontab] - Not enough arguments. Type 'crontab' for syntax.
+								}
+								else do
+								{
+									es crontab 0 0 1 * * server_var(_crontab_arg_2)
+								}
+							}
+							else do
+							{
+								es crontab 0 0 1 * * server_var(_crontab_arg_2) server_var(_crontab_arg_3)
+							}
+						}
+						else do
+						{
+							es crontab 0 0 1 * * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4)
+						}
+					}
+					else do
+					{
+						es crontab 0 0 1 * * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4) server_var(_crontab_arg_5)
+					}
+				}
+				else do
+				{
+					if (server_var(_crontab_arg_1) == "#weekly") do
+					{
+						ifx false(_crontab_arg_5) do
+						{
+							ifx false(_crontab_arg_4) do
+							{
+								ifx false(_crontab_arg_3) do
+								{
+									ifx false(_crontab_arg_2) do
+									{
+										es_xdbgmsg 0 [Crontab] - Not enough arguments. Type 'crontab' for syntax.
+									}
+									else do
+									{
+										es crontab 0 0 * * 0 server_var(_crontab_arg_2)
+									}
+								}
+								else do
+								{
+									es crontab 0 0 * * 0 server_var(_crontab_arg_2) server_var(_crontab_arg_3)
+								}
+							}
+							else do
+							{
+								es crontab 0 0 * * 0 server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4)
+							}
+						}
+						else do
+						{
+							es crontab 0 0 * * 0 server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4) server_var(_crontab_arg_5)
+						}
+					}
+					else do
+					{
+						if (server_var(_crontab_arg_1) == "#daily") do
+						{
+							ifx false(_crontab_arg_5) do
+							{
+								ifx false(_crontab_arg_4) do
+								{
+									ifx false(_crontab_arg_3) do
+									{
+										ifx false(_crontab_arg_2) do
+										{
+											es_xdbgmsg 0 [Crontab] - Not enough arguments. Type 'crontab' for syntax.
+										}
+										else do
+										{
+											es crontab 0 0 * * * server_var(_crontab_arg_2)
+										}
+									}
+									else do
+									{
+										es crontab 0 0 * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3)
+									}
+								}
+								else do
+								{
+									es crontab 0 0 * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4)
+								}
+							}
+							else do
+							{
+								es crontab 0 0 * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4) server_var(_crontab_arg_5)
+							}
+						}
+						else do
+						{
+							if (server_var(_crontab_arg_1) == "#midnight") do
+							{
+								es_xset _crontab_arg_1 "0 0 * * *"
+								ifx false(_crontab_arg_5) do
+								{
+									ifx false(_crontab_arg_4) do
+									{
+										ifx false(_crontab_arg_3) do
+										{
+											ifx false(_crontab_arg_2) do
+											{
+												es_xdbgmsg 0 [Crontab] - Not enough arguments. Type 'crontab' for syntax.
+											}
+											else do
+											{
+												es crontab 0 0 * * * server_var(_crontab_arg_2)
+											}
+										}
+										else do
+										{
+											es crontab 0 0 * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3)
+										}
+									}
+									else do
+									{
+										es crontab 0 0 * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4)
+									}
+								}
+								else do
+								{
+									es crontab 0 0 * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4) server_var(_crontab_arg_5)
+								}
+							}
+							else do
+							{
+								if (server_var(_crontab_arg_1) == "#hourly") do
+								{
+									ifx false(_crontab_arg_5) do
+									{
+										ifx false(_crontab_arg_4) do
+										{
+											ifx false(_crontab_arg_3) do
+											{
+												ifx false(_crontab_arg_2) do
+												{
+													es_xdbgmsg 0 [Crontab] - Not enough arguments. Type 'crontab' for syntax.
+												}
+												else do
+												{
+													es crontab 0 * * * * server_var(_crontab_arg_2)
+												}
+											}
+											else do
+											{
+												es crontab 0 * * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3)
+											}
+										}
+										else do
+										{
+											es crontab 0 * * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4)
+										}
+									}
+									else do
+									{
+										es crontab 0 * * * * server_var(_crontab_arg_2) server_var(_crontab_arg_3) server_var(_crontab_arg_4) server_var(_crontab_arg_5)
+									}
+								}
+								else do
+								{
+									if (server_var(_crontab_arg_1) == "del") do
+									{
+										es_xforeachkey _crontab_tmp_key in crontab "es_xdoblock crontab/remove"
+										es_xsoon es_xkeygroupsave crontab |crontab
+									}
+									else do
+									{
+										if (server_var(_crontab_arg_1) == "run") do
+										{
+											es_xforeachkey _crontab_tmp_key in crontab "es_xdoblock crontab/run"
+										}
+										else do
+										{
+											if (server_var(_crontab_arg_1) == "search") do
+											{
+												es_xset _crontab_match 0
+												es_xforeachkey _crontab_tmp_key in crontab "es_xdoblock crontab/search"
+												if (server_var(_crontab_match) == 0) then es_xdbgmsg 0 [Crontab] There were no matches found for server_var(_crontab_arg_2) server_var(_crontab_arg_3)
+											}
+											else do
+											{
+												if (server_var(_crontab_arg_1) == "backup") do
+												{
+													es_xkeygroupcopy crontab crontab_backup
+													es_xkeygroupsave crontab_backup |crontab
+													es_xkeygroupdelete crontab_backup
+													es_xlog [Crontab] - Backup complete.
+												}
+												else do
+												{
+													if (server_var(_crontab_arg_1) == "restore") do
+													{
+														es_xkeygroupload crontab_backup |crontab
+														es_xset _crontab_exists 0
+														es_xexists _crontab_exists key crontab_backup jobs
+														ifx true(_crontab_exists) do
+														{
+															es_xkeygroupdelete crontab
+															es_xkeygroupcopy crontab_backup crontab
+															es_xkeygroupsave crontab |crontab
+															es_xkeygroupdelete crontab_backup
+															es_xlog [Crontab] - Database successfully restored.
+														}
+														else do
+														{
+															es_xdbgmsg 0 [Crontab] - Database could not be restored. Backup does not exist or is corrupted.
+															es_xdbgmsg 0 [Crontab] - You can create a backup database using 'crontab backup'.
+														}
+													}
+													else do
+													{
+														if (server_var(_crontab_arg_count) < 8) do
+														{
+															// Create a new crontab job
+															// Get unique id number to assign a unique job name.
+															es_xkeygetvalue _crontab_job_name crontab jobs rname
+															// Format job name with unique identifier
+															es_xformatv _crontab_job_name "crontab_%1" _crontab_job_name
+															// Create unique key for this job
+															es_keycreate crontab server_var(_crontab_job_name)
+															es_keysetvalue crontab server_var(_crontab_job_name) name server_var(_crontab_job_name)
+															// Increment the unique key identifier
+															keymath crontab jobs rname + 1
+															// Increment total job counter
+															keymath crontab jobs total + 1
+				
+															// Process the arguments
+															es_xset _crontab_tmp_arg 1
+															while "server_var(_crontab_tmp_arg) < 6" "es_xdoblock crontab/process_new"
+															es_keysetvalue crontab server_var(_crontab_job_name) time server_var(_crontab_new_command)
+															es_keysetvalue crontab server_var(_crontab_job_name) command server_var(_crontab_arg_6)
+															es_log [Crontab] - Job 'server_var(_crontab_job_name)' created.
+															es_xdbgmsg 0 [Crontab] - Job name is temporarily saved to _crontab_job_name
+															es_xkeygroupsave crontab |crontab
+														}
+														else do
+														{
+															// Do not allow jobname "jobs"
+															if (server_var(_crontab_arg_7) != "jobs") do
+															{
+																// Check for existing cronjob with this name
+																es_xset _crontab_exists 0
+																es_exists _crontab_exists key crontab server_var(_crontab_arg_7)
+																ifx true(_crontab_exists) do
+																{
+																	// Check for overwrite permission
+																	ifx true(_crontab_arg_8) do
+																	{
+																		// Edit existing cronjob
+																		es_xcopy _crontab_job_name _crontab_arg_7
+																		// Process the arguments
+																		es_xset _crontab_tmp_arg 1
+																		while "server_var(_crontab_tmp_arg) < 6" "es_xdoblock crontab/process_new"
+																		es_keysetvalue crontab server_var(_crontab_job_name) time server_var(_crontab_new_command)
+																		es_keysetvalue crontab server_var(_crontab_job_name) command server_var(_crontab_arg_6)
+																		es_log [Crontab] - Job 'server_var(_crontab_job_name)' has been overwritten.
+																		es_xkeygroupsave crontab |crontab
+																	}
+																	else do
+																	{
+																		es_xdbgmsg 0 [Crontab] - That job name already exists. Add overwrite permission to overwrite this job.
+																		es_xdbgmsg 0 [Crontab] - Type 'crontab' with no arguments to get the current joblist and syntax.
+																		es_xdbgmsg 0 [Crontab] - See en.wikipedia.org/wiki/Crontab for more help and complete list of options
+																	}
+																}
+																else do
+																{
+																	// Create new cronjob with this name
+																	es_xcopy _crontab_job_name _crontab_arg_7
+																	// Create unique key for this job
+																	es_keycreate crontab server_var(_crontab_job_name)
+																	es_keysetvalue crontab server_var(_crontab_job_name) name server_var(_crontab_job_name)
+																	// Increment total job counter
+																	keymath crontab jobs total + 1
+					
+																	// Process the arguments
+																	es_xset _crontab_tmp_arg 1
+																	while "server_var(_crontab_tmp_arg) < 6" "es_xdoblock crontab/process_new"
+																	es_keysetvalue crontab server_var(_crontab_job_name) time server_var(_crontab_new_command)
+																	es_keysetvalue crontab server_var(_crontab_job_name) command server_var(_crontab_arg_6)
+																	es_log [Crontab] - Job 'server_var(_crontab_job_name)' created.
+																	es_xkeygroupsave crontab |crontab
+																}
+															}
+															else do
+															{
+																es_xdbgmsg 0 [Crontab] - That job name is reserved.  Pick a different job name.
+																es_xdbgmsg 0 [Crontab] - Type 'crontab' with no arguments to get the current joblist and syntax.
+																es_xdbgmsg 0 [Crontab] - See en.wikipedia.org/wiki/Crontab for more help and complete list of options
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+block remove
+{
+	es_keygetvalue _crontab_tmp crontab server_var(_crontab_tmp_key) name
+	if (server_var(_crontab_tmp) == server_var(_crontab_arg_2)) do
+	{
+		es_soon es_xkeydelete crontab server_var(_crontab_tmp_key)
+		keymath crontab jobs total - 1
+		es_log [Crontab] Job 'server_var(_crontab_tmp)' successfully deleted.
+	}
+}
+
+block run
+{
+	es_keygetvalue _crontab_tmp crontab server_var(_crontab_tmp_key) name
+	if (server_var(_crontab_tmp) == server_var(_crontab_arg_2)) then es_xdoblock crontab/execute
+}
+
+block search
+{
+	if (server_var(_crontab_arg_2) == "job") do
+	{
+		// Find job by name
+		es_keygetvalue _crontab_tmp crontab server_var(_crontab_tmp_key) name
+		if (server_var(_crontab_tmp) == server_var(_crontab_arg_3)) do
+		{
+			es_keygetvalue _crontab_tmp crontab server_var(_crontab_tmp_key) command
+			es_keygetvalue _crontab_tmp2 crontab server_var(_crontab_tmp_key) time
+			es_dbgmsg 0 [Crontab] Job name 'server_var(_crontab_arg_3)' exists.
+			es_dbgmsg 0 [Crontab] Command: server_var(_crontab_tmp)
+			es_dbgmsg 0 [Crontab] Scheduled time: server_var(_crontab_tmp2)
+			es_xset _crontab_match 1
+		}
+	}
+	if (server_var(_crontab_arg_2) == "command") do
+	{
+		// Find job by command
+		es_keygetvalue _crontab_tmp crontab server_var(_crontab_tmp_key) command
+		if (server_var(_crontab_tmp) == server_var(_crontab_arg_3)) do
+		{
+			es_keygetvalue _crontab_tmp crontab server_var(_crontab_tmp_key) name
+			es_keygetvalue _crontab_tmp2 crontab server_var(_crontab_tmp_key) time
+			es_xdbgmsg 0 [Crontab] Command exists.
+			es_dbgmsg 0 [Crontab] Job name: server_var(_crontab_tmp)
+			es_dbgmsg 0 [Crontab] Scheduled time: server_var(_crontab_tmp2)
+			es_xset _crontab_match 1
+		}
+	}
+}
+
+block printjobs
+{
+	if (server_var(_crontab_tmp_key) != "jobs") do
+	{
+		//es_xmath _crontab_job_count + 1
+		// Read database and print job listing
+		es_keygetvalue _crontab_job_name crontab server_var(_crontab_tmp_key) name
+		es_keygetvalue _crontab_job_time crontab server_var(_crontab_tmp_key) time
+		es_keygetvalue _crontab_job_command crontab server_var(_crontab_tmp_key) command
+		es_keygetvalue _crontab_job_timestamp crontab server_var(_crontab_tmp_key) timestamp
+		es_xstring _crontab_job_time replace "_"
+		//es_log [Crontab] Job # server_var(_crontab_job_count) name: server_var(_crontab_job_name)
+		es_dbgmsg 0 [Crontab] Job name: server_var(_crontab_job_name)
+		es_dbgmsg 0 [Crontab] Job scheduled time: server_var(_crontab_job_time)
+		es_dbgmsg 0 [Crontab] Job command: server_var(_crontab_job_command)
+		es_dbgmsg 0 [Crontab] Job last ran: server_var(_crontab_job_timestamp)
+		es_xdbgmsg 0 ---------------------------------------------
+	}
+}
+
+block check
+{
+	// Process server time and check database for any jobs that need processing
+	if (server_var(_crontab_tmp_key) != "jobs") do
+	{
+		// Execute each job, not the job counter
+		es_xset _crontab_job_verify 0
+		es_keygetvalue _crontab_job_time crontab server_var(_crontab_tmp_key) time
+		es_token _crontab_job_minutes server_var(_crontab_job_time) 1
+		es_token _crontab_job_hours server_var(_crontab_job_time) 2
+		es_token _crontab_job_days server_var(_crontab_job_time) 3
+		es_token _crontab_job_months server_var(_crontab_job_time) 4
+		es_token _crontab_job_dow server_var(_crontab_job_time) 5
+		
+		if (server_var(_crontab_job_minutes) != "*") do
+		{
+			if (server_var(_crontab_server_minutes) in server_var(_crontab_job_minutes)) then es_xmath _crontab_job_verify + 1
+		}
+		else do
+		{
+			es_xmath _crontab_job_verify + 1
+		}
+		if (server_var(_crontab_job_hours) != "*") do
+		{
+			if (server_var(_crontab_server_hours) in server_var(_crontab_job_hours)) then es_xmath _crontab_job_verify + 2
+		}
+		else do
+		{
+			es_xmath _crontab_job_verify + 2
+		}
+		if (server_var(_crontab_job_days) != "*") do
+		{
+			if (server_var(_crontab_server_days) in server_var(_crontab_job_days)) then es_xmath _crontab_job_verify + 8
+		}
+		else do
+		{
+			es_xmath _crontab_job_verify + 4
+		}
+		if (server_var(_crontab_job_months) != "*") do
+		{
+			if (server_var(_crontab_server_months) in server_var(_crontab_job_months)) then es_xmath _crontab_job_verify + 16
+		}
+		else do
+		{
+			es_xmath _crontab_job_verify + 16
+		}
+		if (server_var(_crontab_job_dow) != "*") do
+		{
+			if (server_var(_crontab_server_dow) in server_var(_crontab_job_dow)) then es_xmath _crontab_job_verify + 64
+		}
+		else do
+		{
+			es_xmath _crontab_job_verify + 32
+		}
+		
+		// Execute job, assume servertime is 0 0 0 0 0 for comments
+		// If all values are present and correct, 0 0 0 0 0
+		if (server_var(_crontab_job_verify) == 91) then es_xdoblock crontab/execute
+		// If everything except day of week is present and correct, 0 0 0 0 *
+		if (server_var(_crontab_job_verify) == 59) then es_xdoblock crontab/execute
+		// If everything except day of month is present, 0 0 * 0 0
+		if (server_var(_crontab_job_verify) == 87) then es_xdoblock crontab/execute
+		// If everything except day of month and day of week is present, 0 0 * 0 *
+		if (server_var(_crontab_job_verify) == 55) then es_xdoblock crontab/execute
+		// OR operation
+		// If day of month is wrong but day of week is correct, 0 0 X 0 0
+		if (server_var(_crontab_job_verify) == 83) then es_xdoblock crontab/execute
+		// If day of week is wrong but day of month is correct, 0 0 0 0 X
+		if (server_var(_crontab_job_verify) == 27) then es_xdoblock crontab/execute
+	}
+}
+
+block process_new
+{
+	// Process each job argument and add to _crontab_new_command
+	es_xformatv _crontab_tmp_arg_num "_crontab_arg_%1" _crontab_tmp_arg
+	es_xformatv _crontab_tmp_arg_min "_crontab_arg_%1_min" _crontab_tmp_arg
+	es_xformatv _crontab_tmp_arg_max "_crontab_arg_%1_max" _crontab_tmp_arg
+	es_set _crontab_tmp_arg_num server_var(server_var(_crontab_tmp_arg_num))
+	es_set _crontab_tmp_arg_min server_var(server_var(_crontab_tmp_arg_min))
+	es_set _crontab_tmp_arg_max server_var(server_var(_crontab_tmp_arg_max))
+	
+	// Process * first
+	if ("*" in server_var(_crontab_tmp_arg_num)) do
+	{
+		if ("/" notin server_var(_crontab_tmp_arg_num)) do
+		{
+			if (server_var(_crontab_tmp_arg) == 1) do
+			{
+				es_xset _crontab_new_command "*"
+			}
+			else do
+			{
+				es_xformatv _crontab_new_command "%1 *" _crontab_new_command
+			}
+		}
+		else do
+		{
+			es_token _crontab_arg_token_inc server_var(_crontab_tmp_arg_num) 2 /
+			es_xset _crontab_arg_token_newstring 0
+			es_set _crontab_arg_token server_var(_crontab_tmp_arg_min)
+			while "server_var(_crontab_arg_token) <= server_var(_crontab_tmp_arg_max)" "es_xdoblock crontab/token_increment"
+			es_xcopy _crontab_tmp_arg_num _crontab_arg_token_newstring
+			if (server_var(_crontab_tmp_arg) == 1) do
+			{
+				es_set _crontab_new_command server_var(_crontab_tmp_arg_num)
+			}
+			else do
+			{
+				es_xformatv _crontab_new_command "%1 %2" _crontab_new_command _crontab_tmp_arg_num
+			}
+		}
+	}
+	else do
+	{
+		// Process - next
+		if ("-" in server_var(_crontab_tmp_arg_num)) do
+		{
+			// Set default increment to 1
+			es_xset _crontab_arg_token_inc 1
+			if ("/" in server_var(_crontab_tmp_arg_num)) do
+			{
+				es_token _crontab_arg_token server_var(_crontab_tmp_arg_num) 1 -
+				es_token _crontab_arg_token2 server_var(_crontab_tmp_arg_num) 2 -
+				es_token _crontab_arg_token_inc server_var(_crontab_tmp_arg_num) 2 /
+				es_token _crontab_arg_token2 server_var(_crontab_arg_token2) 1 /
+				es_xset _crontab_arg_token_newstring 0
+				if (server_var(_crontab_arg_token) > server_var(_crontab_arg_token2)) do
+				{
+					while "server_var(_crontab_arg_token) <= server_var(_crontab_tmp_arg_max)" "es_xdoblock crontab/token_increment"
+					es_xcopy _crontab_arg_token _crontab_tmp_arg_min
+					while "server_var(_crontab_arg_token) <= server_var(_crontab_arg_token2)" "es_xdoblock crontab/token_increment"
+					es_xcopy _crontab_tmp_arg_num _crontab_arg_token_newstring
+				}
+				else do
+				{
+					while "server_var(_crontab_arg_token) <= server_var(_crontab_arg_token2)" "es_xdoblock crontab/token_increment"
+					es_xcopy _crontab_tmp_arg_num _crontab_arg_token_newstring
+				}
+			}
+			else do
+			{
+				es_token _crontab_arg_token server_var(_crontab_tmp_arg_num) 1 -
+				es_token _crontab_arg_token2 server_var(_crontab_tmp_arg_num) 2 -
+				es_xset _crontab_arg_token_newstring 0
+				if (server_var(_crontab_arg_token) > server_var(_crontab_arg_token2)) do
+				{
+					while "server_var(_crontab_arg_token) <= server_var(_crontab_tmp_arg_max)" "es_xdoblock crontab/token_increment"
+					es_xcopy _crontab_arg_token _crontab_tmp_arg_min
+					while "server_var(_crontab_arg_token) <= server_var(_crontab_arg_token2)" "es_xdoblock crontab/token_increment"
+					es_xcopy _crontab_tmp_arg_num _crontab_arg_token_newstring
+				}
+				else do
+				{
+					while "server_var(_crontab_arg_token) <= server_var(_crontab_arg_token2)" "es_xdoblock crontab/token_increment"
+					es_xcopy _crontab_tmp_arg_num _crontab_arg_token_newstring
+				}
+			}
+		}
+		else do
+		{
+			// Process , and single digits last
+			es_token _crontab_arg_token_total server_var(_crontab_tmp_arg_num) 0 ,
+			if (server_var(_crontab_arg_token_total) > 1) do
+			{
+				// Multiple numbers given
+				// Process tokens and add leading zeros
+				es_xset _crontab_arg_token_count 1
+				es_xset _crontab_arg_token_newstring 0
+				while "server_var(_crontab_arg_token_count) <= server_var(_crontab_arg_token_total)" "es_xdoblock crontab/process_tokens"
+				es_xcopy _crontab_tmp_arg_num _crontab_arg_token_newstring
+			}
+			else do
+			{
+				// Only one number given
+				// Add an Underscore to numbers less than 10
+				if (server_var(_crontab_tmp_arg_num) < 10) then es_xformatv _crontab_tmp_arg_num "_%1" _crontab_tmp_arg_num
+			}
+		}
+		if (server_var(_crontab_tmp_arg) == 1) do
+		{
+			es_xcopy _crontab_new_command _crontab_tmp_arg_num
+		}
+		else do
+		{
+			es_xformatv _crontab_new_command "%1 %2" _crontab_new_command _crontab_tmp_arg_num
+		}
+	}
+	es_xmath _crontab_tmp_arg + 1
+}
+
+block process_tokens
+{
+	es_token _crontab_arg_token server_var(_crontab_tmp_arg_num) server_var(_crontab_arg_token_count) ,
+	if (server_var(_crontab_arg_token) < 10) do
+	{
+		es_xformatv _crontab_arg_token "_%1" _crontab_arg_token
+	}
+	if (server_var(_crontab_arg_token_newstring) != 0) do
+	{
+		es_xformatv _crontab_arg_token_newstring "%1,%2" _crontab_arg_token_newstring _crontab_arg_token
+	}
+	else do
+	{
+		es_xcopy _crontab_arg_token_newstring _crontab_arg_token
+	}
+	es_xmath _crontab_arg_token_count + 1
+}
+
+block token_increment
+{
+	if (server_var(_crontab_arg_token) < 10) do
+	{
+		es_xformatv _crontab_arg_token_write "_%1" _crontab_arg_token
+	}
+	else do
+	{
+		es_xcopy _crontab_arg_token_write _crontab_arg_token
+	}
+	if (server_var(_crontab_arg_token_newstring) != 0) do
+	{
+		es_xformatv _crontab_arg_token_newstring "%1,%2" _crontab_arg_token_newstring _crontab_arg_token_write
+	}
+	else do
+	{
+		es_xcopy _crontab_arg_token_newstring _crontab_arg_token_write
+	}
+	es_math _crontab_arg_token + server_var(_crontab_arg_token_inc)
+}
+
+block execute
+{
+	es_keygetvalue _crontab_job_time crontab server_var(_crontab_tmp_key) timestamp
+	if (server_var(_crontab_job_time) != server_var(_crontab_server_time)) do
+	{
+		es_keygetvalue _crontab_new_command crontab server_var(_crontab_tmp_key) command
+		es_keygetvalue _crontab_job_name crontab server_var(_crontab_tmp_key) name
+		es_keysetvalue crontab server_var(_crontab_tmp_key) timestamp server_var(_crontab_server_time)
+		es_xkeygroupsave crontab |crontab
+		es alias _crontab_command server_var(_crontab_new_command)
+		_crontab_command
+		es_dbgmsg 1 [Crontab] - Executed job: server_var(_crontab_new_command)
+	}
+	else do
+	{
+		if (server_var(_crontab_arg_1) == "run") do
+		{
+			es_keygetvalue _crontab_new_command crontab server_var(_crontab_tmp_key) command
+			es_keygetvalue _crontab_job_name crontab server_var(_crontab_tmp_key) name
+			es_keysetvalue crontab server_var(_crontab_tmp_key) timestamp server_var(_crontab_server_time)
+			es_xkeygroupsave crontab |crontab
+			es alias _crontab_command server_var(_crontab_new_command)
+			_crontab_command
+			es_log [Crontab] - Executed job: server_var(_crontab_new_command)
+		}
+	}
+}
+
+
+block unload
+{
+	es_xkeygroupsave crontab |crontab
+	es_xkeygroupdelete crontab
+	es_xlog [Crontab] - Program halted.
+}

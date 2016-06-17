@@ -1,0 +1,28 @@
+TestInterface
+{
+    _metadata
+    {
+      version 1
+      name "Test Interface"
+      description "Provides generic methods to test interface handling."
+    }
+    _constants
+    {
+      // these constants are used typically for default level specification
+      "TESTINTERFACE_CONSTANT1" "one"
+      "TESTINTERFACE_CONSTANT2" "two"
+    }    
+    "myCommand"
+    {
+      "1" "testinterface_command"
+      "2" "testinterface2"
+      "3" "testinterface3"
+      "4" "testinterface4"
+    }
+    "myCommand2"
+    {
+      "1" "testinterface_command"
+      "2" "testinterface2"
+      "3" "testinterface3"
+    }
+}

@@ -1,0 +1,614 @@
+// vecmath corelib command
+// usage for 2d vectors:
+//   vecmath <x var> <y var> <x1> <y1> <op> [<x2> <y2>]
+// usage for 3d vectors:
+//   vecmath <x var> <y var> <z var> <x1> <y1> <z1> <op> [<x2> <y2> <z2>]
+// with vector strings:
+//   vecmath <variable> <vector1> <op> [<vector2>]
+
+block load
+{
+  es_xdoblock corelib/vecmath/vecmath_register
+}
+
+block vecmath_register
+{
+  // vecmath variables
+  es_xset _core_vec_xout 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_yout 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_zout 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_x0 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_y0 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_z0 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_x1 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_y1 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_z1 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_x2 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_y2 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_z2 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_l1 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_l2 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_temp 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_op 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_argc 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_dimension 0 "ES Corelib vecmath internal var"
+  es_xset _core_vec_ret 0 "ES Corelib vecmath internal var"
+  es_xexists _tempcore command vecmath
+  ifx false(_tempcore) do
+  {
+    es_xregcmd vecmath corelib/vecmath/command "Perform vector operations."
+    testcase qcreate corelib vecmathtest "Tests vecmath"
+    testcase addtest vecmathtest vecmathtest2 corelib/vecmath/vecmath_test2 "Test 2d vector operations"
+    testcase addtest vecmathtest vecmathtest3 corelib/vecmath/vecmath_test3 "Test 3d vector operations"
+    testcase addtest vecmathtest vecmathtestv corelib/vecmath/vecmath_testv "Test vectorstring operations"
+  }
+} 
+
+block command
+{
+  es_xgetargc _core_vec_argc
+  if (server_var(_core_vec_argc) < 4) do
+  {
+    es_xdoblock corelib/vecmath/usage
+  }
+  else do
+  {
+    if (server_var(_core_vec_argc) < 6) do
+    {
+      es_xdoblock corelib/vecmath/comvec
+    }
+    else do
+    {
+      _core_vec_dimension 2
+      if (server_var(_core_vec_argc) == 8) do
+      {
+        es_xgetargv _core_vec_y2 7
+        es_xcopy _core_vec_op _core_vec_y2
+        es_xcopy _tempcore eventscripts_debug
+        eventscripts_debug -1
+        es_xmath _core_vec_y2 + 1
+        es_xcopy eventscripts_debug _tempcore
+        if (server_var(_core_vec_y2) == server_var(_core_vec_op)) then _core_vec_dimension 3
+      }
+      if (server_var(_core_vec_argc) > 8) then _core_vec_dimension 3
+      if (server_var(_core_vec_dimension) == 2) do
+      {
+        es_xdoblock corelib/vecmath/com2d
+      }
+      else do
+      {
+        es_xdoblock corelib/vecmath/com3d
+      }
+    }
+  }
+}
+
+block usage
+{
+  es_xdbgmsg 0 "Usage for 2d vectors: vecmath <x var> <y var> <x1> <y1> <op> [<x2> <y2>]"
+  es_xdbgmsg 0 "Usage for 3d vectors: vecmath <x var> <y var> <z var> <x1> <y1> <z1> <op> [<x2> <y2> <z2>]"
+  es_xdbgmsg 0 "With vectorstrings  : vecmath <variable> <vector1> <op> [<vector2>]"
+  es_xdbgmsg 0 "Operators for two vectors: + - . X angle angles"
+  es_xdbgmsg 0 "Operators for one vector: length normalize setlength * /"
+}
+
+block com2d
+{
+  // Two dimensional vector operation
+  es_xgetargv _core_vec_xout 1
+  es_xgetargv _core_vec_yout 2
+  es_xgetargv _core_vec_x1 3
+  es_xgetargv _core_vec_y1 4
+  _core_vec_z1 0
+  _core_vec_z2 0
+  es_xgetargv _core_vec_op 5
+  es_xgetargv _core_vec_x2 6
+  es_xgetargv _core_vec_y2 7
+  es_xdoblock corelib/vecmath/calculate
+  es_copy server_var(_core_vec_xout) _core_vec_x0
+  es_copy server_var(_core_vec_yout) _core_vec_y0
+}
+
+block com3d
+{
+  // Three dimensional vector operation
+  es_xgetargv _core_vec_xout 1
+  es_xgetargv _core_vec_yout 2
+  es_xgetargv _core_vec_zout 3
+  es_xgetargv _core_vec_x1 4
+  es_xgetargv _core_vec_y1 5
+  es_xgetargv _core_vec_z1 6
+  es_xgetargv _core_vec_op 7
+  es_xgetargv _core_vec_x2 8
+  es_xgetargv _core_vec_y2 9
+  es_xgetargv _core_vec_z2 10
+  es_xdoblock corelib/vecmath/calculate
+  es_copy server_var(_core_vec_xout) _core_vec_x0
+  es_copy server_var(_core_vec_yout) _core_vec_y0
+  es_copy server_var(_core_vec_zout) _core_vec_z0
+}
+
+block comvec
+{
+  // vectorstring operation
+  es_xgetargv _core_vec_xout 1
+  es_xgetargv _core_vec_l1 2
+  es_xgetargv _core_vec_op 3
+  es_xgetargv _core_vec_l2 4
+  es_splitvectorstring _core_vec_x1 _core_vec_y1 _core_vec_z1 server_var(_core_vec_l1)
+  es_token _core_vec_temp server_var(_core_vec_l2) 0 ,
+  if (server_var(_core_vec_temp) < 3) do
+  {
+    es_xcopy _core_vec_x2 _core_vec_l2
+  }
+  else do
+  {
+    es_splitvectorstring _core_vec_x2 _core_vec_y2 _core_vec_z2 server_var(_core_vec_l2)
+  }
+  es_xdoblock corelib/vecmath/calculate
+  ifx false(_core_vec_ret) do
+  {
+    es_createvectorstring server_var(_core_vec_xout) server_var(_core_vec_x0) server_var(_core_vec_y0) server_var(_core_vec_z0)
+  }
+  else do
+  {
+    es_copy server_var(_core_vec_xout) _core_vec_x0
+  }
+}
+
+block calculate
+{
+  es_xcopy _core_vec_x0 _core_vec_x1
+  es_xcopy _core_vec_y0 _core_vec_y1
+  es_xcopy _core_vec_z0 _core_vec_z1
+  if (server_var(_core_vec_op) == "+") do
+  {
+    es_xdoblock corelib/vecmath/sum
+  }
+  else do
+  {
+    if (server_var(_core_vec_op) == "-") do
+    {
+      es_xdoblock corelib/vecmath/subtract
+    }
+    else do
+    {
+      if (server_var(_core_vec_op) == ".") do
+      {
+        es_xdoblock corelib/vecmath/iproduct
+      }
+      else do
+      {
+        if (server_var(_core_vec_op) == "X") do
+        {
+          es_xdoblock corelib/vecmath/cproduct
+        }
+        else do
+        {
+          if (server_var(_core_vec_op) == "angle") do
+          {
+            es_xdoblock corelib/vecmath/angle
+          }
+          else do
+          {
+            if (server_var(_core_vec_op) == "angles") do
+            {
+              es_xdoblock corelib/vecmath/angles
+            }
+            else do
+            {
+              if (server_var(_core_vec_op) == "length") do
+              {
+                es_xdoblock corelib/vecmath/length
+              }
+              else do
+              {
+                if (server_var(_core_vec_op) == "normalize") do
+                {
+                  es_xdoblock corelib/vecmath/normalize
+                }
+                else do
+                {
+                  if (server_var(_core_vec_op) == "setlength") do
+                  {
+                    es_xdoblock corelib/vecmath/setlength
+                  }
+                  else do
+                  {
+                    if (server_var(_core_vec_op) == "*") do
+                    {
+                      es_xdoblock corelib/vecmath/multiply
+                    }
+                    else do
+                    {
+                      if (server_var(_core_vec_op) == "/") do
+                      {
+                        es_xdoblock corelib/vecmath/divide
+                      }
+                      else do
+                      {
+                        es_xdoblock corelib/vecmath/usage
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+block sum
+{
+  es_math _core_vec_x0 + server_var(_core_vec_x2)
+  es_math _core_vec_y0 + server_var(_core_vec_y2)
+  es_math _core_vec_z0 + server_var(_core_vec_z2)
+  _core_vec_ret 0
+}
+
+block subtract
+{
+  es_math _core_vec_x0 - server_var(_core_vec_x2)
+  es_math _core_vec_y0 - server_var(_core_vec_y2)
+  es_math _core_vec_z0 - server_var(_core_vec_z2)
+  _core_vec_ret 0
+}
+
+block iproduct
+{
+  es_xmathparse _core_vec_x0 "_core_vec_x1*_core_vec_x2+_core_vec_y1*_core_vec_y2+_core_vec_z1*_core_vec_z2"
+  _core_vec_ret 1
+}
+
+block cproduct
+{
+  es_xmathparse _core_vec_x0 "_core_vec_y1*_core_vec_z2-_core_vec_z1*_core_vec_y2"
+  es_xmathparse _core_vec_y0 "_core_vec_z1*_core_vec_x2-_core_vec_x1*_core_vec_z2"
+  es_xmathparse _core_vec_z0 "_core_vec_x1*_core_vec_y2-_core_vec_y1*_core_vec_x2"
+  _core_vec_ret 0
+}
+
+block angle
+{
+  es_xdoblock corelib/vecmath/length
+  es_xcopy _core_vec_l1 _core_vec_x0
+  es_xdoblock corelib/vecmath/length2
+  es_xcopy _core_vec_l2 _core_vec_x0
+  es_xdoblock corelib/vecmath/iproduct
+  es_xcopy _core_vec_temp _core_vec_x0
+  es_xmathparse _core_vec_x0 "acos(_core_vec_temp/_core_vec_l1/_core_vec_l2)"
+  _core_vec_ret 1
+}
+
+block angles
+{
+  es_xmathparse _core_vec_l1 "_core_vec_y1*_core_vec_y2+_core_vec_z1*_core_vec_z2"
+  es_xmathparse _core_vec_l2 "sqrt(_core_vec_y1^2+_core_vec_z1^2)*sqrt(_core_vec_y2^2+_core_vec_z2^2)"
+  es_xmathparse _core_vec_x0 "acos(_core_vec_l1/_core_vec_l2)"
+  es_xmathparse _core_vec_l1 "_core_vec_x1*_core_vec_x2+_core_vec_z1*_core_vec_z2"
+  es_xmathparse _core_vec_l2 "sqrt(_core_vec_x1^2+_core_vec_z1^2)*sqrt(_core_vec_x2^2+_core_vec_z2^2)"
+  es_xmathparse _core_vec_y0 "acos(_core_vec_l1/_core_vec_l2)"
+  es_xmathparse _core_vec_l1 "_core_vec_y1*_core_vec_y2+_core_vec_x1*_core_vec_x2"
+  es_xmathparse _core_vec_l2 "sqrt(_core_vec_y1^2+_core_vec_x1^2)*sqrt(_core_vec_y2^2+_core_vec_x2^2)"
+  es_xmathparse _core_vec_z0 "acos(_core_vec_l1/_core_vec_l2)"
+  _core_vec_ret 0
+}
+
+block length
+{
+  es_xmathparse _core_vec_x0 "sqrt(_core_vec_x1^2+_core_vec_y1^2+_core_vec_z1^2)"
+  _core_vec_ret 1
+}
+
+block length2
+{
+  es_xmathparse _core_vec_x0 "sqrt(_core_vec_x2^2+_core_vec_y2^2+_core_vec_z2^2)"
+}
+
+block normalize
+{
+  es_xdoblock corelib/vecmath/length
+  es_xcopy _core_vec_x2 _core_vec_x0
+  es_xcopy _core_vec_x0 _core_vec_x1
+  es_xdoblock corelib/vecmath/divide
+}
+
+block setlength
+{
+  es_xdoblock corelib/vecmath/length
+  es_math _core_vec_x2 / server_var(_core_vec_x0)
+  es_xcopy _core_vec_x0 _core_vec_x1
+  es_xdoblock corelib/vecmath/multiply
+}
+
+block multiply
+{
+  es_math _core_vec_x0 * server_var(_core_vec_x2)
+  es_math _core_vec_y0 * server_var(_core_vec_x2)
+  es_math _core_vec_z0 * server_var(_core_vec_x2)
+  _core_vec_ret 0
+}
+
+block divide
+{
+  es_math _core_vec_x0 / server_var(_core_vec_x2)
+  es_math _core_vec_y0 / server_var(_core_vec_x2)
+  es_math _core_vec_z0 / server_var(_core_vec_x2)
+  _core_vec_ret 0
+}
+
+// Script testing blocks, they use testlib!
+block vecmath_test2
+{
+  es_xset vmt_x 0 "Vecmath test x return value"
+  es_xset vmt_y 0 "Vecmath test y return value"
+  es_xset vmt_z 0 "Vecmath test z return value"
+  es_xset vmt_s 0 "Vecmath test s return value"
+  es_xset vmt_pass 0 "Vecmath test pass value"
+  
+  profile begin vecmath_test2_timer
+  
+  testlib begin vmt_sum2 "Test 2d vector operation +"
+  vecmath vmt_x vmt_y 2.3 -1.006 + -0.67 2.03
+  testlib fail_unless vmt_x equalto 1.630000
+  testlib fail_unless vmt_y equalto 1.024000
+  testlib end
+  
+  testlib begin vmt_sub2 "Test 2d vector operation -"
+  vecmath vmt_x vmt_y 2.3 -1.006 - -0.67 2.03
+  testlib fail_unless vmt_x equalto 2.970000
+  testlib fail_unless vmt_y equalto -3.036000
+  testlib end
+  
+  testlib begin vmt_dot2 "Test 2d vector operation ."
+  vecmath vmt_x vmt_y 2.3 -1.006 . -0.67 2.03
+  testlib fail_unless vmt_x equalto -3.583180
+  testlib end
+  
+  testlib begin vmt_cross2 "Test 2d vector operation X"
+  vecmath vmt_x vmt_y 2.3 -1.006 X -0.67 2.03
+  testlib fail_unless vmt_x equalto 0.000000
+  testlib fail_unless vmt_y equalto 0.000000
+  testlib end
+  
+  testlib begin vmt_angle2 "Test 2d vector operation angle"
+  vecmath vmt_x vmt_y 2.3 -1.006 angle -0.67 2.03
+  vmt_pass 1
+  // Floats are not accurate, it is enough to see if the value is between these limits to see if it works or not:
+  if (server_var(vmt_x) < 2.30190) then vmt_pass 0
+  if (server_var(vmt_x) > 2.30191) then vmt_pass 0
+  testlib fail_if vmt_pass equalto 0
+  testlib end
+  
+  testlib begin vmt_angles2 "Test 2d vector operation angles"
+  vecmath vmt_x vmt_y 1.0 1.0 angles -2.0 2.0
+  vmt_pass 1
+  // Floats are not accurate, it is enough to see if the value is between these limits to see if it works or not:
+  if (server_var(vmt_y) < 3.14159) then vmt_pass 0
+  if (server_var(vmt_y) > 3.14160) then vmt_pass 0
+  testlib fail_if vmt_pass equalto 0
+  testlib fail_unless vmt_x equalto 0
+  testlib end
+  
+  testlib begin vmt_length2 "Test 2d vector operation length"
+  vecmath vmt_x vmt_y 4.5 -6.0 length
+  testlib fail_unless vmt_x equalto 7.500000
+  testlib end
+  
+  testlib begin vmt_norm2 "Test 2d vector operation normalize"
+  vecmath vmt_x vmt_y 4.5 -6.0 normalize
+  testlib fail_unless vmt_x equalto 0.600000
+  testlib fail_unless vmt_y equalto -0.800000
+  testlib end
+  
+  testlib begin vmt_setl2 "Test 2d vector operation setlength"
+  vecmath vmt_x vmt_y 4.5 -6.0 setlength 5.0
+  testlib fail_unless vmt_x >= 3.000000
+  testlib fail_unless vmt_x <= 3.01
+  testlib fail_unless vmt_y >= -4.01
+  testlib fail_unless vmt_y <= -4.000000
+  testlib end
+  
+  testlib begin vmt_multi2 "Test 2d vector operation *"
+  vecmath vmt_x vmt_y 4.5 -6.0 * 5.5
+  testlib fail_unless vmt_x equalto 24.750000
+  testlib fail_unless vmt_y equalto -33.000000
+  testlib end
+  
+  testlib begin vmt_div2 "Test 2d vector operation /"
+  vecmath vmt_x vmt_y 4.5 -6.0 / -3.0
+  testlib fail_unless vmt_x equalto -1.500000
+  testlib fail_unless vmt_y equalto 2.000000
+  testlib end
+  
+  profile end vecmath_test2_timer
+}
+
+block vecmath_test3
+{
+  es_xset vmt_x 0 "Vecmath test x return value"
+  es_xset vmt_y 0 "Vecmath test y return value"
+  es_xset vmt_z 0 "Vecmath test z return value"
+  es_xset vmt_s 0 "Vecmath test s return value"
+  es_xset vmt_pass 0 "Vecmath test pass value"
+  
+  profile begin vecmath_test3_timer
+  
+  testlib begin vmt_sum3 "Test 3d vector operation +"
+  vecmath vmt_x vmt_y vmt_z 2.3 -1.006 .1123 + -0.67 2.03 99.81
+  testlib fail_unless vmt_x equalto 1.630000
+  testlib fail_unless vmt_y equalto 1.024000
+  testlib fail_unless vmt_z lessthan 99.922300
+  testlib fail_unless vmt_z greaterthan 99.922200
+  testlib end
+  
+  testlib begin vmt_sub3 "Test 3d vector operation -"
+  vecmath vmt_x vmt_y vmt_z 2.3 -1.006 .1123 - -0.67 2.03 99.81
+  testlib fail_unless vmt_x equalto 2.970000
+  testlib fail_unless vmt_y equalto -3.036000
+  testlib fail_unless vmt_z <= -99.697700
+  testlib fail_unless vmt_z >= -99.697800
+  testlib end
+  
+  testlib begin vmt_dot3 "Test 3d vector operation ."
+  vecmath vmt_x vmt_y vmt_z 2.3 -1.006 .1123 . -0.67 2.03 99.81
+  vmt_pass 1
+  if (server_var(vmt_x) < 7.62548) then vmt_pass 0
+  if (server_var(vmt_x) > 7.62549) then vmt_pass 0
+  testlib fail_if vmt_pass equalto 0
+  testlib end
+  
+  testlib begin vmt_cross3 "Test 3d vector operation X"
+  vecmath vmt_x vmt_y vmt_z 2.3 -1.6 .12 X -0.67 2.3 99.8
+  testlib fail_unless vmt_x lessthan -159.956000
+  testlib fail_unless vmt_x greaterthan -159.957000
+  testlib fail_unless vmt_y lessthan -229.620400
+  testlib fail_unless vmt_y greaterthan -229.620500
+  testlib fail_unless vmt_z equalto 4.218000
+  testlib end
+  
+  testlib begin vmt_angle3 "Test 3d vector operation angle"
+  vecmath vmt_x vmt_y vmt_z 2.3 -1.006 .1123 angle -0.67 2.03 99.81
+  vmt_pass 1
+  // Floats are not accurate, it is enough to see if the value is between these limits to see if it works or not:
+  if (server_var(vmt_x) < 1.54039) then vmt_pass 0
+  if (server_var(vmt_x) > 1.54040) then vmt_pass 0
+  testlib fail_if vmt_pass equalto 0
+  testlib end
+  
+  testlib begin vmt_angles3 "Test 3d vector operation angles"
+  vecmath vmt_x vmt_y vmt_z 1.0 1.0 1.0 angles -2.0 2.0 0.0
+  vmt_pass 1
+  // Floats are not accurate, it is enough to see if the value is between these limits to see if it works or not:
+  if (server_var(vmt_y) < 2.35619) then vmt_pass 0
+  if (server_var(vmt_y) > 2.35620) then vmt_pass 0
+  if (server_var(vmt_z) < 1.57079) then vmt_pass 0
+  if (server_var(vmt_z) > 1.57080) then vmt_pass 0
+  if (server_var(vmt_x) < 0.78539) then vmt_pass 0
+  if (server_var(vmt_x) > 0.78540) then vmt_pass 0
+  testlib fail_if vmt_pass equalto 0
+  testlib end
+  
+  testlib begin vmt_length3 "Test 3d vector operation length"
+  vecmath vmt_x vmt_y vmt_z 4.5 -6.0 4.0 length
+  testlib fail_unless vmt_x equalto 8.500000
+  testlib end
+  
+  testlib begin vmt_norm3 "Test 3d vector operation normalize"
+  vecmath vmt_x vmt_y vmt_z 9.0 0.0 -12.0 normalize
+  testlib fail_unless vmt_x equalto 0.600000
+  testlib fail_unless vmt_y equalto 0.000000
+  testlib fail_unless vmt_z equalto -0.800000
+  testlib end
+  
+  testlib begin vmt_setl3 "Test 3d vector operation setlength"
+  vecmath vmt_x vmt_y vmt_z 9.0 0.0 -12.0 setlength 5.0
+  testlib fail_unless vmt_x <= 3.000000
+  testlib fail_unless vmt_x >= 2.900000
+  testlib fail_unless vmt_y equalto 0.000000
+  testlib fail_unless vmt_z >= -4.000000
+  testlib fail_unless vmt_z <= -3.900000
+  testlib end
+  
+  testlib begin vmt_multi3 "Test 3d vector operation *"
+  vecmath vmt_x vmt_y vmt_z 4.5 -6.0 1.0 * 5.5
+  testlib fail_unless vmt_x equalto 24.750000
+  testlib fail_unless vmt_y equalto -33.000000
+  testlib fail_unless vmt_z equalto 5.500000
+  testlib end
+  
+  testlib begin vmt_div3 "Test 3d vector operation /"
+  vecmath vmt_x vmt_y vmt_z 4.5 -6.0 12.3 / -3.0
+  testlib fail_unless vmt_x equalto -1.500000
+  testlib fail_unless vmt_y equalto 2.000000
+  testlib fail_unless vmt_z equalto -4.100000
+  testlib end
+  
+  profile end vecmath_test3_timer
+}
+
+// TODO: all of these might be inexact due to floating point issues.
+//    Need to covert to approximate comparisons for test results
+block vecmath_testv
+{
+  es_xset vmt_x 0 "Vecmath test x return value"
+  es_xset vmt_y 0 "Vecmath test y return value"
+  es_xset vmt_z 0 "Vecmath test z return value"
+  es_xset vmt_s 0 "Vecmath test s return value"
+  es_xset vmt_pass 0 "Vecmath test pass value"
+  
+  profile begin vecmath_testv_timer
+  
+  testlib begin vmt_sumv "Test vectorstring operation +"
+  vecmath vmt_s "2.3,-1.006,.1123" + "-0.67,2.03,99.81"
+  testlib warn_unless vmt_s equalto "1.630000,1.024000,99.922300"
+  testlib end
+  
+  testlib begin vmt_subv "Test vectorstring operation -"
+  vecmath vmt_s "2.3,-1.006,.1123" - "-0.67,2.03,99.81"
+  testlib warn_unless vmt_s equalto "2.970000,-3.036000,-99.697700"
+  testlib end
+  
+  testlib begin vmt_dotv "Test vectorstring operation ."
+  vecmath vmt_s "2.3,-1.6,.3" . "-0.6,2.0,99.0"
+  testlib warn_unless vmt_s equalto 25.120000
+  testlib end
+  
+  testlib begin vmt_crossv "Test vectorstring operation X"
+  vecmath vmt_s "2.3,-1.6,.3" . "-0.6,2.0,99.0"
+  testlib warn_unless vmt_s equalto "-159.000000,-227.880000,3.640000"
+  testlib end
+  
+  testlib begin vmt_anglev "Test vectorstring operation angle"
+  vecmath vmt_s "2.3,-1.006,.1123" angle "-0.67,2.03,99.81"
+  vmt_pass 1
+  // Floats are not accurate, it is enough to see if the value is between these limits to see if it works or not:
+  if (server_var(vmt_s) < 1.54039) then vmt_pass 0
+  if (server_var(vmt_s) > 1.54040) then vmt_pass 0
+  testlib fail_if vmt_pass equalto 0
+  testlib end
+  
+  testlib begin vmt_anglesv "Test vectorstring operation angles"
+  vecmath vmt_s "1.0,1.0,1.0" angles "-2.0,2.0,0.0"
+  vmt_pass 1
+  // Floats are not accurate, it is enough to see if the value is between these limits to see if it works or not:
+  es_splitvectorstring vmt_x vmt_y vmt_z server_var(vmt_s)
+  if (server_var(vmt_y) < 2.35619) then vmt_pass 0
+  if (server_var(vmt_y) > 2.35620) then vmt_pass 0
+  if (server_var(vmt_z) < 1.57079) then vmt_pass 0
+  if (server_var(vmt_z) > 1.57080) then vmt_pass 0
+  if (server_var(vmt_x) < 0.78539) then vmt_pass 0
+  if (server_var(vmt_x) > 0.78540) then vmt_pass 0
+  testlib fail_if vmt_pass equalto 0
+  testlib end
+  
+  testlib begin vmt_lengthv "Test vectorstring operation length"
+  vecmath vmt_s "4.5,-6.0,4.0" length
+  testlib fail_unless vmt_s equalto 8.500000
+  testlib end
+  
+  testlib begin vmt_normv "Test vectorstring operation normalize"
+  vecmath vmt_s "9.0,0.0,-12.0" normalize
+  testlib fail_unless vmt_s equalto "0.600000,0.000000,-0.800000"
+  testlib end
+  
+  testlib begin vmt_setlv "Test vectorstring operation setlength"
+  vecmath vmt_s "9.0,0.0,-12.0" setlength 5.0
+  testlib warn_unless vmt_s equalto "3.000000,0.000000,-4.000000"
+  testlib end
+  
+  testlib begin vmt_multiv "Test vectorstring operation *"
+  vecmath vmt_s "4.5,-6.0,1.0" * 5.5
+  testlib fail_unless vmt_s equalto "24.750000,-33.000000,5.500000"
+  testlib end
+  
+  testlib begin vmt_divv "Test vectorstring operation /"
+  vecmath vmt_s "4.5,-6.0,12.3" / -3.0
+  testlib fail_unless vmt_s equalto "-1.500000,2.000000,-4.100000"
+  testlib end
+  
+  profile end vecmath_testv_timer
+}

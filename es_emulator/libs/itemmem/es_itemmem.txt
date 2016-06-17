@@ -1,0 +1,901 @@
+// itemmem library v0.1
+// Submitted by Wonder
+
+block load
+{
+  // Create the command.
+  es_xexists _tempcore command itemmem
+  ifx false(_tempcore) do
+  {
+    es_xregcmd itemmem itemmem/command_server "Check the weapons a player was carrying from a specified round."
+  }
+
+  es_xset _iml_arg1 0
+  es_xset _iml_arg2 0
+  es_xset _iml_arg3 0
+  es_xset _iml_arg4 0
+  es_xset _iml_argc 0
+  es_xset _iml_format 0
+  es_xset _iml_format2 0
+  es_xset _iml_i 0
+  es_xset _iml_key 0
+  es_xset _iml_oldpref 0
+  es_xset _iml_roundcount 0
+
+  keygroupremove _itemmem_round0
+  es_xkeygroupcreate _itemmem_round0
+  foreach player _iml_key #all "es_xdoblock itemmem/key_create"
+
+  es_xdoblock corelib/noisy_on
+
+  // We need to read the drop command.
+  es_xcopy _iml_oldpref eventscripts_cmdprefixes
+  es_xformatv eventscripts_cmdprefixes "%1Dd" eventscripts_cmdprefixes
+}
+block command_server
+{
+  es_xgetargc _iml_argc
+  if (server_var(_iml_argc) > 1) do
+  {
+    // Does this sub-command exist?
+    es_xgetargv _iml_arg1 1
+    es_xformatv _iml_format "itemmem/command_server_%1_subcmd" _iml_arg1
+    es_exists _tempcore block server_var(_iml_format)
+    ifx true(_tempcore) do
+    {
+      es_doblock server_var(_iml_format)
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The sub-command server_var(_iml_arg1) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] You must provide a sub-command!!!
+  }
+}
+block command_server_getcurrentround_subcmd
+{
+  if (server_var(_iml_argc) > 2) do
+  {
+    // Does the variable exist?
+    es_xgetargv _iml_arg2 2
+    es_exists _tempcore variable server_var(_iml_arg2)
+    ifx true(_tempcore) do
+    {
+      es_copy server_var(_iml_arg2) _iml_roundcount
+
+      if (server_var(_iml_roundcount) < 0) do
+      {
+        // We are below 0. Something wrong has happened.
+        es_xcopy _tempcore _iml_roundcount
+        es_xmath _tempcore * -1
+
+        es_dbgmsg 0 [itemmem] WARNING!!! Round count is server_var(_tempcore) below zero!!!
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The variable server_var(_iml_arg2) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] Syntax: itemmem getcurrentround <var>
+  }
+}
+block command_server_getprimary_subcmd
+{
+  if (server_var(_iml_argc) > 4) do
+  {
+    // Does the variable exist?
+    es_xgetargv _iml_arg2 2
+    es_exists _tempcore variable server_var(_iml_arg2)
+    ifx true(_tempcore) do
+    {
+      // Has round been played?
+      es_xgetargv _iml_arg4 4
+      es_xformatv _iml_format "_itemmem_round%1" _iml_arg4
+      es_exists _tempcore keygroup server_var(_iml_format)
+      ifx true(_tempcore) do
+      {
+        // Did the user play that round.
+        es_xgetargv _iml_arg3 3
+        es_exists _tempcore key server_var(_iml_format) server_var(_iml_arg3)
+        ifx true(_tempcore) do
+        {
+          es_keygetvalue server_var(_iml_arg2) server_var(_iml_format) server_var(_iml_arg3) primgun
+          es_dbgmsg 1 [itemmem] User server_var(_iml_arg4) had a server_var(server_var(_iml_arg2)) in their primary slot!!!
+        }
+        else do
+        {
+          es_set server_var(_iml_arg2) 0
+          es_dbgmsg 0 [itemmem] User server_var(_iml_arg4) did not play that round!!!
+        }
+      }
+      else do
+      {
+        es_set server_var(_iml_arg2) 0
+        es_dbgmsg 0 [itemmem] Round server_var(_iml_arg4) has not been played!!!
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The variable server_var(_iml_arg2) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] Syntax: itemmem getprimary <var> <userid> <round>
+  }
+}
+block command_server_getsecondary_subcmd
+{
+  if (server_var(_iml_argc) > 4) do
+  {
+    // Does the variable exist?
+    es_xgetargv _iml_arg2 2
+    es_exists _tempcore variable server_var(_iml_arg2)
+    ifx true(_tempcore) do
+    {
+      // Has round been played?
+      es_xgetargv _iml_arg4 4
+      es_xformatv _iml_format "_itemmem_round%1" _iml_arg4
+      es_exists _tempcore keygroup server_var(_iml_format)
+      ifx true(_tempcore) do
+      {
+        // Did the user play that round.
+        es_xgetargv _iml_arg3 3
+        es_exists _tempcore key server_var(_iml_format) server_var(_iml_arg3)
+        ifx true(_tempcore) do
+        {
+          es_keygetvalue server_var(_iml_arg2) server_var(_iml_format) server_var(_iml_arg3) secgun
+          es_dbgmsg 1 [itemmem] User server_var(_iml_arg4) had a server_var(server_var(_iml_arg2)) in their secondary slot!!!
+        }
+        else do
+        {
+          es_set server_var(_iml_arg2) 0
+          es_dbgmsg 0 [itemmem] User server_var(_iml_arg4) did not play that round!!!
+        }
+      }
+      else do
+      {
+        es_set server_var(_iml_arg2) 0
+        es_dbgmsg 0 [itemmem] Round server_var(_iml_arg4) has not been played!!!
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The variable server_var(_iml_arg2) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] Syntax: itemmem getsecondary <var> <userid> <round>
+  }
+}
+block command_server_gethe_subcmd
+{
+  if (server_var(_iml_argc) > 4) do
+  {
+    // Does the variable exist?
+    es_xgetargv _iml_arg2 2
+    es_exists _tempcore variable server_var(_iml_arg2)
+    ifx true(_tempcore) do
+    {
+      // Has round been played?
+      es_xgetargv _iml_arg4 4
+      es_xformatv _iml_format "_itemmem_round%1" _iml_arg4
+      es_exists _tempcore keygroup server_var(_iml_format)
+      ifx true(_tempcore) do
+      {
+        // Did the user play that round.
+        es_xgetargv _iml_arg3 3
+        es_exists _tempcore key server_var(_iml_format) server_var(_iml_arg3)
+        ifx true(_tempcore) do
+        {
+          es_keygetvalue server_var(_iml_arg2) server_var(_iml_format) server_var(_iml_arg3) hecount
+          es_dbgmsg 1 [itemmem] User server_var(_iml_arg4) had server_var(server_var(_iml_arg2)) hegrenades!!!
+        }
+        else do
+        {
+          es_set server_var(_iml_arg2) 0
+          es_dbgmsg 0 [itemmem] User server_var(_iml_arg4) did not play that round!!!
+        }
+      }
+      else do
+      {
+        es_set server_var(_iml_arg2) 0
+        es_dbgmsg 0 [itemmem] Round server_var(_iml_arg4) has not been played!!!
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The variable server_var(_iml_arg2) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] Syntax: itemmem gethe <var> <userid> <round>
+  }
+}
+block command_server_getfb_subcmd
+{
+  if (server_var(_iml_argc) > 4) do
+  {
+    // Does the variable exist?
+    es_xgetargv _iml_arg2 2
+    es_exists _tempcore variable server_var(_iml_arg2)
+    ifx true(_tempcore) do
+    {
+      // Has round been played?
+      es_xgetargv _iml_arg4 4
+      es_xformatv _iml_format "_itemmem_round%1" _iml_arg4
+      es_exists _tempcore keygroup server_var(_iml_format)
+      ifx true(_tempcore) do
+      {
+        // Did the user play that round.
+        es_xgetargv _iml_arg3 3
+        es_exists _tempcore key server_var(_iml_format) server_var(_iml_arg3)
+        ifx true(_tempcore) do
+        {
+          es_keygetvalue server_var(_iml_arg2) server_var(_iml_format) server_var(_iml_arg3) fbcount
+          es_dbgmsg 1 [itemmem] User server_var(_iml_arg4) had server_var(server_var(_iml_arg2)) flashbangs!!!
+        }
+        else do
+        {
+          es_set server_var(_iml_arg2) 0
+          es_dbgmsg 0 [itemmem] User server_var(_iml_arg4) did not play that round!!!
+        }
+      }
+      else do
+      {
+        es_set server_var(_iml_arg2) 0
+        es_dbgmsg 0 [itemmem] Round server_var(_iml_arg4) has not been played!!!
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The variable server_var(_iml_arg2) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] Syntax: itemmem getfb <var> <userid> <round>
+  }
+}
+block command_server_getsg_subcmd
+{
+  if (server_var(_iml_argc) > 4) do
+  {
+    // Does the variable exist?
+    es_xgetargv _iml_arg2 2
+    es_exists _tempcore variable server_var(_iml_arg2)
+    ifx true(_tempcore) do
+    {
+      // Has round been played?
+      es_xgetargv _iml_arg4 4
+      es_xformatv _iml_format "_itemmem_round%1" _iml_arg4
+      es_exists _tempcore keygroup server_var(_iml_format)
+      ifx true(_tempcore) do
+      {
+        // Did the user play that round.
+        es_xgetargv _iml_arg3 3
+        es_exists _tempcore key server_var(_iml_format) server_var(_iml_arg3)
+        ifx true(_tempcore) do
+        {
+          es_keygetvalue server_var(_iml_arg2) server_var(_iml_format) server_var(_iml_arg3) sgcount
+          es_dbgmsg 1 [itemmem] User server_var(_iml_arg4) had server_var(server_var(_iml_arg2)) smokegrenades!!!
+        }
+        else do
+        {
+          es_set server_var(_iml_arg2) 0
+          es_dbgmsg 0 [itemmem] User server_var(_iml_arg4) did not play that round!!!
+        }
+      }
+      else do
+      {
+        es_set server_var(_iml_arg2) 0
+        es_dbgmsg 0 [itemmem] Round server_var(_iml_arg4) has not been played!!!
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The variable server_var(_iml_arg2) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] Syntax: itemmem getsg <var> <userid> <round>
+  }
+}
+block command_server_getc4_subcmd
+{
+  if (server_var(_iml_argc) > 4) do
+  {
+    // Does the variable exist?
+    es_xgetargv _iml_arg2 2
+    es_exists _tempcore variable server_var(_iml_arg2)
+    ifx true(_tempcore) do
+    {
+      // Has round been played?
+      es_xgetargv _iml_arg4 4
+      es_xformatv _iml_format "_itemmem_round%1" _iml_arg4
+      es_exists _tempcore keygroup server_var(_iml_format)
+      ifx true(_tempcore) do
+      {
+        // Did the user play that round.
+        es_xgetargv _iml_arg3 3
+        es_exists _tempcore key server_var(_iml_format) server_var(_iml_arg3)
+        ifx true(_tempcore) do
+        {
+          es_keygetvalue server_var(_iml_arg2) server_var(_iml_format) server_var(_iml_arg3) hasc4
+          es_dbgmsg 1 [itemmem] User server_var(_iml_arg4) had the C4!!!
+        }
+        else do
+        {
+          es_set server_var(_iml_arg2) 0
+          es_dbgmsg 0 [itemmem] User server_var(_iml_arg4) did not play that round!!!
+        }
+      }
+      else do
+      {
+        es_set server_var(_iml_arg2) 0
+        es_dbgmsg 0 [itemmem] Round server_var(_iml_arg4) has not been played!!!
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The variable server_var(_iml_arg2) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] Syntax: itemmem getc4 <var> <userid> <round>
+  }
+}
+block command_server_getc4planted_subcmd
+{
+  if (server_var(_iml_argc) > 4) do
+  {
+    // Does the variable exist?
+    es_xgetargv _iml_arg2 2
+    es_exists _tempcore variable server_var(_iml_arg2)
+    ifx true(_tempcore) do
+    {
+      // Has round been played?
+      es_xgetargv _iml_arg4 4
+      es_xformatv _iml_format "_itemmem_round%1" _iml_arg4
+      es_exists _tempcore keygroup server_var(_iml_format)
+      ifx true(_tempcore) do
+      {
+        // Did the user play that round.
+        es_xgetargv _iml_arg3 3
+        es_exists _tempcore key server_var(_iml_format) server_var(_iml_arg3)
+        ifx true(_tempcore) do
+        {
+          es_keygetvalue server_var(_iml_arg2) server_var(_iml_format) server_var(_iml_arg3) c4planted
+          es_dbgmsg 1 [itemmem] User server_var(_iml_arg4) planted the C4 server_var(server_var(_iml_arg2)) times!!!
+        }
+        else do
+        {
+          es_set server_var(_iml_arg2) 0
+          es_dbgmsg 0 [itemmem] User server_var(_iml_arg4) did not play that round!!!
+        }
+      }
+      else do
+      {
+        es_set server_var(_iml_arg2) 0
+        es_dbgmsg 0 [itemmem] Round server_var(_iml_arg4) has not been played!!!
+      }
+    }
+    else do
+    {
+      es_dbgmsg 0 [itemmem] The variable server_var(_iml_arg2) does not exist!!!
+    }
+  }
+  else do
+  {
+    es_xdbgmsg 0 [itemmem] Syntax: itemmem getc4planted <var> <userid> <round>
+  }
+}
+block key_create
+{
+  es_keycreate _itemmem_round0 server_var(_iml_key)
+  es_keysetvalue _itemmem_round0 server_var(_iml_key) primgun 0
+  es_keysetvalue _itemmem_round0 server_var(_iml_key) secgun 0
+  es_keysetvalue _itemmem_round0 server_var(_iml_key) hecount 0
+  es_keysetvalue _itemmem_round0 server_var(_iml_key) fbcount 0
+  es_keysetvalue _itemmem_round0 server_var(_iml_key) sgcount 0
+  es_keysetvalue _itemmem_round0 server_var(_iml_key) hasc4 0
+  es_keysetvalue _itemmem_round0 server_var(_iml_key) c4planted 0
+}
+block unload
+{
+  es_xset _iml_i 0
+  es_xdoblock itemmem/key_delete
+
+  es_xdoblock corelib/noisy_off
+
+  es_xcopy eventscripts_cmdprefixes _iml_oldpref
+}
+block key_delete
+{
+  if (server_var(_iml_i) <= server_var(_iml_roundcount)) do
+  {
+    es_xformatv _iml_format "_itemmem_round%1" _iml_i
+    es keygroupremove server_var(_iml_format)
+    es_xmath _iml_i + 1
+    es_xdoblock itemmem/key_delete
+  }
+}
+event player_activate
+{
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keycreate server_var(_iml_format) event_var(userid)
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun 0
+  es_keysetvalue server_var(_iml_format) event_var(userid) hecount 0
+  es_keysetvalue server_var(_iml_format) event_var(userid) fbcount 0
+  es_keysetvalue server_var(_iml_format) event_var(userid) sgcount 0
+  es_keysetvalue server_var(_iml_format) event_var(userid) hasc4 0
+  es_keysetvalue server_var(_iml_format) event_var(userid) c4planted 0
+}
+event player_disconnect
+{
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keydelete server_var(_iml_format) event_var(userid)
+}
+event round_start
+{
+  es_xmath _iml_roundcount + 1
+
+  if (server_var(_iml_roundcount) < 0) do
+  {
+    // We are below 0. Something wrong has happened.
+    es_xcopy _tempcore _iml_roundcount
+    es_xmath _tempcore * -1
+
+    es_dbgmsg 0 [itemmem] WARNING!!! Round count is server_var(_tempcore) below zero!!!
+  }
+
+  // Create new keygroup and copy keys.
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keygroupcreate server_var(_iml_format)
+  es_xcopy _tempcore _iml_roundcount
+  es_xmath _tempcore - 1
+  es_xformatv _iml_format2 "_itemmem_round%1" _tempcore
+  es_foreachkey _iml_key in server_var(_iml_format2) "es_xdoblock itemmem/round_start_key_copy"
+}
+block round_start_key_copy
+{
+  es_keycreate server_var(_iml_format) server_var(_iml_key)
+
+  // Is this user dead?
+  es_getplayerprop _tempcore server_var(_iml_key) CBasePlayer.pl.deadflag
+  ifx true(_tempcore) do
+  {
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) primgun 0
+
+    // Get team and set secondary gun.
+    es_getplayerteam _tempcore server_var(_iml_key)
+    if (server_var(_tempcore) == 2) do
+    {
+      es_keysetvalue server_var(_iml_format) server_var(_iml_key) secgun glock
+    }
+    else do
+    {
+      if (server_var(_tempcore) == 3) do
+      {
+        es_keysetvalue server_var(_iml_format) server_var(_iml_key) secgun usp
+      }
+      else do
+      {
+        es_keysetvalue server_var(_iml_format) server_var(_iml_key) secgun 0
+      }
+    }
+
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) hecount 0
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) fbcount 0
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) sgcount 0
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) hasc4 0
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) c4planted 0
+  }
+  else do
+  {
+    es_keygetvalue _tempcore server_var(_iml_format2) server_var(_iml_key) primgun
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) primgun server_var(_tempcore)
+    es_keygetvalue _tempcore server_var(_iml_format2) server_var(_iml_key) secgun
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) secgun server_var(_tempcore)
+    es_keygetvalue _tempcore server_var(_iml_format2) server_var(_iml_key) hecount
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) hecount server_var(_tempcore)
+    es_keygetvalue _tempcore server_var(_iml_format2) server_var(_iml_key) fbcount
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) fbcount server_var(_tempcore)
+    es_keygetvalue _tempcore server_var(_iml_format2) server_var(_iml_key) sgcount
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) sgcount server_var(_tempcore)
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) hasc4 0
+    es_keysetvalue server_var(_iml_format) server_var(_iml_key) c4planted 0
+  }
+}
+event es_client_command
+{
+  if (event_var(command) == drop) do
+  {
+    // Do the block for the item dropped.
+    es_format _iml_format "itemmem/drop_%1" event_var(es_userweapon)
+    es_doblock server_var(_iml_format)
+  }
+}
+block drop_weapon_glock
+{
+  // We dropped our secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun 0
+}
+block drop_weapon_usp
+{
+  // We dropped our secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun 0
+}
+block drop_weapon_p228
+{
+  // We dropped our secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun 0
+}
+block drop_weapon_deagle
+{
+  // We dropped our secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun 0
+}
+block drop_weapon_elite
+{
+  // We dropped our secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun 0
+}
+block drop_weapon_fiveseven
+{
+  // We dropped our secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun 0
+}
+block drop_weapon_m3
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_xm1014
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_mac10
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_tmp
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_mp5navy
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_ump45
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_p90
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_galil
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_famas
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_ak47
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_scout
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_m4a1
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_sg552
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_aug
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_sg550
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_awp
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_g3sg1
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_m249
+{
+  // We dropped our primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun 0
+}
+block drop_weapon_c4
+{
+  // We dropped the C4!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) hasc4 0
+}
+event item_pickup
+{
+  // Do the block for the item obtained.
+  es_format _iml_format "itemmem/pickup_weapon_%1" event_var(item)
+  es_doblock server_var(_iml_format)
+}
+block pickup_weapon_glock
+{
+  // We obtained a secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun event_var(item)
+}
+block pickup_weapon_usp
+{
+  // We obtained a secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun event_var(item)
+}
+block pickup_weapon_p228
+{
+  // We obtained a secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun event_var(item)
+}
+block pickup_weapon_deagle
+{
+  // We obtained a secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun event_var(item)
+}
+block pickup_weapon_elite
+{
+  // We obtained a secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun event_var(item)
+}
+block pickup_weapon_fiveseven
+{
+  // We obtained a secondary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) secgun event_var(item)
+}
+block pickup_weapon_m3
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_xm1014
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_mac10
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_tmp
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_mp5navy
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_ump45
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_p90
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_galil
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_famas
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_ak47
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_scout
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_m4a1
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_sg552
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_aug
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_sg550
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_awp
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_g3sg1
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_m249
+{
+  // We obtained a primary gun!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) primgun event_var(item)
+}
+block pickup_weapon_hegrenade
+{
+  // We obtained a hegrenade!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keygetvalue _tempcore server_var(_iml_format) event_var(userid) hecount
+  es_xmath _tempcore + 1
+  es_keysetvalue server_var(_iml_format) event_var(userid) hecount server_var(_tempcore)
+}
+block pickup_weapon_flashbang
+{
+  // We obtained a flashbang!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keygetvalue _tempcore server_var(_iml_format) event_var(userid) fbcount
+  es_xmath _tempcore + 1
+  es_keysetvalue server_var(_iml_format) event_var(userid) fbcount server_var(_tempcore)
+}
+block pickup_weapon_smokegrenade
+{
+  // We obtained a smokegrenade!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keygetvalue _tempcore server_var(_iml_format) event_var(userid) sgcount
+  es_xmath _tempcore + 1
+  es_keysetvalue server_var(_iml_format) event_var(userid) sgcount server_var(_tempcore)
+}
+block pickup_weapon_c4
+{
+  // We obtained the C4!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) hasc4 1
+}
+event weapon_fire
+{
+  if (event_var(weapon) == hegrenade) do
+  {
+    // We threw a hegrenade!
+    es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+    es_keygetvalue _tempcore server_var(_iml_format) event_var(userid) hecount
+    es_xmath _tempcore - 1
+    es_keysetvalue server_var(_iml_format) event_var(userid) hecount server_var(_tempcore)
+  }
+  else do
+  {
+    if (event_var(weapon) == flashbang) do
+    {
+      // We threw a flashbang!
+      es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+      es_keygetvalue _tempcore server_var(_iml_format) event_var(userid) fbcount
+      es_xmath _tempcore - 1
+      es_keysetvalue server_var(_iml_format) event_var(userid) fbcount server_var(_tempcore)
+    }
+    else do
+    {
+      if (event_var(weapon) == smokegrenade) do
+      {
+        // We threw a smokegrenade!
+        es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+        es_keygetvalue _tempcore server_var(_iml_format) event_var(userid) sgcount
+        es_xmath _tempcore - 1
+        es_keysetvalue server_var(_iml_format) event_var(userid) sgcount server_var(_tempcore)
+      }
+    }
+  }
+}
+event bomb_planted
+{
+  // We planted the C4!
+  es_xformatv _iml_format "_itemmem_round%1" _iml_roundcount
+  es_keysetvalue server_var(_iml_format) event_var(userid) hasc4 0
+  es_keygetvalue _tempcore server_var(_iml_format) event_var(userid) c4planted
+  es_xmath _tempcore + 1
+  es_keysetvalue server_var(_iml_format) event_var(userid) c4planted server_var(_tempcore)
+}

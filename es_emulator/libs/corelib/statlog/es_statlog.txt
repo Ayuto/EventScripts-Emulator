@@ -1,0 +1,709 @@
+// statlog command v0.3
+// Submitted by Wonder
+// Syntax: statlog <identifier> <event>
+
+block load
+{
+	es_xset _w_sl_arg1 0
+	es_xset _w_sl_arg2 0
+	es_xset _w_sl_argc 0
+	es_xset _w_sl_argname 0
+	es_xset _w_sl_argvalue 0
+	es_xset _w_sl_exists 0
+	es_xset _w_sl_format 0
+	es_xset _w_sl_format2 0
+	es_xset _w_sl_game 0
+	es_xset _w_sl_name 0
+	es_xset _w_sl_oldesc 0
+	es_xset _w_sl_script 0
+	es_xset _w_sl_sid 0
+	es_xset _w_sl_team 0
+	es_xset _w_sl_quote "`"
+	es_xset _statlog_argc 0
+	es_xset _statlog_event 0
+	es_xset _statlog_userid 0
+
+	// Create the command.
+	es_xexists _w_sl_exists command statlog
+	ifx false(_w_sl_exists) do
+	{
+		es_xregcmd statlog corelib/statlog/statlog "Logs a stat event for stat trackers (such as HLstatsX) and triggers blocks in scripts."
+	}
+
+	// Get which game we are running.
+	es_xgetgame _w_sl_game
+	if (Counter-Strike in server_var(_w_sl_game)) do
+	{
+		es_xset _w_sl_game css
+	}
+	else do
+	{
+		if ("Day of Defeat" in server_var(_w_sl_game)) do
+		{
+			es_xset _w_sl_game dods
+		}
+		else do
+		{
+			if (server_var(_w_sl_game) == "Half-Life 2 Deathmatch") do
+			{
+				es_xset _w_sl_game hl2dm
+			}
+			else do
+			{
+				if (server_var(_w_sl_game) == Deathmatch) do
+				{
+					es_xset _w_sl_game hl2dm
+				}
+				else do
+				{
+					if (server_var(_w_sl_game) == "Team Deathmatch") do
+					{
+						es_xset _w_sl_game hl2dm_team
+					}
+					else do
+					{
+						if (server_var(_w_sl_game) == "Half-Life 2 CTF") do
+						{
+							es_xset _w_sl_game hl2dm
+						}
+						else do
+						{
+							if (SourceForts in server_var(_w_sl_game)) do
+							{
+								es_xset _w_sl_game sf
+							}
+							else do
+							{
+								es_xset _w_sl_game UNSUPPORTED
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+block statlog
+{
+	es_xgetargc _w_sl_argc
+	if (server_var(_w_sl_argc) > 2) do
+	{
+		es_xformatv _w_sl_format corelib/statlog/statlog_%1 _w_sl_game
+		es_exists _w_sl_exists block server_var(_w_sl_format)
+		ifx true(_w_sl_exists) do
+		{
+			es_doblock server_var(_w_sl_format)
+		}
+		else do
+		{
+			es_xdbgmsg 0 [statlog] This game is not supported by statlog.
+		}
+	}
+	else do
+	{
+		es_xdbgmsg 0 [statlog] Syntax: statlog <identifier> <event> [arg1 <value>] [arg2 <value>] [...]
+	}
+}
+block statlog_css
+{
+	es_xgetargv _w_sl_arg1 1
+
+	if (server_var(_w_sl_arg1) == #t) do
+	{
+		// Log event.
+		es_xgetargv _w_sl_arg2 2
+		es_xformatv _w_sl_format "es_xlogq Team %1TERRORIST%1 triggered %1%2%1" eventscripts_quote _w_sl_arg2
+
+		es_xset _statlog_argc 0
+		if (server_var(_w_sl_argc) > 3) do
+		{
+			es_xset _w_sl_arg 3
+			alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+			alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+			_statlog_check
+		}
+
+		es_xcommandv _w_sl_format
+
+		// Trigger blocks.
+		es_xset _statlog_userid #t
+		es_xcopy _statlog_event _w_sl_arg2
+		es_xcreatescriptlist _statlog_scripts
+		es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+		es_xkeygroupdelete _statlog_scripts
+	}
+	else do
+	{
+		if (server_var(_w_sl_arg1) == #ct) do
+		{
+			// Log event.
+			es_xgetargv _w_sl_arg2 2
+			es_xformatv _w_sl_format "es_xlogq Team %1TERRORIST%1 triggered %1%2%1" eventscripts_quote _w_sl_arg2
+
+			es_xset _statlog_argc 0
+			if (server_var(_w_sl_argc) > 3) do
+			{
+				es_xset _w_sl_arg 3
+				alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+				alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+				_statlog_check
+			}
+
+			es_xcommandv _w_sl_format
+
+			// Trigger blocks.
+			es_xset _statlog_userid #ct
+			es_xcopy _statlog_event _w_sl_arg2
+			es_xcreatescriptlist _statlog_scripts
+			es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+			es_xkeygroupdelete _statlog_scripts
+		}
+		else do
+		{
+			es_exists _w_sl_exists userid server_var(_w_sl_arg1)
+			ifx true(_w_sl_exists) do
+			{
+				es_getplayerteam _w_sl_team server_var(_w_sl_arg1)
+				if (server_var(_w_sl_team) == 2) do
+				{
+					es_xgetargv _w_sl_arg2 2
+					es_getplayername _w_sl_name server_var(_w_sl_arg1)
+					es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+					// Log event.
+					es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><TERRORIST>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+					es_xset _statlog_argc 0
+					if (server_var(_w_sl_argc) > 3) do
+					{
+						es_xset _w_sl_arg 3
+						alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+						alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+						_statlog_check
+					}
+
+					es_xcommandv _w_sl_format
+
+					// Trigger blocks.
+					es_xcopy _statlog_userid _w_sl_arg1
+					es_xcopy _statlog_event _w_sl_arg2
+					es_xcreatescriptlist _statlog_scripts
+					es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+					es_xkeygroupdelete _statlog_scripts
+				}
+				else do
+				{
+					if (server_var(_w_sl_team) == 3) do
+					{
+						es_xgetargv _w_sl_arg2 2
+						es_getplayername _w_sl_name server_var(_w_sl_arg1)
+						es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+						// Log event.
+						es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><TERRORIST>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+						es_xset _statlog_argc 0
+						if (server_var(_w_sl_argc) > 3) do
+						{
+							es_xset _w_sl_arg 3
+							alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+							alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+							_statlog_check
+						}
+
+						es_xcommandv _w_sl_format
+
+						// Trigger blocks.
+						es_xcopy _statlog_userid _w_sl_arg1
+						es_xcopy _statlog_event _w_sl_arg2
+						es_xcreatescriptlist _statlog_scripts
+						es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+						es_xkeygroupdelete _statlog_scripts
+					}
+					else do
+					{
+						es_xstring _w_sl_arg1 replacev eventscripts_quote _w_sl_quote
+						es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is not in a team!" eventscripts_quote _w_sl_arg1
+						es_xcommandv _w_sl_format
+					}
+				}
+			}
+			else do
+			{
+				es_xstring _w_sl_arg1 replacev eventscripts_quote _w_sl_quote
+				es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is invalid." eventscripts_quote _w_sl_arg1
+				es_xcommandv _w_sl_format
+			}
+		}
+	}
+}
+block statlog_args
+{
+	es_getargv _w_sl_argname server_var(_w_sl_arg)
+	es_xmath _w_sl_arg + 1
+	if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) do
+	{
+		es_xmath _statlog_argc + 1
+
+		es_getargv _w_sl_argvalue server_var(_w_sl_arg)
+		es_xformatv _w_sl_format "%1 (%2 %3%4%3)" _w_sl_format _w_sl_argname eventscripts_quote _w_sl_argvalue
+
+		// Set argument variables.
+		es_xformatv _w_sl_format2 _statlog_arg%1_name _statlog_argc
+		es_set server_var(_w_sl_format2) server_var(_w_sl_argname)
+		es_xformatv _w_sl_format2 _statlog_arg%1_value _statlog_argc
+		es_set server_var(_w_sl_format2) server_var(_w_sl_argvalue)
+
+		es_xmath _w_sl_arg + 1
+	}
+	else do
+	{
+		es_xdbgmsg 0 [statlog] You provided an argument name without a value.
+	}
+}
+block statlog_dods
+{
+	es_xgetargv _w_sl_arg1 1
+
+	if (server_var(_w_sl_arg1) == #a) do
+	{
+		// Log event.
+		es_xgetargv _w_sl_arg2 2
+		es_xformatv _w_sl_format "es_xlogq Team %1Allies%1 triggered %1%2%1" eventscripts_quote _w_sl_arg2
+
+		es_xset _statlog_argc 0
+		if (server_var(_w_sl_argc) > 3) do
+		{
+			es_xset _w_sl_arg 3
+			alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+			alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+			_statlog_check
+		}
+
+		es_xcommandv _w_sl_format
+
+		// Trigger blocks.
+		es_xset _statlog_userid #a
+		es_xcopy _statlog_event _w_sl_arg2
+		es_xcreatescriptlist _statlog_scripts
+		es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+		es_xkeygroupdelete _statlog_scripts
+	}
+	else do
+	{
+		if (server_var(_w_sl_arg1) == #x) do
+		{
+			// Log event.
+			es_xgetargv _w_sl_arg2 2
+			es_xformatv _w_sl_format "es_xlogq Team %1Axis%1 triggered %1%2%1" eventscripts_quote _w_sl_arg2
+
+			es_xset _statlog_argc 0
+			if (server_var(_w_sl_argc) > 3) do
+			{
+				es_xset _w_sl_arg 3
+				alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+				alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+				_statlog_check
+			}
+
+			es_xcommandv _w_sl_format
+
+			// Trigger blocks.
+			es_xset _statlog_userid #x
+			es_xcopy _statlog_event _w_sl_arg2
+			es_xcreatescriptlist _statlog_scripts
+			es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+			es_xkeygroupdelete _statlog_scripts
+		}
+		else do
+		{
+			es_exists _w_sl_exists userid server_var(_w_sl_arg1)
+			ifx true(_w_sl_exists) do
+			{
+				es_getplayerteam _w_sl_team server_var(_w_sl_arg1)
+				if (server_var(_w_sl_team) == 2) do
+				{
+					es_xgetargv _w_sl_arg2 2
+					es_getplayername _w_sl_name server_var(_w_sl_arg1)
+					es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+					// Log event.
+					es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><Allies>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+					es_xset _statlog_argc 0
+					if (server_var(_w_sl_argc) > 3) do
+					{
+						es_xset _w_sl_arg 3
+						alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+						alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+						_statlog_check
+					}
+
+					es_xcommandv _w_sl_format
+
+					// Trigger blocks.
+					es_xcopy _statlog_userid _w_sl_arg1
+					es_xcopy _statlog_event _w_sl_arg2
+					es_xcreatescriptlist _statlog_scripts
+					es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+					es_xkeygroupdelete _statlog_scripts
+				}
+				else do
+				{
+					if (server_var(_w_sl_team) == 3) do
+					{
+						es_xgetargv _w_sl_arg2 2
+						es_getplayername _w_sl_name server_var(_w_sl_arg1)
+						es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+						// Log event.
+						es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><Axis>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+						es_xset _statlog_argc 0
+						if (server_var(_w_sl_argc) > 3) do
+						{
+							es_xset _w_sl_arg 3
+							alias	_statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+							alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+							_statlog_check
+						}
+
+						es_xcommandv _w_sl_format
+
+						// Trigger blocks.
+						es_xcopy _statlog_userid _w_sl_arg1
+						es_xcopy _statlog_event _w_sl_arg2
+						es_xcreatescriptlist _statlog_scripts
+						es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+						es_xkeygroupdelete _statlog_scripts
+					}
+					else do
+					{
+						es_xstring _w_sl_arg1 replacev eventscripts_quote _w_sl_quote
+						es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is not in a team!" eventscripts_quote _w_sl_arg1
+						es_xcommandv _w_sl_format
+					}
+				}
+			}
+			else do
+			{
+				es_xstring _w_sl_arg1 replacev eventscripts_quote _w_sl_quote
+				es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is invalid." eventscripts_quote _w_sl_arg1
+				es_xcommandv _w_sl_format
+			}
+		}
+	}
+}
+block statlog_hl2dm
+{
+	es_xgetargv _w_sl_arg1
+	es_exists _w_sl_exists userid server_var(_w_sl_arg1)
+	ifx true(_w_sl_exists) do
+	{
+		es_getplayerteam _w_sl_team server_var(_w_sl_arg1)
+		ifx false(_w_sl_team) do
+		{
+			es_xgetargv _w_sl_arg2 2
+			es_getplayername _w_sl_name server_var(_w_sl_arg1)
+			es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+			// Log event.
+			es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><Rebels>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+			es_xset _statlog_argc 0
+			if (server_var(_w_sl_argc) > 3) do
+			{
+				es_xset _w_sl_arg 3
+				alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+				alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+				_statlog_check
+			}
+
+			es_xcommandv _w_sl_format
+
+
+			// Trigger blocks.
+			es_xcopy _statlog_userid _w_sl_arg1
+			es_xcopy _statlog_event _w_sl_arg2
+			es_xcreatescriptlist _statlog_scripts
+			es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+			es_xkeygroupdelete _statlog_scripts
+		}
+		else do
+		{
+			es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is not in a team!" eventscripts_quote _w_sl_arg1
+			es_xcommandv _w_sl_format
+		}
+	}
+	else do
+	{
+		es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is invalid." eventscripts_quote _w_sl_arg1
+		es_xcommandv _w_sl_format
+	}
+}
+block statlog_hl2dm_team
+{
+	es_xgetargv _w_sl_arg1 1
+
+	if (server_var(_w_sl_arg1) == #r) do
+	{
+		// Log event.
+		es_xgetargv _w_sl_arg2 2
+		es_xformatv _w_sl_format "es_xlogq Team %1Rebels%1 triggered %1%2%1" eventscripts_quote _w_sl_arg2
+
+		es_xset _statlog_argc 0
+		if (server_var(_w_sl_argc) > 3) do
+		{
+			es_xset _w_sl_arg 3
+			alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+			alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+			_statlog_check
+		}
+
+		es_xcommandv _w_sl_format
+
+		// Trigger blocks.
+		es_xset _statlog_userid #r
+		es_xcopy _statlog_event _w_sl_arg2
+		es_xcreatescriptlist _statlog_scripts
+		es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+		es_xkeygroupdelete _statlog_scripts
+	}
+	else do
+	{
+		if (server_var(_w_sl_arg1) == #c) do
+		{
+			// Log event.
+			es_xgetargv _w_sl_arg2 2
+			es_xformatv _w_sl_format "es_xlogq Team %1Combine%1 triggered %1%2%1" eventscripts_quote _w_sl_arg2
+
+			es_xset _statlog_argc 0
+			if (server_var(_w_sl_argc) > 3) do
+			{
+				es_xset _w_sl_arg 3
+				alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+				alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+				_statlog_check
+			}
+
+			es_xcommandv _w_sl_format
+
+			// Trigger blocks.
+			es_xset _statlog_userid #c
+			es_xcopy _statlog_event _w_sl_arg2
+			es_xcreatescriptlist _statlog_scripts
+			es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+			es_xkeygroupdelete _statlog_scripts
+		}
+		else do
+		{
+			es_exists _w_sl_exists userid server_var(_w_sl_arg1)
+			ifx true(_w_sl_exists) do
+			{
+				es_getplayerteam _w_sl_team server_var(_w_sl_arg1)
+				if (server_var(_w_sl_team) == 2) do
+				{
+					es_xgetargv _w_sl_arg2 2
+					es_getplayername _w_sl_name server_var(_w_sl_arg1)
+					es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+					// Log event.
+					es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><Rebels>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+					es_xset _statlog_argc 0
+					if (server_var(_w_sl_argc) > 3) do
+					{
+						es_xset _w_sl_arg 3
+						alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+						alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+						_statlog_check
+					}
+
+					es_xcommandv _w_sl_format
+
+					// Trigger blocks.
+					es_xcopy _statlog_userid _w_sl_arg1
+					es_xcopy _statlog_event _w_sl_arg2
+					es_xcreatescriptlist _statlog_scripts
+					es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+					es_xkeygroupdelete _statlog_scripts
+				}
+				else do
+				{
+					if (server_var(_w_sl_team) == 3) do
+					{
+						es_xgetargv _w_sl_arg2 2
+						es_getplayername _w_sl_name server_var(_w_sl_arg1)
+						es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+						// Log event.
+						es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><Combine>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+						es_xset _statlog_argc 0
+						if (server_var(_w_sl_argc) > 3) do
+						{
+							es_xset _w_sl_arg 3
+							alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+							alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+							_statlog_check
+						}
+
+						es_xcommandv _w_sl_format
+
+						// Trigger blocks.
+						es_xcopy _statlog_userid _w_sl_arg1
+						es_xcopy _statlog_event _w_sl_arg2
+						es_xcreatescriptlist _statlog_scripts
+						es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+						es_xkeygroupdelete _statlog_scripts
+					}
+					else do
+					{
+						es_xstring _w_sl_arg1 replacev eventscripts_quote _w_sl_quote
+						es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is not in a team!" eventscripts_quote _w_sl_arg1
+						es_xcommandv _w_sl_format
+					}
+				}
+			}
+			else do
+			{
+				es_xstring _w_sl_arg1 replacev eventscripts_quote _w_sl_quote
+				es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is invalid." eventscripts_quote _w_sl_arg1
+				es_xcommandv _w_sl_format
+			}
+		}
+	}
+}
+block statlog_sf
+{
+	es_xgetargv _w_sl_arg1 1
+
+	if (server_var(_w_sl_arg1) == #b) do
+	{
+		// Log event.
+		es_xgetargv _w_sl_arg2 2
+		es_xformatv _w_sl_format "es_xlogq Team %1Blue%1 triggered %1%2%1" eventscripts_quote _w_sl_arg2
+
+		es_xset _statlog_argc 0
+		if (server_var(_w_sl_argc) > 3) do
+		{
+			es_xset _w_sl_arg 3
+			alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+			alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+			_statlog_check
+		}
+
+		es_xcommandv _w_sl_format
+
+		// Trigger blocks.
+		es_xset _statlog_userid #b
+		es_xcopy _statlog_event _w_sl_arg2
+		es_xcreatescriptlist _statlog_scripts
+		es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+		es_xkeygroupdelete _statlog_scripts
+	}
+	else do
+	{
+		if (server_var(_w_sl_arg1) == #r) do
+		{
+			// Log event.
+			es_xgetargv _w_sl_arg2 2
+			es_xformatv _w_sl_format "es_xlogq Team %1Red%1 triggered %1%2%1" eventscripts_quote _w_sl_arg2
+
+			es_xset _statlog_argc 0
+			if (server_var(_w_sl_argc) > 3) do
+			{
+				es_xset _w_sl_arg 3
+				alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+				alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+				_statlog_check
+			}
+
+			es_xcommandv _w_sl_format
+
+			// Trigger blocks.
+			es_xset _statlog_userid #r
+			es_xcopy _statlog_event _w_sl_arg2
+			es_xcreatescriptlist _statlog_scripts
+			es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+			es_xkeygroupdelete _statlog_scripts
+		}
+		else do
+		{
+			es_exists _w_sl_exists userid server_var(_w_sl_arg1)
+			ifx true(_w_sl_exists) do
+			{
+				es_getplayerteam _w_sl_team server_var(_w_sl_arg1)
+				if (server_var(_w_sl_team) == 2) do
+				{
+					es_xgetargv _w_sl_arg2 2
+					es_getplayername _w_sl_name server_var(_w_sl_arg1)
+					es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+					// Log event.
+					es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><Blue>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+					es_xset _statlog_argc 0
+					if (server_var(_w_sl_argc) > 3) do
+					{
+						es_xset _w_sl_arg 3
+						alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+						alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+						_statlog_check
+					}
+
+					es_xcommandv _w_sl_format
+
+					// Trigger blocks.
+					es_xcopy _statlog_userid _w_sl_arg1
+					es_xcopy _statlog_event _w_sl_arg2
+					es_xcreatescriptlist _statlog_scripts
+					es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+					es_xkeygroupdelete _statlog_scripts
+				}
+				else do
+				{
+					if (server_var(_w_sl_team) == 3) do
+					{
+						es_xgetargv _w_sl_arg2 2
+						es_getplayername _w_sl_name server_var(_w_sl_arg1)
+						es_getplayersteamid _w_sl_sid server_var(_w_sl_arg1)
+
+						// Log event.
+						es_xformatv _w_sl_format "es_xlogq %1%2<%3><%4><Red>%1 triggered %1%5%1" eventscripts_quote _w_sl_name _w_sl_arg1 _w_sl_sid _w_sl_arg2
+
+						es_xset _statlog_argc 0
+						if (server_var(_w_sl_argc) > 3) do
+						{
+							es_xset _w_sl_arg 3
+							alias _statlog_do "es_xdoblock corelib/statlog/statlog_args;_statlog_check"
+							alias _statlog_check "if (server_var(_w_sl_arg) < server_var(_w_sl_argc)) then _statlog_do"
+							_statlog_check
+						}
+
+						es_xcommandv _w_sl_format
+
+						// Trigger blocks.
+						es_xcopy _statlog_userid _w_sl_arg1
+						es_xcopy _statlog_event _w_sl_arg2
+						es_xcreatescriptlist _statlog_scripts
+						es_xforeachkey _w_sl_script in _statlog_scripts "es_xformatv _w_sl_format %1/_statlog _w_sl_script;es_doblock server_var(_w_sl_format)"
+						es_xkeygroupdelete _statlog_scripts
+					}
+					else do
+					{
+						es_xstring _w_sl_arg1 replacev eventscripts_quote _w_sl_quote
+						es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is not in a team!" eventscripts_quote _w_sl_arg1
+						es_xcommandv _w_sl_format
+					}
+				}
+			}
+			else do
+			{
+				es_xstring _w_sl_arg1 replacev eventscripts_quote _w_sl_quote
+				es_xformatv _w_sl_format "es_xdbgmsg 0 [statlog] Userid %1%2%1 is invalid." eventscripts_quote _w_sl_arg1
+				es_xcommandv _w_sl_format
+			}
+		}
+	}
+}
