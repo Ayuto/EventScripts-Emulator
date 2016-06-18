@@ -1949,7 +1949,7 @@ def es_map_start(event_var):
     '''
 event es_map_start is fired when a map is loaded on the server
     '''
-    es.loadevents("addons/eventscripts/popup/popup.res")
+    es.loadevents("addons/source-python/plugins/es_emulator/libs/popup/popup.res")
     gUsers.__init__()
 
 def es_client_command(event_var):
