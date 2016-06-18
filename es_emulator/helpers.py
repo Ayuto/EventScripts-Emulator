@@ -288,7 +288,7 @@ def _cheats_enabled():
         sv_cheats.set_int(old_value)
         sv_cheats.flags = old_flags
 
-def _get_entity_indexes(classname):
+def _get_entity_indexes(classname=''):
     result = set()
     for edict in EntityGenerator(classname, True):
         result.add(index_from_edict(edict))
@@ -296,7 +296,7 @@ def _get_entity_indexes(classname):
     return result
 
 @contextmanager
-def _last_give_enabled(classname):
+def _last_give_enabled(classname=''):
     lastgive_cvar.set_int(0)
     old_indexes = _get_entity_indexes(classname)
     yield
