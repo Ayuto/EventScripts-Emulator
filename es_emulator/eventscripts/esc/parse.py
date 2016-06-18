@@ -59,8 +59,8 @@ def splitblocks(file):
             currentblock = blockstack[-1]
             
         else: # Tokenize line and add it to current subblock
-        
-          map(currentblock.append, getcommands(line, n))
+          for command in getcommands(line, n):
+            currentblock.append(command)
             
   return script
   
@@ -123,7 +123,7 @@ def escompile(commandname, argv, args=None): # TODO: keep as strings until neede
     coerce(argv, command.types, exp)
     if command.args:
       if exp:
-        if exp[-1] < command.argsfrom:
+        if command.argsfrom is not None and exp[-1] < command.argsfrom:
           args = join(argv[command.argsfrom:])
       elif args is not None:
         args = argsfrom(args, command.argsfrom)

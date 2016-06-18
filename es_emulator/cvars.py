@@ -37,12 +37,6 @@ debugfunctions_cvar = ConVar(
     'Adds internal ES function names and line numbers to debug strings for parsing.'
 )
 
-scripttrace_cvar = ConVar(
-    'eventscripts_scripttrace',
-    '0',
-    'Turns on script tracing.'
-)
-
 debuglog_cvar = ConVar(
     'eventscripts_debuglog',
     '0',
@@ -95,12 +89,6 @@ quote_cvar = ConVar(
     'eventscripts_quote',
     '"',
     'A quotation mark. A tool, not a variable.'
-)
-
-shellengine_cvar = ConVar(
-    'eventscripts_shellengine',
-    '0',
-    'Turns on Python-based ESC script engine'
 )
 
 python_cvar = ConVar(
@@ -221,6 +209,12 @@ cmdprefix_cvar = ConVar(
     'A list of single character prefixes which will be passed to es_client_command.cfg when fired.'
 )
 
+scripttrace_cvar = ConVar(
+    'eventscripts_scripttrace',
+    '0',
+    'Turns on script tracing.'
+)
+
 
 # =============================================================================
 # >> UNUSED CVARS
@@ -247,4 +241,10 @@ defaultevents_cvar = ConVar(
     'eventscripts_defaultevents',
     '1',
     'If set to 1, EventScripts will try to register for the default event files on each new map.'
+)
+
+shellengine_cvar = ConVar(
+    'eventscripts_shellengine',
+    '1',
+    'Turns on Python-based ESC script engine'
 )
