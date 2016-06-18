@@ -18,11 +18,14 @@ from memory import DataType
 #   Engines
 from engines.server import server_game_dll
 #   Entities
+from entities import EntityGenerator
 from entities.props import SendPropType
+from entities.helpers import index_from_edict
 
 # ES Emulator
 from .cvars import botcexec_cvar
 from .cvars import deadflag_cvar
+from .cvars import lastgive_cvar
 
 
 # =============================================================================
@@ -257,6 +260,24 @@ def cheats_enabled():
         sv_cheats.set_int(old_value)
         sv_cheats.flags = old_flags
 
-def exec_client_cheat_command(player, command):
+def _get_entity_indexes(classname):
+    result = set()
+    for edict in EntityGenerator(classname, True):
+        result.add(index_from_edict(edict))
+
+    return result
+
+@contextmanager
+def _last_give_enabled(classname):
+    lastgive_cvar.set_int(0)
+    old_indexes = _get_entity_indexes(classname)
+    yield
+    new_indexes = _get_entity_indexes(classname)
+    try:
+        lastgive_cvar.set_int(new_indexes.difference(old_indexes).pop())
+    except KeyError:
+        pass
+
+def _exec_client_cheat_command(player, command):
     with cheats_enabled():
         player.client_command(command, True)

@@ -79,12 +79,6 @@ timeformat_cvar = ConVar(
     'Format for time strings retrieved by es_gettimestring.'
 )
 
-lastgive_cvar = ConVar(
-    'eventscripts_lastgive',
-    '',
-    'Last given entity index'
-)
-
 cmdprefix_cvar = ConVar(
     'eventscripts_cmdprefixes',
     '!',
@@ -237,6 +231,13 @@ setipcmdline_cvar = ConVar(
     'eventscripts_setipcmdline',
     '1',
     'EventScripts will set the IP for you passed from a +ip command-line.'
+)
+
+# TODO: This is not implemented for all commands
+lastgive_cvar = ConVar(
+    'eventscripts_lastgive',
+    '',
+    'Last given entity index'
 )
 
 

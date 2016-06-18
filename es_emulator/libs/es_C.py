@@ -71,7 +71,8 @@ from es_emulator.helpers import _get_send_prop_type_name
 from es_emulator.helpers import _get_convar_flag
 from es_emulator.helpers import _get_menu_options
 from es_emulator.helpers import _dump_entity_table
-from es_emulator.helpers import exec_client_cheat_command
+from es_emulator.helpers import _exec_client_cheat_command
+from es_emulator.helpers import _last_give_enabled
 
 
 # =============================================================================
@@ -808,7 +809,8 @@ def give(userid, entity):
     except ValueError:
         return
 
-    exec_client_cheat_command(player, 'give {}'.format(entity))
+    with _last_give_enabled(entity):
+        _exec_client_cheat_command(player, 'give {}'.format(entity))
 
 def isbot(*args):
     """Checks a userid to see if it's a bot, stores 1 in the variable if so, 0 if not."""
