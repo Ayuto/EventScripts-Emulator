@@ -394,9 +394,8 @@ def dumpserverclasses():
 
 def dumpstringtable(table_name, path):
     """Outputs a specific string table item"""
-    try:
-        string_table = string_tables[table_name]
-    except KeyError:
+    string_table = string_tables[table_name]
+    if string_table is None:
         return
 
     index = string_table[path]
@@ -1349,9 +1348,16 @@ def stopsound(userid, sound):
 
     engine_sound.stop_sound(index, 0, sound)
 
-def stringtable(*args):
+def stringtable(table_name, string):
     """Update an entry in a stringtable"""
-    raise NotImplementedError
+    table = string_tables[table_name]
+    if table is None:
+        dbgmsg(0, 'Could not add strings: {} to table {}'.format(
+            string, table_name))
+        return
+
+    table.add_string(string, is_server=False, length=len(string)+1)
+    dbgmsg(1, 'Added string: %s to table %s'.format(string, table_name))
 
 def tell(userid, color, msg=None):
     """Sends HUD message to one player. If the first word of the message is '#green', or '#lightgreen' then the message is displayed in that color. Supports '#multi' also for embedded #green/#lightgreen in the message."""
