@@ -299,10 +299,13 @@ def createvectorstring(x, y, z):
     """Creates a string form of three x y z variables representing a vector."""
     return '{},{},{}'.format(x, y, z)
 
-def dbgmsg(level, msg):
+def dbgmsg(level, *args):
     """Outputs a message to the console."""
     # TODO: Create a proper implementation
-    print(msg)
+    if len(args):
+        print(' '.join(map(str, args)))
+    else:
+        print('Invalid syntax.')
 
 def dbgmsgv(level, convar_name):
     """Prints a debug message for EventScripts"""
@@ -623,7 +626,8 @@ def getEventInfo(name):
 
 def getFlags(name):
     """Gets the flags value for a command"""
-    return cvar.find_base(name).flags
+    base = cvar.find_base(name)
+    return base and base.flags
 
 def getFloat(name):
     """Gets the float value for a server variable"""
@@ -1159,7 +1163,7 @@ def regclientcmd(command, block_name, description):
     get_client_command(command).add_callback(
         client_command_proxies.create_proxy(command, block_name))
 
-def regcmd(command, block_name, description):
+def regcmd(command, block_name, description=''):
     """Adds a console command that refers to a particular block."""
     if cvar.find_command(command) is not None:
         dbgmsg(0, 'Command {} already exists.'.format(command))
