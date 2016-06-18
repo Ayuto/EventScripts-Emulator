@@ -209,7 +209,7 @@ class Stack(object):
 
     except SyntaxError as e: # TODO: Custom errors
       if not e.msg:
-        self.error(commandname, 'Syntax: %s %s' % (command.expname, self.syntax))
+        self.error(commandname, 'Syntax: %s %s' % (command.expname, command.syntax))
       else:
         self.error(commandname, e)
 
