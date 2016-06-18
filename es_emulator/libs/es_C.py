@@ -17,9 +17,10 @@ from commands.client import get_client_command
 from commands.server import get_server_command
 #   Engines
 from engines.server import engine_server
-from engines.server import engine_sound
 from engines.server import global_vars
 from engines.server import server_game_dll
+from engines.sound import engine_sound
+from engines.sound import Pitch
 #   Events
 from events.manager import game_event_manager
 #   Messages
@@ -387,9 +388,22 @@ def effect(*args):
     """Performs a particular effect."""
     raise NotImplementedError
 
-def emitsound(*args):
+def emitsound(emitter_type, emitter, sound, volume, attenuation, flags=0, pitch=Pitch.NORMAL):
     """Plays a sound from an entity."""
-    raise NotImplementedError
+    index = 0
+    if emitter_type == 'player':
+        try:
+            index = index_from_userid(atoi(emitter))
+        except ValueError:
+            pass
+    elif emitter_type == 'entity':
+        index = atoi(emitter)
+
+    if not index:
+        return
+
+    engine_sound.emit_sound(RecipientFilter(), index, 0, sound, atof(volume),
+        atof(attenuation), atoi(flags), atoi(pitch))
 
 def enable(*args):
     """Enables a script that has been loaded."""
