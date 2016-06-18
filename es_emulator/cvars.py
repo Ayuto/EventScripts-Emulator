@@ -97,12 +97,6 @@ quote_cvar = ConVar(
     'A quotation mark. A tool, not a variable.'
 )
 
-defaultevents_cvar = ConVar(
-    'eventscripts_defaultevents',
-    '1',
-    'If set to 1, EventScripts will try to register for the default event files on each new map.'
-)
-
 shellengine_cvar = ConVar(
     'eventscripts_shellengine',
     '0',
@@ -247,4 +241,10 @@ maxmessages_cvar = ConVar(
     'eventscripts_maxmsg',
     '28',
     'Maximum number of usermessages supported by the mod. Do not change unless instructed to do so.'
+)
+
+defaultevents_cvar = ConVar(
+    'eventscripts_defaultevents',
+    '1',
+    'If set to 1, EventScripts will try to register for the default event files on each new map.'
 )
