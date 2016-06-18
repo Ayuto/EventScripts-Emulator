@@ -4,8 +4,11 @@
 # Python
 import re
 
+from contextlib import contextmanager
+
 # Source.Python
 #   Cvars
+from cvars import cvar
 from cvars.flags import ConVarFlags
 #   Memory
 import memory
@@ -27,6 +30,8 @@ from .cvars import deadflag_cvar
 # =============================================================================
 # TODO: On Linux it's probably libc
 runtimelib = memory.find_binary('msvcrt.dll')
+
+sv_cheats = cvar.find_var('sv_cheats')
 
 
 # =============================================================================
@@ -229,3 +234,29 @@ def _get_menu_options(keys):
             result += 1 << x
 
     return result
+
+
+# =============================================================================
+# >> sv_cheats related commands
+# =============================================================================
+@contextmanager
+def cheats_enabled():
+    """A nitfy context manager to enable sv_cheats temporarily."""
+    old_value = sv_cheats.get_int()
+    old_flags = sv_cheats.flags
+    # Use try/finally to make sure sv_cheats is always set back to its
+    # original value in case something went wrong.
+    try:
+        # Adding this flag will prevent ICvar::CallGlobalChangeCallbacks()
+        # from being called. Thus, we don't need to remove the NOTIFY flag and
+        # care about other side effects.
+        sv_cheats.add_flags(ConVarFlags.NEVER_AS_STRING)
+        sv_cheats.set_int(1)
+        yield
+    finally:
+        sv_cheats.set_int(old_value)
+        sv_cheats.flags = old_flags
+
+def exec_client_cheat_command(player, command):
+    with cheats_enabled():
+        player.client_command(command, True)

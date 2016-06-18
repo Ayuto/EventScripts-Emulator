@@ -71,6 +71,7 @@ from es_emulator.helpers import _get_send_prop_type_name
 from es_emulator.helpers import _get_convar_flag
 from es_emulator.helpers import _get_menu_options
 from es_emulator.helpers import _dump_entity_table
+from es_emulator.helpers import exec_client_cheat_command
 
 
 # =============================================================================
@@ -800,9 +801,14 @@ def getuserid(*args):
     """Looks-up a userid based on the string provided. Checks it against a userid, steamid, exact name, and partial name. (Based on Mani's algorithm.)"""
     raise NotImplementedError
 
-def give(*args):
+def give(userid, entity):
     """Gives the player a named item."""
-    raise NotImplementedError
+    try:
+        player = Player.from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    exec_client_cheat_command(player, 'give {}'.format(entity))
 
 def isbot(*args):
     """Checks a userid to see if it's a bot, stores 1 in the variable if so, 0 if not."""
