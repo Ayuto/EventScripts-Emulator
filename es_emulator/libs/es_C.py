@@ -48,6 +48,9 @@ from listeners.tick import Delay
 #   Mathlib
 from mathlib import QAngle
 from mathlib import Vector
+#   Stringtables
+from stringtables import string_tables
+from stringtables import INVALID_STRING_INDEX
 
 # ES Emulator
 #   Logic
@@ -380,9 +383,17 @@ def dumpserverclasses():
 
         current = current.next
 
-def dumpstringtable(*args):
+def dumpstringtable(table_name, path):
     """Outputs a specific string table item"""
-    raise NotImplementedError
+    try:
+        string_table = string_tables[table_name]
+    except KeyError:
+        return
+
+    index = string_table[path]
+    if index != INVALID_STRING_INDEX:
+        dbgmsg(0, 'Data:\n{}'.format(string_table[index]))
+        dbgmsg(0, 'Data:\n{}'.format(string_table.get_user_data(index)))
 
 def effect(*args):
     """Performs a particular effect."""
