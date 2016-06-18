@@ -566,9 +566,18 @@ def getargv(index):
     """Gets the command parameter passed to the current ES console command."""
     return command_info.get_argv(index)
 
-def getclientvar(*args):
+def getclientvar(userid, var_name):
     """Reads a console variable from a given player."""
-    raise NotImplementedError
+    try:
+        index = index_from_userid(atoi(userid))
+    except ValueError:
+        dbgmsg(0, 'userid not found: {}'.format(userid))
+        return
+
+    if index > 0:
+        return engine_server.get_client_convar_value(var_name)
+
+    return None
 
 def getcmduserid():
     """Gets the commandstring passed to the current Valve console command."""
