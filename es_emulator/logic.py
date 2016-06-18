@@ -41,6 +41,7 @@ from .cvars import sayevents_cvar
 from .cvars import nextmap_cvar
 from .cvars import setipcmdline_cvar
 from .cvars import frametimer_cvar
+from .cvars import cmdprefix_cvar
 #   Helpers
 from .helpers import _is_dead
 #   Paths
@@ -173,7 +174,7 @@ def on_tick():
 
     import es
     es.addons.tick()
-    
+
     if frametimer_cvar.get_int():
         diff = time.time() - now
         if diff > 0.01:
@@ -200,16 +201,33 @@ def on_say(command, index, team_only):
 
 
 # =============================================================================
-# >> CLIENT COMMAND FILTER
+# >> CLIENT COMMAND FILTER & es_client_command
 # =============================================================================
 @ClientCommandFilter
 def on_client_command(command, index):
     import es
     userid = userid_from_index(index)
-    if es.addons.clientCommand(userid):
-        return CommandReturn.CONTINUE
+    if not es.addons.clientCommand(userid):
+        return CommandReturn.BLOCK
 
-    return CommandReturn.BLOCK
+    command_name = command[0]
+    fire_client_command = command_name[0] in cmdprefix_cvar.get_string()
+    if fire_client_command or command_name == 'menuselect':
+        event = game_event_manager.create_event('es_client_command', True)
+        if event is not None:
+            event.set_int('userid', userid)
+            event.set_string('command', command_name)
+            event.set_string('commandstring', command.arg_string)
+            try:
+                game_event_manager.fire_event(event)
+            except RuntimeError:
+                # TODO:
+                # I have no idea why that happens, but the event gets fired...
+                pass
+        else:
+            es.dbgmsg(0, 'es_client_command not fired! =(')
+
+    return CommandReturn.CONTINUE
 
 
 # =============================================================================
@@ -222,7 +240,8 @@ if protectrcon_cvar.get_int() > 0:
 # =============================================================================
 # >> mattie_eventscripts.res
 # =============================================================================
-game_event_manager.load_events_from_file(str(ES_EVENTS_PATH))
+if game_event_manager.load_events_from_file(str(ES_EVENTS_PATH)) == 0:
+    raise ValueError('Failed to load mattie_eventscripts.res')
 
 
 # =============================================================================

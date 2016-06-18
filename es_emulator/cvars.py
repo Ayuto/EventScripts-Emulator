@@ -67,22 +67,10 @@ escape_cvar = ConVar(
     'Lists the characters for that cause variable expansion to require quotes to prevent parsing issues. (Leave this alone unless you know what you\'re doing.)'
 )
 
-cflags_cvar = ConVar(
-    'eventscripts_cflags',
-    '902',
-    'Obsolete. eventscripts_cflags'
-)
-
 timeformat_cvar = ConVar(
     'eventscripts_timeformat',
     '%Y-%m-%d %H:%M:%S (%Z)',
     'Format for time strings retrieved by es_gettimestring.'
-)
-
-cmdprefix_cvar = ConVar(
-    'eventscripts_cmdprefixes',
-    '!',
-    'A list of single character prefixes which will be passed to es_client_command.cfg when fired.'
 )
 
 execmd_cvar = ConVar(
@@ -101,12 +89,6 @@ serverclients_cvar = ConVar(
     'eventscripts_servergameclients_ver',
     '',
     'Version of ServerGameClients interface used by EventScripts. (read only)'
-)
-
-maxmessages_cvar = ConVar(
-    'eventscripts_maxmsg',
-    '28',
-    'Maximum number of usermessages supported by the mod. Do not change unless instructed to do so.'
 )
 
 quote_cvar = ConVar(
@@ -239,6 +221,12 @@ frametimer_cvar = ConVar(
     'If set to 1, EventScripts will output timing warnings when a GameFrame takes longer than 0.01 seconds inside scripts.'
 )
 
+cmdprefix_cvar = ConVar(
+    'eventscripts_cmdprefixes',
+    '!',
+    'A list of single character prefixes which will be passed to es_client_command.cfg when fired.'
+)
+
 
 # =============================================================================
 # >> UNUSED CVARS
@@ -247,4 +235,16 @@ interface_cvar = ConVar(
     'eventscripts_eiface',
     '1',
     'Internal function for helping EventScripts choose the right ImmediateExecuteCommand for command ordering.'
+)
+
+cflags_cvar = ConVar(
+    'eventscripts_cflags',
+    '902',
+    'Obsolete. eventscripts_cflags'
+)
+
+maxmessages_cvar = ConVar(
+    'eventscripts_maxmsg',
+    '28',
+    'Maximum number of usermessages supported by the mod. Do not change unless instructed to do so.'
 )
