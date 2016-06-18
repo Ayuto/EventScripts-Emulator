@@ -1,3 +1,5 @@
+from es_emulator.paths import POPUPLIB_POPUP_RES_PATH
+
 import es
 import playerlib
 import math
@@ -1949,7 +1951,7 @@ def es_map_start(event_var):
     '''
 event es_map_start is fired when a map is loaded on the server
     '''
-    es.loadevents("addons/source-python/plugins/es_emulator/libs/popup/popup.res")
+    es.loadevents(str(POPUPLIB_POPUP_RES_PATH))
     gUsers.__init__()
 
 def es_client_command(event_var):
