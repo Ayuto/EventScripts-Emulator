@@ -429,9 +429,17 @@ def enable(*args):
     """Enables a script that has been loaded."""
     raise NotImplementedError
 
-def entcreate(*args):
+def entcreate(userid, entity, *args):
     """Creates an entity where a player is looking."""
-    raise NotImplementedError
+    try:
+        player = Player.from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    _exec_client_cheat_command(
+        player,
+        'ent_create {}'.format(entity, ' '.join(map(str, args))).rstrip()
+    )
 
 def entitygetvalue(index, value_name):
     """Get a value name for a given entity."""
