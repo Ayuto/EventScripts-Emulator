@@ -243,7 +243,7 @@ def _get_menu_options(keys):
 # >> sv_cheats related commands
 # =============================================================================
 @contextmanager
-def cheats_enabled():
+def _cheats_enabled():
     """A nitfy context manager to enable sv_cheats temporarily."""
     old_value = sv_cheats.get_int()
     old_flags = sv_cheats.flags
@@ -279,5 +279,5 @@ def _last_give_enabled(classname):
         pass
 
 def _exec_client_cheat_command(player, command):
-    with cheats_enabled():
+    with _cheats_enabled():
         player.client_command(command, True)

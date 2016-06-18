@@ -73,6 +73,7 @@ from es_emulator.helpers import _get_menu_options
 from es_emulator.helpers import _dump_entity_table
 from es_emulator.helpers import _exec_client_cheat_command
 from es_emulator.helpers import _last_give_enabled
+from es_emulator.helpers import _cheats_enabled
 
 
 # =============================================================================
@@ -93,10 +94,7 @@ def ForceServerCommand(command_str):
 
     command = cvar.find_command(c[0])
     if command:
-        if command.is_command():
-            # TODO: This is not the equivalent. Call command.dispatch(c) instead
-            engine_server.server_command(c.arg_string)
-            engine_server.server_execute()
+        command.dispatch(c)
     else:
         convar = cvar.find_var(c[0])
         if convar:
@@ -443,9 +441,14 @@ def entitysetvalue(index, value_name, value):
     """Set a value name for a given entity."""
     BaseEntity(index).set_key_value_string(value_name, value)
 
-def entsetname(*args):
+def entsetname(userid, targetname):
     """Names the entity the player is looking at. (DOES NOT SET PLAYER NAME)"""
-    raise NotImplementedError
+    try:
+        player = Player.from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    _exec_client_cheat_command(player, 'ent_setname {}'.format(targetname))
 
 def escinputbox(*args):
     """Sends an ESC input box to a player."""
@@ -503,8 +506,7 @@ def exists(identifier, value):
         return int(value in ClientCommandGenerator())
 
     if identifier == 'command':
-        command = cvar.find_command(value)
-        return int(bool(command and command.is_command()))
+        return int(cvar.find_command(value) is not None)
 
     if identifier == 'keygroup':
         raise NotImplementedError
@@ -542,13 +544,20 @@ def fadevolume(userid, percent, fadetime, holdtime, fadeintime):
     engine_server.fade_client_volume(
         edict, atof(percent), atof(fadetime), atof(holdtime), atof(fadeintime))
 
-def fire(*args):
+def fire(userid, target, action='', value='', delay=''):
     """Fires an entity trigger."""
-    raise NotImplementedError
+    try:
+        player = Player.from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    command = 'ent_fire {} {} {} {}'.format(
+        target, action, value, delay).rstrip()
+    _exec_client_cheat_command(player, command)
 
 def flags(action, flag_name, convar_name):
     """Adds or removes the cheat flag from a command or variable. (EXPERIMENTAL/UNSUPPORTED)"""
-    convar = cvar.find_command(convar_name)
+    convar = cvar.find_base(convar_name)
     if convar is None:
         dbgmsg(0, 'Could not find var or command: {}'.format(convar_name))
         return
@@ -611,7 +620,7 @@ def getEventInfo(name):
 
 def getFlags(name):
     """Gets the flags value for a command"""
-    return cvar.find_command(name).flags
+    return cvar.find_base(name).flags
 
 def getFloat(name):
     """Gets the float value for a server variable"""
@@ -620,7 +629,7 @@ def getFloat(name):
 
 def getHelpText(name):
     """Gets the help text for a console command or server variable."""
-    convar = cvar.find_command(name)
+    convar = cvar.find_base(name)
     return convar and convar.help_text
 
 def getInt(name):
@@ -1161,9 +1170,10 @@ def reload(addon):
     es.unloadModuleAddon(addon)
     es.loadModuleAddon(addon)
 
-def remove(*args):
+def remove(entity):
     """Removes an entity class"""
-    raise NotImplementedError
+    with _cheats_enabled():
+        ForceServerCommand('ent_remove {}'.format(entity))
 
 def scriptpacklist(*args):
     """Lists the script packs running on the server. If a userid is provided, will es_tell the list to the user."""
@@ -1312,9 +1322,33 @@ def toptext(*args):
     """Sends HUD message to one player."""
     raise NotImplementedError
 
-def trick(*args):
+def trick(operation, *args):
     """Miscellaneous tricky things."""
-    raise NotImplementedError
+    if len(args) == 0:
+        return
+
+    operation = operation.lower()
+    if operation == 'greenblock':
+        try:
+            player = Player.from_userid(atoi(args[0]))
+        except ValueError:
+            return
+
+        _exec_client_cheat_command(player, 'test_entity_blocker')
+
+    elif operation == 'entity':
+        with _last_give_enabled():
+            with _cheats_enabled():
+                ForceServerCommand('Test_CreateEntity {}'.format(args[0]))
+
+    elif operation == 'dispatcheffect':
+        try:
+            player = Player.from_userid(atoi(args[0]))
+        except ValueError:
+            return
+
+        _exec_client_cheat_command(
+            player, 'test_dispatcheffect {}'.format(' '.join(args[1:])))
 
 def unload(addon):
     """Unloads a script that has been loaded."""
