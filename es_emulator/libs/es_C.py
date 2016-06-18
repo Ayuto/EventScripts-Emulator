@@ -284,7 +284,13 @@ def createscriptlist(scriptname=None):
 
 def createvectorfrompoints(a, b):
     """Creates a vector-string that goes from point/vector A to point/vector B."""
-    raise NotImplementedError
+    vec1 = splitvectorstring(a)
+    vec2 = splitvectorstring(b)
+    return createvectorstring(
+        vec2[0] - vec1[0],
+        vec2[1] - vec1[1],
+        vec2[2] - vec1[2]
+    )
 
 def createvectorstring(x, y, z):
     """Creates a string form of three x y z variables representing a vector."""
