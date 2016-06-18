@@ -494,7 +494,7 @@ def event(command, event_name, value_name=None, value=None):
         elif command == 'setstring':
             _current_event.set_string(value_name, value)
 
-def exists(identifier, value):
+def exists(identifier, value, *args):
     """Checks whether a keygroup, keys, variable, or function exists."""
     if identifier == 'variable':
         return int(cvar.find_var(value) is not None)
