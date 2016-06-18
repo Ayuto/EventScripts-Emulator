@@ -20,14 +20,12 @@ class TimeSortedQueue(object):
       self.name = name
       self.gotime = float(gotime)
       self.cmd = cmd
-    def __cmp__(self, b):
-      #Should return a negative integer if self < other, zero if self == other, a positive integer if self > other
-      if self.gotime < b.gotime:
-        return -1
-      elif self.gotime == b.gotime:
-        return 0
-      else:
-        return 1
+    def __lt__(self, b):
+      return self.gotime < b.gotime
+    def __eq__(self, b):
+      return self.gotime == b.gotime
+    def __gt__(self, b):
+      return self.gotime > b.gotime
   def __init__(self):
     self.nodes = []
     self.lock = threading.Lock()

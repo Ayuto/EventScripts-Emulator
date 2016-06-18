@@ -177,3 +177,18 @@ def _get_convar_flag(name):
         return CONVAR_FLAGS[name]
     except KeyError:
         return atoi(name)
+
+
+# =============================================================================
+# >> HELPERS FOR es.menu()
+# =============================================================================
+def _get_menu_options(keys):
+    if not keys:
+        return 1023
+
+    result = 0
+    for x in range(10):
+        if str(x) in keys:
+            result += 1 << x
+
+    return result

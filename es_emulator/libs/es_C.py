@@ -19,9 +19,12 @@ from commands.server import get_server_command
 from engines.server import engine_server
 from engines.server import global_vars
 from engines.server import server_game_dll
+#   Events
+from events.manager import game_event_manager
 #   Messages
 from messages import TextMsg
 from messages import SayText2
+from messages import ShowMenu
 #   Players
 from players.entity import Player
 from players.helpers import index_from_userid
@@ -59,6 +62,14 @@ from es_emulator.helpers import _cexec
 from es_emulator.helpers import _is_dead
 from es_emulator.helpers import _get_send_prop_type_name
 from es_emulator.helpers import _get_convar_flag
+from es_emulator.helpers import _get_menu_options
+
+
+# =============================================================================
+# >> GLOBAL VARIABLES
+# =============================================================================
+# Helper variable for es.event()
+_current_event = None
 
 
 # =============================================================================
@@ -238,7 +249,7 @@ def createplayerlist(userid=None):
         temp['model'] = player.model_name
         temp['isdead'] = _is_dead(player)
         temp['isbot'] = player.is_fake_client()
-        temp['is_hltv'] = player.is_hltv()
+        temp['ishltv'] = player.is_hltv()
         temp['isobserver'] = player.is_observer()
         temp['isinavehicle'] = player.is_in_a_vehicle()
         temp['health'] = player.health
@@ -404,9 +415,34 @@ def esctextbox(*args):
     """Sends an ESC textbox to a player."""
     raise NotImplementedError
 
-def event(*args):
+def event(command, event_name, value_name=None, value=None):
     """Create and fire events to signal to plugins that an event has happened. It must be an event loaded via es_loadevents."""
-    raise NotImplementedError
+    global _current_event
+    if _current_event is not None and _current_event.name != event_name:
+        dbgmsg(
+            0,
+            ('WARNING: A script is calling \'es_event {}\' for {} when the exis' +
+             'ting event {} has not been cancelled or fired. Trying to continue' +
+             ' anyway...').format(command, event_name, _current_event.name)
+        )
+
+    if command == 'initialize':
+        _current_event = game_event_manager.create_event(event_name, True)
+    elif command == 'cancel':
+        if _current_event is not None:
+            game_event_manager.free_event(_current_event)
+            _current_event = None
+    elif command == 'fire':
+        if _current_event is not None:
+            game_event_manager.fire_event(_current_event)
+            _current_event = None
+    elif value_name is not None and value is not None:
+        if command == 'setint':
+            _current_event.set_int(value_name, atoi(value))
+        elif command == 'setfloat':
+            _current_event.set_float(value_name, atof(value))
+        elif command == 'setstring':
+            _current_event.set_string(value_name, value)
 
 def exists(identifier, value):
     """Checks whether a keygroup, keys, variable, or function exists."""
@@ -574,10 +610,7 @@ def getclientvar(userid, var_name):
         dbgmsg(0, 'userid not found: {}'.format(userid))
         return
 
-    if index > 0:
-        return engine_server.get_client_convar_value(var_name)
-
-    return None
+    return engine_server.get_client_convar_value(var_name)
 
 def getcmduserid():
     """Gets the commandstring passed to the current Valve console command."""
@@ -900,7 +933,11 @@ def load(addon=None):
 
 def loadevents(*args):
     """Reads an event file and registers EventScripts as a handler for those events."""
-    raise NotImplementedError
+    if len(args) == 1:
+        game_event_manager.load_events_from_file(args[0])
+    elif len(args) == 2:
+        # Unnecessary to implement, because the event system is using a pre-hook
+        pass
 
 def log(msg):
     """Logs a message to the server log."""
@@ -922,9 +959,19 @@ def mathparse(*args):
     """Adds a say command that refers to a particular block."""
     raise NotImplementedError
 
-def menu(*args):
+def menu(duration, userid, msg, options=''):
     """Sends an AMX-Style menu to the users"""
-    raise NotImplementedError
+    try:
+        index = index_from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    duration = atoi(duration)
+    ShowMenu(
+        msg,
+        _get_menu_options(options),
+        -1 if duration == 0 else duration
+    ).send(index)
 
 def msg(color, msg=None):
     """Broadcasts a message to all players. If the first word of the message is '#green', or '#lightgreen' then the message is displayed in that color, supports '#multi' also for embedded #green/#lightgreen in the message."""
@@ -1157,7 +1204,7 @@ def sexec_all(commandstring):
 
 def showMenu(*args):
     """Sends an AMX-Style menu to the users"""
-    raise NotImplementedError
+    menu(*args)
 
 def soon(commandstring):
     """Adds a command to the end of the command queue."""
