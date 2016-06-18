@@ -57,6 +57,7 @@ from es_emulator.helpers import atoi
 from es_emulator.helpers import atof
 from es_emulator.helpers import _cexec
 from es_emulator.helpers import _is_dead
+from es_emulator.helpers import _get_send_prop_type_name
 
 
 # =============================================================================
@@ -330,9 +331,33 @@ def dumpentities(*args):
     """Dumps to console all server classes and properties for all entities."""
     raise NotImplementedError
 
-def dumpserverclasses(*args):
+def dumpserverclasses():
     """Dumps to the console all server classes."""
-    raise NotImplementedError
+    current = server_game_dll.all_server_classes
+    while current:
+        table = current.table
+
+        # TODO: Get m_InstanceBaselineIndex
+        m_InstanceBaselineIndex = 0
+
+        print('{} {} ({} properties)'.format(
+            current.name, m_InstanceBaselineIndex, table.length))
+
+        for prop in table:
+            print('---------{} : {}'.format(
+                _get_send_prop_type_name(prop.type), prop.name))
+
+            if prop.type != SendPropType.DATATABLE:
+                continue
+
+            if prop.name == 'baseclassx':
+                continue
+
+            for prop in prop.data_table:
+                print('------------------{} : {}'.format(
+                    _get_send_prop_type_name(prop.type), prop.name))
+
+        current = current.next
 
 def dumpstringtable(*args):
     """Outputs a specific string table item"""

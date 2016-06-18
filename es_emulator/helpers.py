@@ -5,12 +5,15 @@
 import re
 
 # Source.Python
+#   Memory
 import memory
 
 from memory import Convention
 from memory import DataType
-
+#   Engines
 from engines.server import server_game_dll
+#   Entities
+from entities.props import SendPropType
 
 # ES Emulator
 from .cvars import botcexec_cvar
@@ -133,3 +136,19 @@ def _is_dead(player):
         return player.dead
     
     return player.playerinfo.is_dead()
+
+
+# =============================================================================
+# >> HELPERS FOR SERVER CLASS DUMPS
+# =============================================================================
+SEND_PROP_TYPE_NAMES = {
+    SendPropType.INT: 'int',
+    SendPropType.FLOAT: 'float',
+    SendPropType.VECTOR: 'vector',
+    SendPropType.STRING: 'string',
+    SendPropType.ARRAY: 'array',
+    SendPropType.DATATABLE: 'int',
+}
+
+def _get_send_prop_type_name(prop_type):
+    return SEND_PROP_TYPE_NAMES.get(prop_type, 'Unknown')
