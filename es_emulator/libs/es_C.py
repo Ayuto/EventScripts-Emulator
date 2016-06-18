@@ -493,9 +493,16 @@ def exists(identifier, value):
 
     return 0
 
-def fadevolume(*args):
+def fadevolume(userid, percent, fadetime, holdtime, fadeintime):
     """Fades the volume for a client."""
-    raise NotImplementedError
+    try:
+        edict = edict_from_userid(atoi(userid))
+    except ValueError:
+        dbgmsg(0, 'FadeClientVolume: Unable to find player')
+        return
+
+    engine_server.fade_client_volume(
+        edict, atof(percent), atof(fadetime), atof(holdtime), atof(fadeintime))
 
 def fire(*args):
     """Fires an entity trigger."""
