@@ -17,6 +17,7 @@ from commands.client import get_client_command
 from commands.server import get_server_command
 #   Engines
 from engines.server import engine_server
+from engines.server import engine_sound
 from engines.server import global_vars
 from engines.server import server_game_dll
 #   Events
@@ -40,6 +41,7 @@ from entities.helpers import pointer_from_index
 from entities.props import SendPropType
 #   Filters
 from filters.players import PlayerIter
+from filters.recipients import RecipientFilter
 #   Listeners
 from listeners.tick import Delay
 #   Mathlib
@@ -1000,9 +1002,22 @@ def physics(*args):
     """Interface with the Source physics engine (physics gravity, object velocity, etc)."""
     raise NotImplementedError
 
-def playsound(*args):
+def playsound(userid, sound, volume=''):
     """Plays a sound to a player."""
-    raise NotImplementedError
+    try:
+        index = index_from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    engine_server.precache_sound(sound)
+    engine_sound.emit_sound(
+        ReclipientFilter(index),
+        index,
+        0,
+        sound,
+        atof(volume),
+        1
+    )
 
 def precachedecal(modelpath):
     """Precache a decal and return its index."""
