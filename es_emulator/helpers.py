@@ -52,7 +52,7 @@ def atof(value):
 
 
 # =============================================================================
-# >> _prepare_msg
+# >> es.msg() & es.tell()
 # =============================================================================
 RE_DEFAULT = re.compile('#default', re.IGNORECASE)
 RE_GREEN = re.compile('#green', re.IGNORECASE)
@@ -125,23 +125,7 @@ def _get_prop_info_from_table(table, prop_path, offset=0):
 
 
 # =============================================================================
-# >> HELPERS FOR CEXEC
-# =============================================================================
-def _cexec(player, command_str):
-    if not player.is_fake_client():
-        player.client_command(command_str)
-    elif botcexec_cvar.get_int() > 0 and command_str == 'jointeam':
-        player.client_command(command_str, True)
-
-def _is_dead(player):
-    if deadflag_cvar.get_int() > 0:
-        return player.dead
-
-    return player.playerinfo.is_dead()
-
-
-# =============================================================================
-# >> HELPERS FOR SERVER CLASS DUMPS
+# >> es.dumpserverclasses()
 # =============================================================================
 SEND_PROP_TYPE_NAMES = {
     SendPropType.INT: 'int',
@@ -157,7 +141,60 @@ def _get_send_prop_type_name(prop_type):
 
 
 # =============================================================================
-# >> HELPERS FOR es.flags()
+# >> es.dumpentities()
+# =============================================================================
+def _dump_entity_table(entity, table, path, offset=0):
+    import es
+    ptr = entity.pointer
+    for prop in table:
+        current_offset = offset + prop.offset
+        current_path = '{}.{}'.format(path, prop.name)
+        if prop.type == SendPropType.DATATABLE:
+            _dump_entity_table(
+                entity, prop.data_table, current_path, current_offset)
+            continue
+
+        if prop.type == SendPropType.INT:
+            value = ptr.get_int(current_offset)
+        elif prop.type == SendPropType.FLOAT:
+            value = ptr.get_float(current_offset)
+        elif prop.type == SendPropType.VECTOR:
+            value = '{},{},{}'.format(
+                ptr.get_float(), ptr.get_float(4), ptr.get_float(8))
+        elif prop.type == SendPropType.STRING:
+            # Not really a TODO for SP, but ES didn't implement it
+            value = '(TODO: string)'
+        elif prop.type == SendPropType.ARRAY:
+            # Not really a TODO for SP, but ES didn't implement it
+            value = '(TODO: array)'
+        else:
+            value = '(Unknown)'
+
+        es.dbgmsg(0, '{} = {}'.format(current_path, value))
+
+
+# =============================================================================
+# >> es.cexec() & es.cexec_all()
+# =============================================================================
+def _cexec(player, command_str):
+    if not player.is_fake_client():
+        player.client_command(command_str)
+    elif botcexec_cvar.get_int() > 0 and command_str == 'jointeam':
+        player.client_command(command_str, True)
+
+
+# =============================================================================
+# >> eventscripts_deadflag
+# =============================================================================
+def _is_dead(player):
+    if deadflag_cvar.get_int() > 0:
+        return player.dead
+
+    return player.playerinfo.is_dead()
+
+
+# =============================================================================
+# >> es.flags()
 # =============================================================================
 CONVAR_FLAGS = {
     'cheat': ConVarFlags.CHEAT,
@@ -180,7 +217,7 @@ def _get_convar_flag(name):
 
 
 # =============================================================================
-# >> HELPERS FOR es.menu()
+# >> es.menu()
 # =============================================================================
 def _get_menu_options(keys):
     if not keys:

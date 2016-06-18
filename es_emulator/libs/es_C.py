@@ -42,6 +42,7 @@ from entities.helpers import pointer_from_index
 from entities.props import SendPropType
 #   Filters
 from filters.players import PlayerIter
+from filters.entities import EntityIter
 from filters.recipients import RecipientFilter
 #   Listeners
 from listeners.tick import Delay
@@ -69,6 +70,7 @@ from es_emulator.helpers import _is_dead
 from es_emulator.helpers import _get_send_prop_type_name
 from es_emulator.helpers import _get_convar_flag
 from es_emulator.helpers import _get_menu_options
+from es_emulator.helpers import _dump_entity_table
 
 
 # =============================================================================
@@ -351,9 +353,16 @@ def dumpconcommandbase():
     print('Total: {}\tCommands: {}\tVariables: {}'.format(
         command_count+convar_count, command_count, convar_count))
 
-def dumpentities(*args):
+def dumpentities():
     """Dumps to console all server classes and properties for all entities."""
-    raise NotImplementedError
+    for entity in EntityIter():
+        server_class = entity.server_class
+        _dump_entity_table(
+            entity,
+            server_class.table,
+            '{}[{}]: {}'.format(
+                entity.index, entity.classname, server_class.name)
+        )
 
 def dumpserverclasses():
     """Dumps to the console all server classes."""
