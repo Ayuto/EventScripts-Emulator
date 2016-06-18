@@ -436,10 +436,11 @@ def entcreate(userid, entity, *args):
     except ValueError:
         return
 
-    _exec_client_cheat_command(
-        player,
-        'ent_create {}'.format(entity, ' '.join(map(str, args))).rstrip()
-    )
+    with _last_give_enabled():
+        _exec_client_cheat_command(
+            player,
+            'ent_create {}'.format(entity, ' '.join(map(str, args))).rstrip()
+        )
 
 def entitygetvalue(index, value_name):
     """Get a value name for a given entity."""
@@ -1094,13 +1095,27 @@ def printmsg(*args):
     """Outputs a message to the console."""
     raise NotImplementedError
 
-def prop_dynamic_create(*args):
+def prop_dynamic_create(userid, model):
     """See prop_dynamic_create for syntax, but requires a userid first"""
-    raise NotImplementedError
+    try:
+        player = Player.from_userid(atoi(userid))
+    except ValueError:
+        return
 
-def prop_physics_create(*args):
+    with _last_give_enabled():
+        _exec_client_cheat_command(
+            player, 'prop_dynamic_create {}'.format(model))
+
+def prop_physics_create(userid, model):
     """See prop_physics_create for syntax, but requires a userid first."""
-    raise NotImplementedError
+    try:
+        player = Player.from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    with _last_give_enabled():
+        _exec_client_cheat_command(
+            player, 'prop_physics_create {}'.format(model))
 
 def queryclientvar(userid, cvar_name):
     """Sends a request to query a client's console variable."""
@@ -1214,10 +1229,15 @@ def setString(name, value):
     convar = ConVar(name, str(value))
     return convar.get_string()
 
-def setang(userid, pitch, yaw, roll=0):
+def setang(userid, *args):
     """Sets player view angle."""
-    Player.from_userid(atoi(userid)).teleport(
-        None, QAngle(atof(pitch), atof(yaw), atof(roll)), None)
+    try:
+        player = Player.from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    _exec_client_cheat_command(
+        player, 'setang {}'.format(' '.join(map(str, args))))
 
 def setentityname(index, targetname):
     """Sets the targetname of an entity by index."""
@@ -1266,10 +1286,15 @@ def setplayerprop(userid, prop, value):
     """Sets a server class property for the given player"""
     setindexprop(index_from_userid(atoi(userid)), prop, value)
 
-def setpos(userid, x, y, z):
+def setpos(userid, *args):
     """Teleports a player."""
-    Player.from_userid(atoi(userid)).teleport(
-        Vector(atof(x), atof(y), atof(z)), None, None)
+    try:
+        player = Player.from_userid(atoi(userid))
+    except ValueError:
+        return
+
+    _exec_client_cheat_command(
+        player, 'setpos {}'.format(' '.join(map(str, args))))
 
 def setview(userid, entity_index=None):
     """Changes a players view to share that of a particular entity index."""

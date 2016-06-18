@@ -233,7 +233,6 @@ setipcmdline_cvar = ConVar(
     'EventScripts will set the IP for you passed from a +ip command-line.'
 )
 
-# TODO: This is not implemented for all commands
 lastgive_cvar = ConVar(
     'eventscripts_lastgive',
     '',
