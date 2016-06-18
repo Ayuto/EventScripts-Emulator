@@ -115,12 +115,6 @@ quote_cvar = ConVar(
     'A quotation mark. A tool, not a variable.'
 )
 
-frametimer_cvar = ConVar(
-    'eventscripts_frametimecheck',
-    '0',
-    'If set to 1, EventScripts will output timing warnings when a GameFrame takes longer than 0.01 seconds inside scripts.'
-)
-
 defaultevents_cvar = ConVar(
     'eventscripts_defaultevents',
     '1',
@@ -237,6 +231,12 @@ lastgive_cvar = ConVar(
     'eventscripts_lastgive',
     '',
     'Last given entity index'
+)
+
+frametimer_cvar = ConVar(
+    'eventscripts_frametimecheck',
+    '0',
+    'If set to 1, EventScripts will output timing warnings when a GameFrame takes longer than 0.01 seconds inside scripts.'
 )
 
 

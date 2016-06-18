@@ -3,6 +3,7 @@
 # =============================================================================
 # Python
 import sys
+import time
 
 # Source.Python
 #   Cvars
@@ -39,6 +40,7 @@ from .cvars import protectrcon_cvar
 from .cvars import sayevents_cvar
 from .cvars import nextmap_cvar
 from .cvars import setipcmdline_cvar
+from .cvars import frametimer_cvar
 #   Helpers
 from .helpers import _is_dead
 #   Paths
@@ -167,8 +169,15 @@ currentmap_cvar.set_string(global_vars.map_name)
 # =============================================================================
 @OnTick
 def on_tick():
+    now = time.time()
+
     import es
     es.addons.tick()
+    
+    if frametimer_cvar.get_int():
+        diff = time.time() - now
+        if diff > 0.01:
+            es.dbgmsg(0, '[EventScripts] Long frame: {} seconds'.format(diff))
 
 
 # =============================================================================
