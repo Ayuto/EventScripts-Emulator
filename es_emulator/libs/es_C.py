@@ -1339,9 +1339,15 @@ def sql(*args):
     """Local database support"""
     raise NotImplementedError
 
-def stopsound(*args):
+def stopsound(userid, sound):
     """Stops a specific sound for a player."""
-    raise NotImplementedError
+    try:
+        index = index_from_userid(atoi(userid))
+    except ValueError:
+        dbgmsg(0, 'StopSound: Unable to find player {}'.format(userid))
+        return
+
+    engine_sound.stop_sound(index, 0, sound)
 
 def stringtable(*args):
     """Update an entry in a stringtable"""
