@@ -2,9 +2,9 @@ import es
 from ..val import sv, VAR
 from . import Command
 
-@Command(con=True, desc='Broadcasts a message to all players. Will not expand any EventScripts variables. If the first word of the message is \'GREEN\', or \'LIGHTGREEN\' then the message is displayed in that color.')
+@Command(syntax='[color] <msg>', desc='Broadcasts a message to all players. Will not expand any EventScripts variables. If the first word of the message is \'GREEN\', or \'LIGHTGREEN\' then the message is displayed in that color.')
 def msg(argv):
-  pass
+  es.msg(*argv)
   
 @Command(con=True, desc='Sends HUD message to one player. If the first word of the message is \'#green\', or \'#lightgreen\' then the message is displayed in that color.')
 def tell(argv):
@@ -46,9 +46,9 @@ def centertell(argv):
 def usermsg(argv):
   pass
   
-@Command(con=True, desc='Prints a debug message for EventScripts.')
+@Command(desc='Prints a debug message for EventScripts.')
 def dbgmsg(argv):
-  pass
+  es.dbgmsg(*argv)
   
 @Command(con=True, desc='Prints a debug message for EventScripts')
 def dbgmsgv(argv):

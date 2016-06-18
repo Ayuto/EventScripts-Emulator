@@ -50,10 +50,10 @@ def load():
     logic.post_initialization()
 
     # TODO: There is a conflict between ES' and SP's keyvalues module
-    #import _libs.python.keyvalues as x
-    #sys.modules['keyvalues'] = x
-    #es.load('esc')
-    #es.server.queuecmd('es_load corelib')
+    import _libs.python.keyvalues as x
+    sys.modules['keyvalues'] = x
+    es.load('esc')
+    es.server.queuecmd('es_load corelib')
 
     print('ES Emulator has been loaded successfully!')
 
