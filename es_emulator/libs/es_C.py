@@ -162,15 +162,15 @@ def changeteam(userid, team):
 
 def cmdargc():
     """Gets the command parameter count passed to the current Valve console command."""
-    raise NotImplementedError
+    command_info.argc
 
 def cmdargs():
     """Gets the commandstring passed to the current Valve console command."""
-    raise NotImplementedError
+    command_info.args
 
 def cmdargv(index):
     """Gets the command parameter passed to the current Valve console command."""
-    raise NotImplementedError
+    command_info.get_argv(index)
 
 def commandv(name):
     """Just runs a command-string inside of the variable."""
@@ -307,9 +307,24 @@ def dosql(*args):
     """Does some SQL."""
     raise NotImplementedError
 
-def dumpconcommandbase(*args):
+def dumpconcommandbase():
     """Outputs all the console commands and variables."""
-    raise NotImplementedError
+    command_count = 0
+    convar_count = 0
+    current = cvar.commands
+    while current:
+        if current.is_command():
+            type_str = 'CMD'
+            command_count += 1
+        else:
+            type_str = 'VAR'
+            convar_count += 1
+
+        print('{}: {}\n\t{}'.format(type_str, current.name, current.help_text))
+        current = current.next
+
+    print('Total: {}\tCommands: {}\tVariables: {}'.format(
+        command_count+convar_count, command_count, convar_count))
 
 def dumpentities(*args):
     """Dumps to console all server classes and properties for all entities."""
