@@ -21,11 +21,39 @@ from engines.server import server_game_dll
 from entities import EntityGenerator
 from entities.props import SendPropType
 from entities.helpers import index_from_edict
+#   Players
+from players.helpers import index_from_userid
+#   Filters
+from filters.recipients import RecipientFilter
+#   Messages
+from messages import UserMessage
+from messages import get_message_index
 
 # ES Emulator
 from .cvars import botcexec_cvar
 from .cvars import deadflag_cvar
 from .cvars import lastgive_cvar
+
+
+# =============================================================================
+# >> __all__
+# =============================================================================
+__all__ = (
+    '_prepare_msg',
+    '_get_prop_info',
+    'atoi',
+    'atof',
+    '_cexec',
+    '_is_dead',
+    '_get_send_prop_type_name',
+    '_get_convar_flag',
+    '_get_menu_options',
+    '_dump_entity_table',
+    '_exec_client_cheat_command',
+    '_last_give_enabled',
+    '_cheats_enabled',
+    '_UserMessageData',
+)
 
 
 # =============================================================================
@@ -281,3 +309,60 @@ def _last_give_enabled(classname):
 def _exec_client_cheat_command(player, command):
     with _cheats_enabled():
         player.client_command(command, True)
+
+
+# =============================================================================
+# >> es.usermsg
+# =============================================================================
+class _UserMessageData(list):
+    data_store = {}
+
+    def __init__(self, name):
+        self.name = name
+
+    @staticmethod
+    def write_user_message_data(data_type, msg_name, value):
+        try:
+            data = _UserMessageData.data_store[msg_name]
+        except KeyError:
+            import es
+            dbgmsg(0, 'Key does not exist, please create it: {}'.format(
+                msg_name))
+        else:
+            data.append((data_type, value))
+
+    def send(self, userid):
+        msg_index = get_message_index(self.name)
+        if msg_index == -1:
+            import es
+            dbgmsg(0, 'Invalid UserMessage type: {}'.format(self.name))
+            return
+
+        try:
+            index = index_from_userid(atoi(userid))
+        except ValueError:
+            return
+
+        user_message = UserMessage(RecipientFilter(index), self.name)
+        buffer = user_message.buffer
+
+        for type_name, value in self:
+            self._write(buffer, type_name, value)
+
+        user_message.send()
+
+    @staticmethod
+    def _write(buffer, type_name, value):
+        type_name = type_name.lower()
+        if type_name == 'string':
+            buffer.write_string(str(value))
+        elif type_name == 'float':
+            buffer.write_float(atof(value))
+        elif type_name == 'short':
+            buffer.write_short(atoi(value))
+        elif type_name == 'char':
+            buffer.write_char(atoi(value))
+        elif type_name == 'byte':
+            buffer.write_byte(atoi(value))
+        elif type_name == 'long':
+            buffer.write_long(atoi(value))

@@ -61,19 +61,14 @@ from es_emulator.logic import say_command_proxies
 from es_emulator.logic import client_command_proxies
 from es_emulator.logic import command_info
 #   Helpers
-from es_emulator.helpers import _prepare_msg
-from es_emulator.helpers import _get_prop_info
-from es_emulator.helpers import atoi
-from es_emulator.helpers import atof
-from es_emulator.helpers import _cexec
-from es_emulator.helpers import _is_dead
-from es_emulator.helpers import _get_send_prop_type_name
-from es_emulator.helpers import _get_convar_flag
-from es_emulator.helpers import _get_menu_options
-from es_emulator.helpers import _dump_entity_table
-from es_emulator.helpers import _exec_client_cheat_command
-from es_emulator.helpers import _last_give_enabled
-from es_emulator.helpers import _cheats_enabled
+from es_emulator.helpers import *
+
+
+# =============================================================================
+# >> __all__
+# =============================================================================
+# TODO:
+#__all__ = ()
 
 
 # =============================================================================
@@ -1418,9 +1413,63 @@ def unregsaycmd(command):
     else:
         get_say_command(command).remove_callback(proxy)
 
-def usermsg(*args):
+def usermsg(operation, *args):
     """Create and send a usermsg to a client."""
-    raise NotImplementedError
+    args_str = '{} {}'.format(operation, ' '.join(map(str, args)))
+    operation = operation.lower()
+
+    if operation == 'create':
+        if len(args) > 1:
+            msg_name, msg_type_name = args
+            try:
+                data = _UserMessageData.data_store[msg_name]
+            except KeyError:
+                _UserMessageData.data_store[msg_name] = _UserMessageData(
+                    msg_type_name)
+            else:
+                data.name = msg_type_name
+        else:
+            dbgmsg(0, 'Not enough parameters: {}'.format(args_str))
+
+    elif operation == 'delete':
+        if len(args) > 0:
+            msg_name = args[0]
+            try:
+                del _UserMessageData.data_store[msg_name]
+                dbgmsg(1, 'Key deleted: {}'.format(msg_name))
+            except KeyError:
+                pass
+
+    elif operation == 'send':
+        if len(args) > 1:
+            msg_name, userid = args
+            try:
+                data = _UserMessageData.data_store[msg_name]
+            except KeyError:
+                dbgmsg(0, 'Key does not exist, please create it: {}'.format(
+                    msg_name))
+            else:
+                data.send(userid)
+
+    else:
+        if len(args) > 2:
+            data_type, msg_name, value = args
+            if operation == 'write':
+                _UserMessageData.write_user_message_data(
+                    data_type, msg_name, value)
+
+            elif operation == 'writev':
+                convar = cvar.find_var(value)
+                if convar is not None:
+                    _UserMessageData.write_user_message_data(
+                        data_type, msg_name, convar.get_string())
+                else:
+                    _UserMessageData.write_user_message_data(
+                        data_type, msg_name, '0')
+            else:
+                dbgmsg(0, 'Unknown user message command: {}'.format(operation))
+        else:
+            dbgmsg(0, 'Not enough parameters: {}'.format(args_str))
 
 def voicechat(command, to_userid, from_userid):
     """Allows you to control listening players."""
