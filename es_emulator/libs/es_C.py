@@ -58,6 +58,7 @@ from es_emulator.helpers import atof
 from es_emulator.helpers import _cexec
 from es_emulator.helpers import _is_dead
 from es_emulator.helpers import _get_send_prop_type_name
+from es_emulator.helpers import _get_convar_flag
 
 
 # =============================================================================
@@ -458,9 +459,17 @@ def fire(*args):
     """Fires an entity trigger."""
     raise NotImplementedError
 
-def flags(*args):
+def flags(action, flag_name, convar_name):
     """Adds or removes the cheat flag from a command or variable. (EXPERIMENTAL/UNSUPPORTED)"""
-    raise NotImplementedError
+    convar = cvar.find_command(convar_name)
+    if convar is None:
+        dbgmsg(0, 'Could not find var or command: {}'.format(convar_name))
+        return
+
+    if action == 'add':
+        convar.add_flags(_get_convar_flag(flag_name))
+    elif action == 'remove':
+        convar.remove_flags(_get_convar_flag(flag_name))
 
 def forcecallbacks(name):
     """Calls all global convar callbacks for a particular server variable."""

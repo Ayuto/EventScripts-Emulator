@@ -5,6 +5,8 @@
 import re
 
 # Source.Python
+#   Cvars
+from cvars.flags import ConVarFlags
 #   Memory
 import memory
 
@@ -130,11 +132,11 @@ def _cexec(player, command_str):
         player.client_command(command_str)
     elif botcexec_cvar.get_int() > 0 and command_str == 'jointeam':
         player.client_command(command_str, True)
-        
+
 def _is_dead(player):
     if deadflag_cvar.get_int() > 0:
         return player.dead
-    
+
     return player.playerinfo.is_dead()
 
 
@@ -152,3 +154,26 @@ SEND_PROP_TYPE_NAMES = {
 
 def _get_send_prop_type_name(prop_type):
     return SEND_PROP_TYPE_NAMES.get(prop_type, 'Unknown')
+
+
+# =============================================================================
+# >> HELPERS FOR es.flags()
+# =============================================================================
+CONVAR_FLAGS = {
+    'cheat': ConVarFlags.CHEAT,
+    'notify': ConVarFlags.NOTIFY,
+    'gamedll': ConVarFlags.GAMEDLL,
+    'replicated': ConVarFlags.REPLICATED,
+    'protected': ConVarFlags.PROTECTED,
+    'unlogged': ConVarFlags.UNLOGGED,
+    'neverstring': ConVarFlags.NEVER_AS_STRING,
+    'printable': ConVarFlags.PRINTABLEONLY,
+    'dontrecord': ConVarFlags.DONTRECORD,
+    'developmentonly': ConVarFlags.DEVELOPMENTONLY,
+}
+
+def _get_convar_flag(name):
+    try:
+        return CONVAR_FLAGS[name]
+    except KeyError:
+        return atoi(name)
