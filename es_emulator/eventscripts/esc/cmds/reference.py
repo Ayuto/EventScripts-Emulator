@@ -54,9 +54,11 @@ def getplayerlocation(argv):
 def isbot(argv):
   es.isbot(*argv)
 
-@Command(syntax='<var> <userid>', desc='Stores the player\'s name in the variable.')
+@Command(syntax='<var> <userid>', types=VAR, desc='Stores the player\'s name in the variable.')
 def getplayername(argv):
-  es.getplayername(*argv)
+  result = es.getplayername(*argv[1:])
+  if result is not None:
+    sv[argv[0]] = result
 
 @Command(syntax='<var> <userid>', desc='Stores the player\'s STEAMID in the variable.')
 def getplayersteamid(argv):

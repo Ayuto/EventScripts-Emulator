@@ -215,6 +215,12 @@ autocreate_cvar = ConVar(
     'Automatically create new console variables when EventScripts commands are used on nonexistent variables.'
 )
 
+error_cvar = ConVar(
+    'eventscripts_lasterror',
+    '',
+    'The last error message returned by an EventScripts command.'
+)
+
 
 # =============================================================================
 # >> UNUSED CVARS
@@ -247,4 +253,10 @@ shellengine_cvar = ConVar(
     'eventscripts_shellengine',
     '1',
     'Turns on Python-based ESC script engine'
+)
+
+errornum_cvar = ConVar(
+    'eventscripts_lasterrornum',
+    '0', 
+    'The last error number returned by an EventScripts command.'
 )

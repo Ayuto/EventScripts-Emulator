@@ -787,9 +787,20 @@ def getplayermovement(userid):
     bcmd = Player.from_userid(atoi(userid)).last_user_command
     return (bcmd.forward_move, bcmd.side_move, bcmd.up_move)
 
-def getplayername(userid):
+@command
+def getplayername(argv):
     """Stores the player's name in the variable."""
-    return Player.from_userid(atoi(userid)).name
+    userid = atoi(argv[1])
+    if userid > 0:
+        try:
+            return Player.from_userid(userid).name
+        except ValueError:
+            return 0
+    else:
+        dbgmsg(0, 'Invalid userid for getplayername.')
+        _set_last_error('Invalid userid')
+
+    return None
 
 def getplayerprop(userid, prop):
     """Gets a server class property for a particular player"""

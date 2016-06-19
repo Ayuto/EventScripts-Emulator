@@ -36,6 +36,7 @@ from messages import get_message_index
 from .cvars import botcexec_cvar
 from .cvars import deadflag_cvar
 from .cvars import lastgive_cvar
+from .cvars import error_cvar
 
 
 # =============================================================================
@@ -59,6 +60,7 @@ __all__ = (
     '_get_convar',
     '_set_convar',
     'command',
+    '_set_last_error',
 )
 
 
@@ -118,6 +120,13 @@ def command(func):
         return func(c)
     return wrapper
 
+
+# =============================================================================
+# >> eventscripts_lasterror implementation
+# =============================================================================
+def _set_last_error(msg):
+    error_cvar.set_string(msg)
+    
 
 # =============================================================================
 # >> CONVAR HELPERS
