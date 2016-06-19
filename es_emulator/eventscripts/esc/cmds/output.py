@@ -1,6 +1,7 @@
 import es
 from ..val import sv, VAR
 from . import Command
+from engines.server import engine_server
 
 @Command(syntax='[color] <msg>', desc='Broadcasts a message to all players. Will not expand any EventScripts variables. If the first word of the message is \'GREEN\', or \'LIGHTGREEN\' then the message is displayed in that color.')
 def msg(argv):
@@ -55,19 +56,16 @@ def dbgmsgv(argv):
   es.dbgmsgv(*argv)
 
 @Command(syntax='<message>', desc='Logs a message to the server log.')
-def log(args):
-  es.dbgmsg(0, args)
-  es.log(args)
+def log(argv):
+  es.log(*argv)
 
-@Command(types=VAR, syntax='<message>', desc='Logs the text inside of a variable.')
+@Command(syntax='<message>', desc='Logs the text inside of a variable.')
 def logv(argv):
-  result = str(sv[argv[0]])
-  es.dbgmsg(0, result)
-  es.log(result)
+  es.logv(*argv)
 
-@Command(syntax='<msg>', desc='Logs a message to the server log. Will not expand any EventScripts variables. Allows quotes.')
+@Command(syntax='<msg>', desc='Logs a message to the server log. Supports expanding EventScripts variables. Allows quotes.')
 def logq(argv):
-  raise NotImplementedError
+  engine_server.log_print(' '.join(argv) + '\n')
 
 @Command(syntax='[userid]', desc='Lists the script packs running on the server. If a userid is provided, will es_tell the list to the user.')
 def scriptpacklist(argv):

@@ -81,6 +81,22 @@ def dumpserverclasses(argv):
 def dumpentities(argv):
   es.dumpentities()
 
+@Command(desc='Outputs all the console commands and variables.')
+def dumpconcommandbase(argv):
+  es.dumpconcommandbase()
+
 @Command(syntax='<stylenum> <stylestring>', desc='Set light style.')
 def lightstyle(argv):
   es.lightstyle(*argv)
+
+@Command(syntax='<entity-name> [targetname]', desc='Creates an entity somewhere by name.')
+def createentity(argv):
+  sv['eventscripts_lastgive'] = es.createentity(*argv)
+
+@Command(syntax='<variable-name> <entity-index> <valuename>', types=VAR, desc='Get a value name for a given entity.')
+def entitygetvalue(argv):
+  sv[argv[0]] = es.entitygetvalue(*argv[1:])
+
+@Command(syntax='<entity-index> <valuename> <value>', desc='Set a value name for a given entity.')
+def entitysetvalue(argv):
+  es.entitysetvalue(*argv)

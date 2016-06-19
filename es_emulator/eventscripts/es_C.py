@@ -182,23 +182,31 @@ def changeteam(userid, team):
 
     player.team = atoi(team)
 
-def cmdargc():
+@command
+def cmdargc(argv):
     """Gets the command parameter count passed to the current Valve console command."""
-    command_info.argc
+    return command_info.argc
 
-def cmdargs():
+@command
+def cmdargs(argv):
     """Gets the commandstring passed to the current Valve console command."""
-    command_info.args
+    return command_info.args
 
-def cmdargv(index):
+@command
+def cmdargv(argv):
     """Gets the command parameter passed to the current Valve console command."""
-    command_info.get_argv(index)
+    return command_info.get_argv(atoi(argv[1]))
 
-def commandv(name):
+@command
+def commandv(argv):
     """Just runs a command-string inside of the variable."""
+    name = argv[1]
     convar = cvar.find_var(name)
     if convar:
         engine_server.insert_server_command(convar.get_string())
+    else:
+        dbgmsg(0,'ERROR: variable {} does not exist.'.format(name))
+        _set_last_error('Variable does not exist')
 
 def copy(var1_name, var2_name):
     """Reads the server variable referenced by varname2 and copies it into the variable referenced by varname."""
@@ -206,15 +214,20 @@ def copy(var1_name, var2_name):
     var2 = cvar.find_var(var2_name)
     var1.set_string(var2.get_string())
 
-def createbot(name):
+@command
+def createbot(argv):
     """Adds a bot to the server."""
-    return userid_from_edict(engine_server.create_fake_client(name))
+    try:
+        return userid_from_edict(engine_server.create_fake_client(argv[1]))
+    except ValueError:
+        return None
 
-def createentity(classname, targetname=''):
+@command
+def createentity(argv):
     """Creates an entity somewhere by name."""
-    entity = BaseEntity.create(classname)
-    if targetname:
-        entity.set_key_value_string('targetname', targetname)
+    entity = BaseEntity.create(argv[1])
+    if len(argv) > 2:
+        entity.set_key_value_string('targetname', argv[2])
 
     return entity.index
 
@@ -340,6 +353,7 @@ def dosql(*args):
     """Does some SQL."""
     raise NotImplementedError
 
+@command
 def dumpconcommandbase():
     """Outputs all the console commands and variables."""
     command_count = 0
@@ -452,13 +466,22 @@ def entcreate(argv):
         _exec_client_cheat_command(player, 'ent_create {} {}'.format(
             entity, ' '.join(argv.args[2:])))
 
-def entitygetvalue(index, value_name):
+@command
+def entitygetvalue(argv):
     """Get a value name for a given entity."""
-    return BaseEntity(index).get_key_value_string(value_name)
+    try:
+        return BaseEntity(atoi(argv[1])).get_key_value_string(argv[2])
+    except ValueError:
+        return ''
 
-def entitysetvalue(index, value_name, value):
+@command
+def entitysetvalue(argv):
     """Set a value name for a given entity."""
-    BaseEntity(index).set_key_value_string(value_name, value)
+    index = atoi(argv[1])
+    try:
+        BaseEntity(index).set_key_value_string(argv[2], argv[3])
+    except ValueError:
+        dbgmsg(0, 'Entity not found: {}'.format(index))
 
 @command
 def entsetname(argv):
@@ -1124,9 +1147,10 @@ def loadevents(*args):
         # Unnecessary to implement, because the event system is using a pre-hook
         pass
 
-def log(msg):
+@command
+def log(argv):
     """Logs a message to the server log."""
-    engine_server.log_print(msg)
+    engine_server.log_print(argv.arg_string.replace('"', '') + '\n')
 
 def logv(name):
     """Logs the text inside of a variable."""

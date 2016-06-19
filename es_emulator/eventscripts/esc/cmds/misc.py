@@ -1,4 +1,5 @@
 from . import Command
+from ..val import sv, VAR
 import es
 
 @Command(syntax='<tablename> <string>', desc='Update an entry in a stringtable')
@@ -8,7 +9,7 @@ def stringtable(argv):
 @Command(syntax='<tablename> <string>', desc='Update an entry in a stringtable')
 def dumpstringtable(argv):
   es.dumpstringtable(*argv)
-  
+
 # es_xsql open <db> [dbdir]
 # es_xsql close <db>
 # es_xsql queryvalue <db> <single-result-var> "<SQL-string>"
@@ -20,7 +21,7 @@ def sql(argv, args):
 @Command(syntax='<db> <query>', desc='Does some SQL.')
 def dosql(argv):
   es.dosql(*argv)
-  
+
 @Command(syntax='[declare] <pathtoeventfile>', desc='Reads an event file and registers EventScripts as a handler for those events.')
 def loadevents(argv):
   es.loadevents(*argv)
@@ -29,9 +30,14 @@ def loadevents(argv):
 def mexec(argv):
   es.mexec(*argv)
 
-@Command(syntax='[var] <botname>', desc='Adds a bot to the server.')
+@Command(syntax='[var] <botname>', types=VAR, desc='Adds a bot to the server.')
 def createbot(argv):
-  es.createbot(*argv)
+  if len(argv) > 1:
+    result = es.createbot(*argv[1:])
+    if result is not None:
+      sv[argv[0]] = result
+  else:
+    es.createbot(*argv)
 
 @Command(syntax='<mode> [options]', desc='Performs a particular effect.')
 def effect(argv):
