@@ -221,6 +221,31 @@ error_cvar = ConVar(
     'The last error message returned by an EventScripts command.'
 )
 
+version_cvar = ConVar(
+    'eventscripts_ver',
+    '2.1.1.379',
+    'The version number of EventScripts.',
+    ConVarFlags.REPLICATED | ConVarFlags.NOTIFY
+)
+
+buildno_cvar = ConVar(
+    'eventscripts_ver_build',
+    '379',
+    'The build number of EventScripts.'
+)
+
+revision_cvar = ConVar(
+    'eventscripts_ver_revision',
+    '804b28a522eb',
+    'The revision number of EventScripts'
+)
+
+sourcesdk_cvar = ConVar(
+    'eventscripts_sourcesdk_level',
+    '2',
+    'The Source SDK level that EventScripts was compiled with (rough numbering scheme)'
+)
+
 
 # =============================================================================
 # >> UNUSED CVARS
@@ -257,6 +282,6 @@ shellengine_cvar = ConVar(
 
 errornum_cvar = ConVar(
     'eventscripts_lasterrornum',
-    '0', 
+    '0',
     'The last error number returned by an EventScripts command.'
 )
