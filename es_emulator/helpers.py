@@ -159,7 +159,7 @@ RE_LIGHTGREEN = re.compile('#lightgreen', re.IGNORECASE)
 RE_DARKGREEN = re.compile('#darkgreen', re.IGNORECASE)
 RE_MULTI = re.compile('#multi', re.IGNORECASE)
 
-def _prepare_msg(argv, color_index):
+def _prepare_msg(argv, color_index, skip):
     if argv[color_index].lower() == '#green':
         msg = '\4' + ' '.join(argv.args[color_index:])
     elif argv[color_index].lower() == '#lightgreen':
@@ -173,7 +173,7 @@ def _prepare_msg(argv, color_index):
         msg = RE_DARKGREEN.sub('\5', msg)
         msg = RE_DEFAULT.sub('\1', msg)
     else:
-        msg = argv.arg_string
+        msg = ' '.join(argv.args[skip:])
 
     return msg
 

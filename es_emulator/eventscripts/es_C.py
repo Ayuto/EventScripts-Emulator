@@ -1048,7 +1048,7 @@ def menu(duration, userid, msg, options=''):
 @command
 def msg(argv):
     """Broadcasts a message to all players. If the first word of the message is '#green', or '#lightgreen' then the message is displayed in that color, supports '#multi' also for embedded #green/#lightgreen in the message."""
-    msg = _prepare_msg(argv, 1)
+    msg = _prepare_msg(argv, 1, 0)
     SayText2(msg).send()
     dbgmsg(0, msg)
 
@@ -1369,7 +1369,7 @@ def tell(argv):
     except ValueError:
         return
 
-    SayText2(_prepare_msg(argv, 2)).send(index)
+    SayText2(_prepare_msg(argv, 2, 1)).send(index)
 
 def toptext(*args):
     """Sends HUD message to one player."""

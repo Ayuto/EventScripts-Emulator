@@ -6,9 +6,9 @@ from . import Command
 def msg(argv):
   es.msg(*argv)
   
-@Command(con=True, desc='Sends HUD message to one player. If the first word of the message is \'#green\', or \'#lightgreen\' then the message is displayed in that color.')
+@Command(syntax='<userid> [color] <msg>', desc='Sends HUD message to one player. If the first word of the message is \'#green\', or \'#lightgreen\' then the message is displayed in that color.')
 def tell(argv):
-  pass
+  es.tell(*argv)
   
 @Command(con=True, desc='Sends HUD message to one player.')
 def toptext(argv):
