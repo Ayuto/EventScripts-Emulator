@@ -6,7 +6,6 @@
 import memory
 #   Cvars
 from cvars import cvar
-from cvars import ConVar
 from cvars.flags import ConVarFlags
 #   Commands
 from commands import Command
@@ -1046,9 +1045,10 @@ def menu(duration, userid, msg, options=''):
         -1 if duration == 0 else duration
     ).send(index)
 
-def msg(color, msg=None):
+@command
+def msg(argv):
     """Broadcasts a message to all players. If the first word of the message is '#green', or '#lightgreen' then the message is displayed in that color, supports '#multi' also for embedded #green/#lightgreen in the message."""
-    msg = _prepare_msg(color, msg)
+    msg = _prepare_msg(argv, 1)
     SayText2(msg).send()
     dbgmsg(0, msg)
 
@@ -1204,19 +1204,22 @@ def sendkeypmsg(*args):
     """Sends a client message based on a KeyValues pointer. sendkeypmsg(userid,type,keyid)"""
     raise NotImplementedError
 
-def set(name, value, description):
+def set(name, value, description=None):
     """Adds/sets a new server/global variable."""
-    ConVar(name, str(value), description)
+    if description is None:
+        _set_convar(name, value, True)
+    else:
+        _set_convar(name, value, True, description)
 
 def setFloat(name, value):
     """Sets the server variable to the given float value. Creating it if necessary."""
-    convar = ConVar(name, str(value))
-    return convar.get_float()
+    convar = _set_convar(name, value, True)
+    return convar and convar.get_float()
 
 def setInt(name, value):
     """Sets the server variable to the given integer value. Creating it if necessary."""
-    convar = ConVar(name, str(value))
-    return convar.get_int()
+    convar = _set_convar(name, value, True)
+    return convar and convar.get_int()
 
 def setNumRegistered(*args):
     """Internal command for setting number of ticklisteners registered."""
@@ -1224,8 +1227,8 @@ def setNumRegistered(*args):
 
 def setString(name, value):
     """Sets the server variable to the given string  value. Creating it if necessary."""
-    convar = ConVar(name, str(value))
-    return convar.get_string()
+    convar = _set_convar(name, value, True)
+    return convar and convar.get_string()
 
 def setang(userid, *args):
     """Sets player view angle."""
@@ -1276,9 +1279,9 @@ def setindexprop(index, prop, value):
         ptr.set_float(y, offset + 4)
         ptr.set_float(z, offset + 8)
 
-def setinfo(variable, value):
+def setinfo(name, value):
     """Adds a new server/global variable."""
-    ConVar(variable, value)
+    _set_convar(name, value)
 
 def setplayerprop(userid, prop, value):
     """Sets a server class property for the given player"""
@@ -1358,9 +1361,15 @@ def stringtable(table_name, string):
     table.add_string(string, is_server=False, length=len(string)+1)
     dbgmsg(1, 'Added string: %s to table %s'.format(string, table_name))
 
-def tell(userid, color, msg=None):
+@command
+def tell(argv):
     """Sends HUD message to one player. If the first word of the message is '#green', or '#lightgreen' then the message is displayed in that color. Supports '#multi' also for embedded #green/#lightgreen in the message."""
-    SayText2(_prepare_msg(color, msg)).send(index_from_userid(atoi(userid)))
+    try:
+        index = index_from_userid(atoi(argv[1]))
+    except ValueError:
+        return
+
+    SayText2(_prepare_msg(argv, 2)).send(index)
 
 def toptext(*args):
     """Sends HUD message to one player."""

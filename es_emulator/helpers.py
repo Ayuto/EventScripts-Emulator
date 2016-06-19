@@ -9,7 +9,10 @@ from contextlib import contextmanager
 # Source.Python
 #   Cvars
 from cvars import cvar
+from cvars import ConVar
 from cvars.flags import ConVarFlags
+#   Commands
+from commands import Command
 #   Memory
 import memory
 
@@ -53,6 +56,9 @@ __all__ = (
     '_last_give_enabled',
     '_cheats_enabled',
     '_UserMessageData',
+    '_get_convar',
+    '_set_convar',
+    'command',
 )
 
 
@@ -88,6 +94,63 @@ def atof(value):
 
 
 # =============================================================================
+# >> HELPERS TO DECLARE ES FUNCTIONS
+# =============================================================================
+class PyCommand(Command):
+    def __getitem__(self, index):
+        # Restore default CCommand behaviour
+        try:
+            return super().__getitem__(index)
+        except IndexError:
+            return ''
+
+    @property
+    def args(self):
+        return list(self[index] for index in range(1, len(self)))
+
+def command(func):
+    # TODO: Add all decorated functions to __all__
+    def wrapper(*args):
+        c = PyCommand()
+        c.tokenize('es_x{} {}'.format(func.__name__, ' '.join(map(str, args))))
+        import es
+        es.dbgmsg(5, 'Command: {} {};'.format(c[0], c.arg_string))
+        return func(c)
+    return wrapper
+
+
+# =============================================================================
+# >> CONVAR HELPERS
+# =============================================================================
+def _get_convar(name, create=False, description='Custom server variable.'):
+    convar = cvar.find_var(name)
+    if convar is None:
+        if create or autocreate_cvar.get_bool():
+            return ConVar(name, '', description)
+        else:
+            import es
+            es.dbgmsg(0, 'ERROR: Variable does not exist.')
+
+    return convar
+
+def _can_change(convar):
+    # TODO: Implement
+    return True
+
+def _set_convar(name, value, create=False, description='Custom server variable.'):
+    convar = _get_convar(name, create, description)
+    if convar is not None:
+        import es
+        if _can_change(convar):
+            convar.set_string(str(value))
+            es.dbgmsg(4, '"{}" set to "{}"'.format(name, value))
+        else:
+            es.dbgmsg(1, 'Can\'t change variable: {}'.format(name))
+
+    return convar
+
+
+# =============================================================================
 # >> es.msg() & es.tell()
 # =============================================================================
 RE_DEFAULT = re.compile('#default', re.IGNORECASE)
@@ -96,21 +159,21 @@ RE_LIGHTGREEN = re.compile('#lightgreen', re.IGNORECASE)
 RE_DARKGREEN = re.compile('#darkgreen', re.IGNORECASE)
 RE_MULTI = re.compile('#multi', re.IGNORECASE)
 
-def _prepare_msg(color, msg):
-    if msg is None:
-        msg = color
+def _prepare_msg(argv, color_index):
+    if argv[color_index].lower() == '#green':
+        msg = '\4' + ' '.join(argv.args[color_index:])
+    elif argv[color_index].lower() == '#lightgreen':
+        msg = '\3' + ' '.join(argv.args[color_index:])
+    elif argv[color_index].lower() == '#darkgreen':
+        msg = '\5' + ' '.join(argv.args[color_index:])
+    elif argv[color_index].lower() == '#multi':
+        msg = ' '.join(argv.args[color_index:])
+        msg = RE_GREEN.sub('\4', msg)
+        msg = RE_LIGHTGREEN.sub('\3', msg)
+        msg = RE_DARKGREEN.sub('\5', msg)
+        msg = RE_DEFAULT.sub('\1', msg)
     else:
-        if RE_GREEN.match(color):
-            msg = '\4' + msg
-        elif RE_LIGHTGREEN.match(color):
-            msg = '\3' + msg
-        elif RE_DARKGREEN.match(color):
-            msg = '\5' + msg
-        elif RE_MULTI.match(color):
-            msg = RE_GREEN.sub('\4', msg)
-            msg = RE_LIGHTGREEN.sub('\3', msg)
-            msg = RE_DARKGREEN.sub('\5', msg)
-            msg = RE_DEFAULT.sub('\1', msg)
+        msg = argv.arg_string
 
     return msg
 
