@@ -80,8 +80,12 @@ _current_event = None
 # =============================================================================
 # >> ES FUNCTIONS
 # =============================================================================
+# Pure Python function
 def ForceServerCommand(command_str):
     """Inserts a command to the server queue at the beginning and forces execution."""
+    if not isinstance(command_str, str):
+        raise TypeError
+
     c = Command()
     if not c.tokenize(command_str):
         return 1
@@ -98,13 +102,21 @@ def ForceServerCommand(command_str):
 
     return 1
 
+# Pure Python function
 def InsertServerCommand(command_str):
     """Inserts a command to the server queue at the beginning."""
+    if not isinstance(command_str, str):
+        raise TypeError
+
     engine_server.insert_server_command(command_str)
     return 1
 
+# Pure Python function
 def ServerCommand(command_str):
     """Adds a command to the end of the server queue."""
+    if not isinstance(command_str, str):
+        raise TypeError
+
     engine_server.server_command('wait;{}'.format(command_str))
     return 1
 
@@ -182,20 +194,23 @@ def changeteam(userid, team):
 
     player.team = atoi(team)
 
-@command
-def cmdargc(argv):
+# Pure Python function
+def cmdargc(*args):
     """Gets the command parameter count passed to the current Valve console command."""
     return command_info.argc
 
-@command
-def cmdargs(argv):
+# Pure Python function
+def cmdargs(*args):
     """Gets the commandstring passed to the current Valve console command."""
     return command_info.args
 
-@command
-def cmdargv(argv):
+# Pure Python function
+def cmdargv(index):
     """Gets the command parameter passed to the current Valve console command."""
-    return command_info.get_argv(atoi(argv[1]))
+    if not isinstance(index, int):
+        raise TypeError
+
+    return command_info.get_argv(index)
 
 @command
 def commandv(argv):
@@ -320,13 +335,11 @@ def createvectorstring(argv):
     """Creates a string form of three x y z variables representing a vector."""
     return '{},{},{}'.format(atof(argv[1]), atof(argv[2]), atof(argv[3]))
 
-def dbgmsg(level, *args):
+# Not quite pure Python (console command gets registred differently)
+def dbgmsg(level, msg):
     """Outputs a message to the console."""
     # TODO: Create a proper implementation
-    if len(args):
-        print(' '.join(map(str, args)))
-    else:
-        print('Invalid syntax.')
+    print(level, msg)
 
 def dbgmsgv(level, convar_name):
     """Prints a debug message for EventScripts"""
@@ -635,57 +648,95 @@ def formatqv(*args):
 
 def getCurrentEventVarFloat(name):
     """Returns the value of a named event variable in integer form."""
+    if not isinstance(name, str):
+        raise TypeError
+
     return float(current_event_vars.get(name, 0))
 
 def getCurrentEventVarInt(name):
     """Returns the value of a named event variable in integer form."""
+    if not isinstance(name, str):
+        raise TypeError
+
     return int(current_event_vars.get(name, 0))
 
 def getCurrentEventVarIsEmpty(name):
     """Returns 1 if the named event variable doesn't exist."""
+    if not isinstance(name, str):
+        raise TypeError
+
     return int(name not in current_event_vars)
 
 def getCurrentEventVarString(name):
     """Returns the value of a named event variable in string form."""
-    return str(current_event_vars.get(name, ''))
+    return getEventInfo(name)
 
+# Pure Python function
 def getEntityIndexes(classname=None):
     """Returns list of all entity indexes on the server, optionally filtered by a classname"""
+    if classname is not None and not isinstance(classname, str):
+        raise TypeError
+
     result = list()
     for entity in EntityIter(classname):
         result.append(entity.index)
 
     return result
 
+# Pure Python function
 def getEventInfo(name):
     """Gets the value of a particular event variable."""
-    return str(current_event_vars.get(name, ''))
+    if not isinstance(name, str):
+        raise TypeError
 
+    return str(current_event_vars.get(args[0], ''))
+
+# Pure Python function
 def getFlags(name):
     """Gets the flags value for a command"""
+    if not isinstance(name, str):
+        raise TypeError
+
     base = cvar.find_base(name)
     return base and base.flags
 
+# Pure Python function
 def getFloat(name):
     """Gets the float value for a server variable"""
+    if not isinstance(name, str):
+        raise TypeError
+
     convar = cvar.find_var(name)
     return convar and convar.get_float()
 
+# Pure Python function
 def getHelpText(name):
     """Gets the help text for a console command or server variable."""
-    convar = cvar.find_base(name)
-    return convar and convar.help_text
+    if not isinstance(name, str):
+        raise TypeError
 
+    base = cvar.find_base(name)
+    return base and base.help_text
+
+# Pure Python function
 def getInt(name):
     """Gets the int value for a server variable"""
+    if not isinstance(name, str):
+        raise TypeError
+
     convar = cvar.find_var(name)
     return convar and convar.get_int()
 
+# Pure Python function
 def getString(name):
     """Gets the string value for a server variable"""
+    if not isinstance(name, str):
+        raise TypeError
+
     convar = cvar.find_var(name)
     return '' if convar is None else convar.get_string()
 
+# Pure Python function
 def getUseridList(*args):
     """Returns a list of the userids of all players on the server."""
     result = list()
@@ -694,17 +745,20 @@ def getUseridList(*args):
 
     return result
 
-def getargc():
+@command
+def getargc(argv):
     """Gets the count of parameters passed to the current ES console command."""
     return command_info.argc
 
-def getargs():
+@command
+def getargs(argv):
     """Gets the commandstring passed to the current ES console command."""
     return command_info.args
 
-def getargv(index):
+@command
+def getargv(argv):
     """Gets the command parameter passed to the current ES console command."""
-    return command_info.get_argv(index)
+    return command_info.get_argv(atoi(argv[1]))
 
 @command
 def getclientvar(argv):
@@ -719,7 +773,8 @@ def getclientvar(argv):
 
     return engine_server.get_client_convar_value(index, argv[2]) or ''
 
-def getcmduserid():
+# Not pure Python (console command is registered differently)
+def getcmduserid(*args):
     """Gets the commandstring passed to the current Valve console command."""
     return command_info.userid
 
@@ -730,9 +785,16 @@ def getentityindex(argv):
     entity = Entity.find(classname)
     return -1 if entity is None else entity.index
 
-def getentitypropoffset(index, offset, prop_type):
+@command
+def getentitypropoffset(argv):
     """Gets a server class property for a particular entity index"""
-    pointer = pointer_from_index(index)
+    try:
+        pointer = pointer_from_index(atoi(argv[1]))
+    except ValueError:
+        return
+
+    offset = atoi(argv[2])
+    prop_type = atoi(argv[3])
     if prop_type == SendPropType.INT:
         return pointer.get_int(offset)
 
@@ -754,17 +816,19 @@ def getgravityvector(argv):
     """Returns the gravity vector."""
     raise NotImplementedError
 
-def gethandlefromindex(index):
+@command
+def gethandlefromindex(argv):
     """Gets the handle for an entity from its integer index."""
     try:
-        return inthandle_from_index(index)
+        return inthandle_from_index(atoi(argv[1]))
     except ValueError:
         return 0
 
-def getindexfromhandle(inthandle):
+@command
+def getindexfromhandle(argv):
     """Gets the index for an entity from its integer handle."""
     try:
-        return index_from_inthandle(inthandle)
+        return index_from_inthandle(atoi(argv[1]))
     except ValueError:
         return 0
 
@@ -926,14 +990,16 @@ def getplayerteam(argv):
     except ValueError:
         return 0
 
-def getpropoffset(name):
+@command
+def getpropoffset(argv):
     """Gets a server class property offset for a particular property path"""
-    prop_type, offset = _get_prop_info(name)
+    prop_type, offset = _get_prop_info(argv[1])
     return 0 if offset is None else offset
 
-def getproptype(name):
+@command
+def getproptype(argv):
     """Gets a server class property type for a particular property path"""
-    prop_type, offset = _get_prop_info(name)
+    prop_type, offset = _get_prop_info(argv[1])
     return 0 if prop_type is None else int(prop_type)
 
 def getuserid(*args):
@@ -963,7 +1029,8 @@ def isbot(argv):
     except ValueError:
         return None
 
-def isdedicated(*args):
+@command
+def isdedicated():
     """Returns 1 in the variable if the server a dedicated server."""
     return engine_server.is_dedicated_server()
 
@@ -1168,19 +1235,10 @@ def mathparse(*args):
     """Adds a say command that refers to a particular block."""
     raise NotImplementedError
 
-def menu(duration, userid, msg, options=''):
+@command
+def menu(argv):
     """Sends an AMX-Style menu to the users"""
-    try:
-        index = index_from_userid(atoi(userid))
-    except ValueError:
-        return
-
-    duration = atoi(duration)
-    ShowMenu(
-        msg,
-        _get_menu_options(options),
-        -1 if duration == 0 else duration
-    ).send(index)
+    showMenu(atoi(argv[1]), atoi(argv[2]), argv[3], argv[4])
 
 @command
 def msg(argv):
@@ -1229,9 +1287,14 @@ def precachesound(argv):
     """Precache sound."""
     engine_server.precache_sound(argv[1])
 
-def printmsg(*args):
+# Pure Python function
+def printmsg(msg):
     """Outputs a message to the console."""
-    raise NotImplementedError
+    if not isinstance(msg, str):
+        raise TypeError
+
+    raise NotImplementedError # Call Msg(msg)
+    return 1
 
 def prop_dynamic_create(userid, model):
     """See prop_dynamic_create for syntax, but requires a userid first"""
@@ -1377,9 +1440,11 @@ def setInt(name, value):
     convar = _set_convar(name, value, True)
     return convar and convar.get_int()
 
-def setNumRegistered(*args):
+# Pure Python function
+def setNumRegistered(num):
     """Internal command for setting number of ticklisteners registered."""
-    # No need to implement
+    if not isinstance(num, int):
+        raise TypeError
 
 def setString(name, value):
     """Sets the server variable to the given string  value. Creating it if necessary."""
@@ -1484,9 +1549,25 @@ def sexec_all(commandstring):
     for player in PlayerIter():
         player.client_command(commandstring, True)
 
-def showMenu(*args):
+def showMenu(duration, userid, msg, options=''):
     """Sends an AMX-Style menu to the users"""
-    menu(*args)
+    userid = int(userid)
+    if (not isinstance(duration, int)
+            or not isinstance(msg, str)
+            or not isinstance(options, str)):
+        raise TypeError
+
+    try:
+        index = index_from_userid(userid)
+    except ValueError:
+        return
+
+    duration = duration
+    ShowMenu(
+        msg,
+        _get_menu_options(options),
+        -1 if duration == 0 else duration
+    ).send(index)
 
 def soon(commandstring):
     """Adds a command to the end of the command queue."""

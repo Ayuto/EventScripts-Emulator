@@ -2,6 +2,7 @@ import es
 from ..val import sv, VAR
 from . import Command
 from engines.server import engine_server
+from es_emulator.helpers import atoi
 
 @Command(syntax='[color] <msg>', desc='Broadcasts a message to all players. Will not expand any EventScripts variables. If the first word of the message is \'GREEN\', or \'LIGHTGREEN\' then the message is displayed in that color.')
 def msg(argv):
@@ -49,7 +50,10 @@ def usermsg(argv):
 
 @Command(syntax='<level> <msg>', desc='Prints a debug message for EventScripts.')
 def dbgmsg(argv):
-  es.dbgmsg(*argv)
+  if len(argv) > 1:
+    es.dbgmsg(atoi(argv[0]), ' '.join(argv[1:]))
+  else:
+    raise SyntaxError
 
 @Command(syntax='<level> <variable>', desc='Prints a debug message for EventScripts')
 def dbgmsgv(argv):
