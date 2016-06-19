@@ -124,14 +124,21 @@ def _unload(*args):
     """EventScripts internal command."""
     raise NotImplementedError
 
-def botsetvalue(userid, convar, value):
+@command
+def botsetvalue(argv):
     """Sets a convar value for a fake client."""
+    userid = argv[1]
     try:
         edict = edict_from_userid(atoi(userid))
     except ValueError:
         dbgmsg(0, 'SetFakeClientConvarValue: Unable to find player')
+        _set_last_error('Invalid userid')
     else:
-        engine_server.set_fake_client_convar_value(edict, convar, str(value))
+        convar_name = argv[2]
+        value = argv[3]
+        engine_server.set_fake_client_convar_value(edict, convar_name, value)
+        dbgmsg(1, 'Set client var: {}, {} = {}'.format(
+            userid, convar_name, value))
 
 def centermsg(msg):
     """Broadcasts a centered HUD message to all players."""

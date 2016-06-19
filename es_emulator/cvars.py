@@ -61,12 +61,6 @@ escape_cvar = ConVar(
     'Lists the characters for that cause variable expansion to require quotes to prevent parsing issues. (Leave this alone unless you know what you\'re doing.)'
 )
 
-timeformat_cvar = ConVar(
-    'eventscripts_timeformat',
-    '%Y-%m-%d %H:%M:%S (%Z)',
-    'Format for time strings retrieved by es_gettimestring.'
-)
-
 execmd_cvar = ConVar(
     'eventscripts_exec-cmd',
     'exec',
@@ -244,6 +238,12 @@ sourcesdk_cvar = ConVar(
     'eventscripts_sourcesdk_level',
     '2',
     'The Source SDK level that EventScripts was compiled with (rough numbering scheme)'
+)
+
+timeformat_cvar = ConVar(
+    'eventscripts_timeformat',
+    '%Y-%m-%d %H:%M:%S (%Z)',
+    'Format for time strings retrieved by es_gettimestring.'
 )
 
 
