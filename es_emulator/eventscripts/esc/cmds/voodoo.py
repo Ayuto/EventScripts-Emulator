@@ -100,3 +100,53 @@ def entitygetvalue(argv):
 @Command(syntax='<entity-index> <valuename> <value>', desc='Set a value name for a given entity.')
 def entitysetvalue(argv):
   es.entitysetvalue(*argv)
+
+@Command(syntax='<keygroupname> [entity-class]', desc='Creates a keygroup (or dictionary) of all indexes for an entity class or for all entities.')
+def createentityindexlist(argv):
+  # TODO
+  es.createentityindexlist(*argv)
+
+@Command(syntax='<variable> <index> <offset> <type>', types=VAR, desc='Gets a server class property for a particular entity index')
+def getentitypropoffset(argv):
+  result = es.getentitypropoffset(*argv[1:])
+  if result is not None:
+    sv[argv[0]] = result
+
+@Command(syntax='<var> <index>', types=VAR, desc='Gets the handle for an entity from its integer index.')
+def gethandlefromindex(argv):
+  sv[argv[0]] = es.gethandlefromindex(*argv[1:])
+
+@Command(syntax='<var> <handle-int>', types=VAR, desc='Gets the index for an entity from its integer handle.')
+def getindexfromhandle(argv):
+  sv[argv[0]] = es.getindexfromhandle(*argv[1:])
+
+@Command(syntax='<variable> <propertypath>', types=VAR, desc='Gets a server class property offset for a particular property path')
+def getpropoffset(argv):
+  sv[argv[0]] = es.getpropoffset(*argv[1:])
+
+@Command(syntax='<variable> <propertypath>', types=VAR, desc='Gets a server class property type for a particular property path')
+def getproptype(argv):
+  sv[argv[0]] = es.getproptype(*argv[1:])
+
+@Command(syntax='<userid> <model>', desc='See prop_dynamic_create for syntax, but requires a userid first')
+def prop_dynamic_create(argv):
+  es.prop_dynamic_create(*argv)
+
+@Command(syntax='<userid> <model>', desc='See prop_physics_create for syntax, but requires a userid first.')
+def prop_physics_create(argv):
+  es.prop_physics_create(*argv)
+
+@Command(syntax='<index> <targetname>', desc='Sets the targetname of an entity by index.')
+def setentityname(argv):
+  es.setentityname(*argv)
+
+@Command(syntax='<index> <offset> <type> <value>', desc='Gets a server class property for a particular entity index')
+def setentitypropoffset(argv):
+  es.setentitypropoffset(*argv)
+
+@Command(syntax='<index>', desc='Spawn a given entity index.')
+def spawnentity(argv):
+  es.spawnentity(*argv)
+  
+
+  

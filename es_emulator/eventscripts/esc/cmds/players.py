@@ -36,3 +36,7 @@ def changeteam(argv):
 @Command(syntax='<userid> [entity-index]', desc='Adds a console command that refers to a particular block.')
 def setview(argv):
   es.setview(*argv)
+
+@Command(syntax='<userid>', desc='Spawn a player with the given userid.')
+def spawnplayer(argv):
+  es.spawnplayer(*argv)

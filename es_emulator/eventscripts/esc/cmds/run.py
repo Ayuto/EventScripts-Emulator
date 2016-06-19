@@ -3,6 +3,7 @@ from gamethread import queue, delayed
 from .. import stack
 from ..val import sv, FLOAT, VAR
 from . import Command
+import es
 
 @Command(syntax='<variable>', types=VAR, desc='Just runs a command-string inside of the variable.')
 def commandv(argv):
@@ -15,3 +16,7 @@ def delayed(argv, args):
 @Command(syntax='<commandstring>', desc='Adds a command to the end of the command queue.')
 def soon(argv, args):
   queue(stack.queueline, (argv[0], argv[1:], args, esc.stack.currentblock, True))
+
+@Command(syntax='<file>', desc='Runs an exec file from memory.')
+def old_mexec(argv):
+  es.old_mexec(*argv)

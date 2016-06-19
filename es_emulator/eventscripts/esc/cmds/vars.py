@@ -107,3 +107,12 @@ def botsetvalue(argv):
 @Command(syntax='<command-name> <output-var> <expression> <string> [start] [range]', desc='Various regular expression commands.')
 def regex(argv):
   es.regex(*argv)
+
+@Command(syntax='<varname>', desc='Calls all global convar callbacks for a particular server variable.')
+def forcecallbacks(argv):
+  es.forcecallbacks(*argv)
+
+@Command(desc='Outputs all the console commands and variables.')
+def refreshpublicvars(argv):
+  es.refreshpublicvars()
+  

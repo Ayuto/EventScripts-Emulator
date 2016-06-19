@@ -9,12 +9,20 @@ def regcmd(argv):
   if es.exists('command', argv[0]):
     raise ValueError('command %s already exists' % argv[0])
   es.regcmd(*argv[:3])
+
+@Command(syntax='<varname> <cmdname>', types=VAR, desc='Queries which block a console command refers to.')
+def queryregcmd(argv):
+  sv[argv[0]] = es.queryregcmd(*argv[1:])
   
 @Command(syntax='<command-name> <block-name> [description]', desc='Adds a client command that refers to a particular block.')
 def regclientcmd(argv):
   if es.exists('clientcommand', argv[0]):
     raise ValueError('command %s already exists' % argv[0])
   es.regclientcmd(*argv[:3])
+
+@Command(syntax='<varname> <cmdname>', types=VAR, desc='Queries which block a particular client cmd is pointed to.')
+def queryregclientcmd(argv):
+  sv[argv[0]] = es.queryregclientcmd(*argv[1:])
   
 @Command(syntax="<command>", desc='Removes a client command that refers to a particular block.')
 def unregclientcmd(argv):
@@ -27,6 +35,10 @@ def regsaycmd(argv):
   if es.exists('saycommand', argv[0]):
     raise ValueError('command %s already exists' % argv[0])
   es.regsaycmd(*argv[:3])
+
+@Command(syntax='<varname> <cmdname>', types=VAR, desc='Queries which block a particular say cmd is pointed to.')
+def queryregsaycmd(argv):
+  sv[argv[0]] = es.queryregsaycmd(*argv[1:])
   
 @Command(syntax="<command>", desc='Removes a say command that refers to a particular block.')
 def unregsaycmd(argv):
