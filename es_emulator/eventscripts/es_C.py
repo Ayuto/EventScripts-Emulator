@@ -805,9 +805,19 @@ def getplayerhandle(userid):
     """Gets the handle for a player class property using an entity handle (Untested)"""
     return Player.from_userid(atoi(userid)).inthandle
 
-def getplayerlocation(userid):
+@command
+def getplayerlocation(argv):
     """Stores the player's current x, y, and z location (in 3 different variables or a 3-tuple in Python)."""
-    return tuple(Player.from_userid(atoi(userid)).origin)
+    userid = atoi(argv[1])
+    if userid > 0:
+        try:
+            return tuple(Player.from_userid(userid).origin)
+        except ValueError:
+            return (0, 0, 0)
+
+    dbgmsg(0, 'getplayerlocation, invalid userid')
+    _set_last_error('Invalid userid')
+    return None
 
 @command
 def getplayermovement(argv):
@@ -838,13 +848,21 @@ def getplayerprop(userid, prop):
     """Gets a server class property for a particular player"""
     return getindexprop(index_from_userid(atoi(userid)), prop)
 
-def getplayersteamid(userid):
+@command
+def getplayersteamid(argv):
     """Stores the player's STEAMID in the variable."""
-    return Player.from_userid(atoi(userid)).steamid
+    try:
+        return Player.from_userid(atoi(argv[1])).steamid or ''
+    except ValueError:
+        return ''
 
-def getplayerteam(userid):
+@command
+def getplayerteam(argv):
     """Stores the player's team # in the variable."""
-    return Player.from_userid(atoi(userid)).team
+    try:
+        return Player.from_userid(atoi(argv[1])).team
+    except ValueError:
+        return 0
 
 def getpropoffset(name):
     """Gets a server class property offset for a particular property path"""
@@ -870,9 +888,13 @@ def give(userid, entity):
     with _last_give_enabled(entity):
         _exec_client_cheat_command(player, 'give {}'.format(entity))
 
-def isbot(*args):
+@command
+def isbot(argv):
     """Checks a userid to see if it's a bot, stores 1 in the variable if so, 0 if not."""
-    return Player.from_userid(atoi(userid)).is_fake_client()
+    try:
+        return int(Player.from_userid(atoi(argv[1])).is_fake_client())
+    except ValueError:
+        return None
 
 def isdedicated(*args):
     """Returns 1 in the variable if the server a dedicated server."""
@@ -1158,10 +1180,20 @@ def prop_physics_create(userid, model):
         _exec_client_cheat_command(
             player, 'prop_physics_create {}'.format(model))
 
-def queryclientvar(userid, cvar_name):
+@command
+def queryclientvar(argv):
     """Sends a request to query a client's console variable."""
-    engine_server.start_query_cvar_value(
-        edict_from_userid(atoi(userid)), cvar_name)
+    userid = atoi(argv[1])
+    if userid > 0:
+        try:
+            engine_server.start_query_cvar_value(
+                edict_from_userid(userid), argv[2])
+        except ValueError:
+            dbgmsg(0, 'Userid does not exist.')
+            _set_last_error('Invalid userid')
+    else:
+        dbgmsg(0, 'Userid does not exist.')
+        _set_last_error('Invalid userid')
 
 def queryregclientcmd(command):
     """Queries which block a particular client cmd is pointed to."""

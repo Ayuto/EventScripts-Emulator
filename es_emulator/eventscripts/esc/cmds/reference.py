@@ -19,6 +19,7 @@ def getmoney(argv):
 
 @Command(syntax='<variable> [string]', desc='Looks-up a userid based on the string provided. Checks it against a userid, steamid, exact name, and partial name. (Based on Mani\'s algorithm.)')
 def getuserid(argv):
+  # TODO
   es.getuserid(*argv)
 
 @Command(syntax='<var> <userid> <varname>', types=VAR, desc='Reads a console variable from a given player.')
@@ -29,10 +30,12 @@ def getclientvar(argv):
 
 @Command(syntax='<keygroupname> [entity-class]', desc='Creates a keygroup for an entity class or for all entities.')
 def createentitylist(argv):
+  # TODO
   es.createentitylist(*argv)
 
 @Command(syntax='<keygroup> [userid]', desc='Creates a new keygroup containing the current list of players.')
 def createplayerlist(argv):
+  # TODO
   es.createplayerlist(*argv)
 
 @Command(syntax='<var> [team number]', types=VAR, desc='Stores the count of players on the server into a variable. Optionally a team can be specified. Returns -1 on error.')
@@ -59,13 +62,19 @@ def getplayermovement(argv):
     sv[argv[1]] = result[1]
     sv[argv[2]] = result[2]
 
-@Command(syntax='<var x> <var y> <var z> <userid>', desc='Stores the player\'s current x, y, and z location (in 3 different variables).')
+@Command(syntax='<var x> <var y> <var z> <userid>', types=(VAR, VAR, VAR), desc='Stores the player\'s current x, y, and z location (in 3 different variables).')
 def getplayerlocation(argv):
-  es.getplayerlocation(*argv)
+  result = es.getplayerlocation(*argv[3:])
+  if result is not None:
+    sv[argv[0]] = result[0]
+    sv[argv[1]] = result[1]
+    sv[argv[2]] = result[2]
 
-@Command(syntax='<var> <userid>', desc='Checks a userid to see if it\'s a bot, stores 1 in the variable if so, 0 if not.')
+@Command(syntax='<var> <userid>', types=VAR, desc='Checks a userid to see if it\'s a bot, stores 1 in the variable if so, 0 if not.')
 def isbot(argv):
-  es.isbot(*argv)
+  result = es.isbot(*argv[1:])
+  if result is not None:
+    sv[argv[0]] = result
 
 @Command(syntax='<var> <userid>', types=VAR, desc='Stores the player\'s name in the variable.')
 def getplayername(argv):
@@ -75,15 +84,16 @@ def getplayername(argv):
 
 @Command(syntax='<var> <userid>', desc='Stores the player\'s STEAMID in the variable.')
 def getplayersteamid(argv):
-  es.getplayersteamid(*argv)
+  sv[argv[0]] = es.getplayersteamid(*argv[1:])
 
 @Command(syntax='<var> <userid>', desc='Stores the player\'s team # in the variable.')
 def getplayerteam(argv):
-  es.getplayerteam(*argv)
+  sv[argv[0]] = es.getplayerteam(*argv[1:])
 
 @Command(syntax='<keygroup> [scriptname]', desc='Creates a new keygroup containing the current list of scripts.')
 def createscriptlist(argv):
-  pass
+  # TODO
+  raise NotImplementedError
 
 @Command(syntax='<variable>', types=VAR, desc='Returns the name of the Source game being played.')
 def getgame(argv):
