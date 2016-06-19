@@ -34,6 +34,7 @@ from players.helpers import edict_from_userid
 from players.voice import voice_server
 #   Entities
 from entities.entity import BaseEntity
+from entities.entity import Entity
 from entities.helpers import inthandle_from_index
 from entities.helpers import index_from_inthandle
 from entities.helpers import edict_from_index
@@ -1255,20 +1256,22 @@ def physics(*args):
     """Interface with the Source physics engine (physics gravity, object velocity, etc)."""
     raise NotImplementedError
 
-def playsound(userid, sound, volume=''):
+@command
+def playsound(argv):
     """Plays a sound to a player."""
     try:
-        index = index_from_userid(atoi(userid))
+        index = index_from_userid(atoi(argv[1]))
     except ValueError:
         return
 
+    sound = argv[2]
     engine_server.precache_sound(sound)
     engine_sound.emit_sound(
         ReclipientFilter(index),
         index,
         0,
         sound,
-        atof(volume),
+        atof(argv[3]),
         1
     )
 
@@ -1296,27 +1299,29 @@ def printmsg(msg):
     raise NotImplementedError # Call Msg(msg)
     return 1
 
-def prop_dynamic_create(userid, model):
+@command
+def prop_dynamic_create(argv):
     """See prop_dynamic_create for syntax, but requires a userid first"""
     try:
-        player = Player.from_userid(atoi(userid))
+        player = Player.from_userid(atoi(argv[1]))
     except ValueError:
         return
 
     with _last_give_enabled():
         _exec_client_cheat_command(
-            player, 'prop_dynamic_create {}'.format(model))
+            player, 'prop_dynamic_create {}'.format(' '.join(argv.args[1:])))
 
-def prop_physics_create(userid, model):
+@command
+def prop_physics_create(argv):
     """See prop_physics_create for syntax, but requires a userid first."""
     try:
-        player = Player.from_userid(atoi(userid))
+        player = Player.from_userid(atoi(argv[1]))
     except ValueError:
         return
 
     with _last_give_enabled():
         _exec_client_cheat_command(
-            player, 'prop_physics_create {}'.format(model))
+            player, 'prop_physics_create {}'.format(' '.join(argv.args[1:])))
 
 @command
 def queryclientvar(argv):
@@ -1333,31 +1338,38 @@ def queryclientvar(argv):
         dbgmsg(0, 'Userid does not exist.')
         _set_last_error('Invalid userid')
 
-def queryregclientcmd(command):
+@command
+def queryregclientcmd(argv):
     """Queries which block a particular client cmd is pointed to."""
+    command_str = argv[1]
     try:
-        return client_command_proxies.get_proxy(command).block_name
+        return client_command_proxies.get_proxy(command_str).block_name
     except KeyError:
-        dbgmsg(0, 'Command {} wasn\'t registered.'.format(command))
+        dbgmsg(0, 'es_xqueryregclientcmd: ERROR. Command {} doesn\'t exist.'.format(command_str))
         return ''
 
-def queryregcmd(command):
+@command
+def queryregcmd(argv):
     """Queries which block a console command refers to."""
+    command_str = argv[1]
     try:
-        return server_command_proxies.get_proxy(command).block_name
+        return server_command_proxies.get_proxy(command_str).block_name
     except KeyError:
-        dbgmsg(0, 'Command {} wasn\'t registered.'.format(command))
+        dbgmsg(0, 'es_xqueryregcmd: ERROR. Command {} wasn\'t registered.'.format(command_str))
         return ''
 
-def queryregsaycmd(command):
+@command
+def queryregsaycmd(argv):
     """Queries which block a particular say cmd is pointed to."""
+    command_str = argv[1]
     try:
-        return say_command_proxies.get_proxy(command).block_name
+        return say_command_proxies.get_proxy(command_str).block_name
     except KeyError:
-        dbgmsg(0, 'Command {} wasn\'t registered.'.format(command))
+        dbgmsg(0, 'es_xqueryregsaycmd: ERROR. Command {} wasn\'t registered.'.format(command_str))
         return ''
 
-def refreshpublicvars():
+@command
+def refreshpublicvars(argv):
     """Outputs all the console commands and variables."""
     current = cvar.commands
     while current:
@@ -1367,39 +1379,47 @@ def refreshpublicvars():
 
         current = current.next
 
-def regclientcmd(command, block_name, description):
+@command
+def regclientcmd(argv):
     """Adds a client command that refers to a particular block."""
-    if command in client_command_proxies:
-        dbgmsg(0, 'Command {} already exists.'.format(command))
+    command_str = argv[1]
+    if command_str in client_command_proxies:
+        dbgmsg(0, 'Command {} already exists.'.format(command_str))
         return
 
-    get_client_command(command).add_callback(
-        client_command_proxies.create_proxy(command, block_name))
+    get_client_command(command_str).add_callback(
+        client_command_proxies.create_proxy(command_str, argv[2]))
 
-def regcmd(command, block_name, description=''):
+@command
+def regcmd(argv):
     """Adds a console command that refers to a particular block."""
-    if cvar.find_command(command) is not None:
-        dbgmsg(0, 'Command {} already exists.'.format(command))
+    command_str = argv[1]
+    if cvar.find_command(command_str) is not None:
+        dbgmsg(0, 'Command {} already exists.'.format(command_str))
         return
 
-    get_server_command(command, description).add_callback(
-        server_command_proxies.create_proxy(command, block_name))
+    get_server_command(command_str, argv[3]).add_callback(
+        server_command_proxies.create_proxy(command_str, argv[2]))
 
 def regex(*args):
     """Various regular expression commands."""
     raise NotImplementedError
 
-def regsaycmd(command, block_name, description):
+@command
+def regsaycmd(argv):
     """Adds a say command that refers to a particular block."""
-    if command in say_command_proxies:
-        dbgmsg(0, 'Command {} already exists.'.format(command))
+    command_str = argv[1]
+    if command_str in say_command_proxies:
+        dbgmsg(0, 'Command {} already exists.'.format(command_str))
         return
 
-    get_say_command(command).add_callback(
-        say_command_proxies.create_proxy(command, block_name))
+    get_say_command(command_str).add_callback(
+        say_command_proxies.create_proxy(command_str, argv[2]))
 
-def reload(addon):
+@command
+def reload(argv):
     """Reloads a script that is loaded."""
+    addon = argv[1]
     import es
     es.unloadModuleAddon(addon)
     es.loadModuleAddon(addon)
@@ -1430,13 +1450,21 @@ def set(name, value, description=None):
     else:
         _set_convar(name, value, True, description)
 
+# Pure Python function
 def setFloat(name, value):
     """Sets the server variable to the given float value. Creating it if necessary."""
+    if not isinstance(name, str) or not isinstance(value, float):
+        raise TypeError
+
     convar = _set_convar(name, value, True)
     return convar and convar.get_float()
 
+# Pure Python function
 def setInt(name, value):
     """Sets the server variable to the given integer value. Creating it if necessary."""
+    if not isinstance(name, str) or not isinstance(value, int):
+        raise TypeError
+
     convar = _set_convar(name, value, True)
     return convar and convar.get_int()
 
@@ -1446,36 +1474,53 @@ def setNumRegistered(num):
     if not isinstance(num, int):
         raise TypeError
 
+# Pure Python function
 def setString(name, value):
     """Sets the server variable to the given string  value. Creating it if necessary."""
+    if not isinstance(name, str) or not isinstance(value, str):
+        raise TypeError
+
     convar = _set_convar(name, value, True)
     return convar and convar.get_string()
 
-def setang(userid, *args):
+@command
+def setang(argv):
     """Sets player view angle."""
     try:
-        player = Player.from_userid(atoi(userid))
+        player = Player.from_userid(atoi(argv[1]))
     except ValueError:
         return
 
     _exec_client_cheat_command(
-        player, 'setang {}'.format(' '.join(map(str, args))))
+        player, 'setang {}'.format(' '.join(argv.args[1:])))
 
-def setentityname(index, targetname):
+@command
+def setentityname(argv):
     """Sets the targetname of an entity by index."""
-    BaseEntity(index).set_key_value_string('targetname', targetname)
+    index = atoi(argv[1])
+    try:
+        BaseEntity(index).set_key_value_string('targetname', argv[2])
+    except ValueError:
+        dbgmsg(0, 'Could not set targetname for entity: {}'.format(index))
 
-def setentitypropoffset(index, offset, type, value):
+@command
+def setentitypropoffset(argv):
     """Gets a server class property for a particular entity index"""
-    pointer = pointer_from_index(atoi(index))
+    try:
+        pointer = pointer_from_index(atoi(argv[1]))
+    except ValueError:
+        return
+
+    offset = atoi(argv[2])
+    prop_type = atoi(argv[3])
     if prop_type == SendPropType.INT:
-        return pointer.set_int(int(value), offset)
+        pointer.set_int(atoi(argv[4]), offset)
 
     if prop_type == SendPropType.FLOAT:
-        return pointer.set_float(float(value), offset)
+        pointer.set_float(atof(argv[4]), offset)
 
     if prop_type == SendPropType.VECTOR:
-        x, y, z = splitvectorstring(value)
+        x, y, z = splitvectorstring(argv[4])
         ptr.set_float(x, offset + 0)
         ptr.set_float(y, offset + 4)
         ptr.set_float(z, offset + 8)
@@ -1520,24 +1565,34 @@ def setplayerprop(argv):
     else:
         setindexprop(index, argv[2], argv[3])
 
-def setpos(userid, *args):
+@command
+def setpos(argv):
     """Teleports a player."""
     try:
-        player = Player.from_userid(atoi(userid))
+        player = Player.from_userid(atoi(argv[1]))
     except ValueError:
         return
 
     _exec_client_cheat_command(
-        player, 'setpos {}'.format(' '.join(map(str, args))))
+        player, 'setpos {}'.format(' '.join(argv.args[1:])))
 
-def setview(userid, entity_index=None):
+@command
+def setview(argv):
     """Changes a players view to share that of a particular entity index."""
-    player_edict = edict_from_userid(atoi(userid))
-    if entity_index is None:
-        view_edict = player_edict
-    else:
-        view_edict = edict_from_index(entity_index)
+    try:
+        player_edict = edict_from_userid(atoi(argv[1]))
+    except ValueError:
+        return
 
+    if len(argv) > 2:
+        try:
+            view_edict = edict_from_index(atoi(argv[2]))
+        except ValueError:
+            return
+    else:
+        view_edict = player_edict
+
+    print(player_edict.classname, view_edict.classname)
     engine_server.set_view(player_edict, view_edict)
 
 def sexec(userid, commandstring):
