@@ -1,21 +1,22 @@
 from . import Command
+import es
 
-@Command(con=True, desc='Plays a sound from an entity.')
+@Command(syntax='<emitter-type> <id> <sound> <volume> <attenuation> [flags] [pitch]', desc='Plays a sound from an entity.')
 def emitsound(argv):
-  pass
+  es.emitsound(*argv)
 
-@Command(con=True, desc='Plays a sound to a player.')
+@Command(syntax='<userid> <sound> [volume]', desc='Plays a sound to a player.')
 def playsound(argv):
-  pass
+  es.playsound(*argv)
 
-@Command(con=True, desc='Precache sound.')
+@Command(syntax='<soundpath>', desc='Precache sound.')
 def precachesound(argv):
-  pass
+  es.precachesound(*argv)
   
-@Command(con=True, desc='Fades the volume for a client.')
+@Command(syntax='<userid> <percent> <fadetime> <holdtime> <fadeintime>', desc='Fades the volume for a client.')
 def fadevolume(argv):
-  pass
+  es.fadevolume(*argv)
   
-@Command(con=True, desc='Stops a specific sound for a player.')
+@Command(syntax='<userid> <soundname>', desc='Stops a specific sound for a player.')
 def stopsound(argv):
-  pass
+  es.stopsound(*argv)

@@ -4,58 +4,58 @@ from .. import stack
 from ..parse import getcode
 from . import Command
 
-@Command(con=True, desc='Creates a keygroup that can be loaded and saved to a file. Must call es_keygroupdelete to free this memory!')
+@Command(syntax='<groupname>', desc='Creates a keygroup that can be loaded and saved to a file. Must call es_keygroupdelete to free this memory!')
 def keygroupcreate(argv):
-  pass
+  es.keygroupcreate(*argv)
 
-@Command(con=True, desc='Deletes a keygroup from memory so that it\'s not leaked.')
+@Command(syntax='<groupname>', desc='Deletes a keygroup from memory so that it\'s not leaked.')
 def keygroupdelete(argv):
-  pass
+  es.keygroupdelete(*argv)
 
-@Command(con=True, desc='Renames an existing keygroup.')
+@Command(syntax='<groupname> <newname>', desc='Renames an existing keygroup.')
 def keygrouprename(argv):
-  pass
-  
-@Command(con=True, desc='Lists all key values in memory that aren\'t groups. Optionally can look up a group, if you provide one.')
+  es.keygrouprename(*argv)
+
+@Command(syntax='[group]', desc='Lists all key values in memory that aren\'t groups. Optionally can look up a group, if you provide one.')
 def keylist(argv):
-  pass
+  es.keylist(*argv)
 
-@Command(con=True, desc='Copies a keygroup.')
+@Command(syntax='<FromKeygroup> <ToKeygroup>', desc='Copies a keygroup.')
 def keygroupcopy(argv):
-  pass
+  es.keygroupcopy(*argv)
 
-@Command(con=True, desc='Loads a keygroup from file based on its name.')
+@Command(syntax='<groupname> [path]', desc='Loads a keygroup from file based on its name.')
 def keygroupload(argv):
-  pass
+  es.keygroupload(*argv)
 
-@Command(con=True, desc='Saves a keygroup to a file based on its name.')
+@Command(syntax='<groupname> [path]', desc='Saves a keygroup to a file based on its name.')
 def keygroupsave(argv):
-  pass
+  es.keygroupsave(*argv)
 
-@Command(con=True, desc='Creates a key that can be free-floating or associated with a group. Must call es_keydelete to free this memory when you\'re done.')
+@Command(syntax='[group] <key>', desc='Creates a key that can be free-floating or associated with a group. Must call es_keydelete to free this memory when you\'re done.')
 def keycreate(argv):
-  pass
+  es.keycreate(*argv)
 
-@Command(con=True, desc='Deletes a key from memory so that it\'s not leaked when you\'re done with it.')
+@Command(syntax='[group] <key>', desc='Deletes a key from memory so that it\'s not leaked when you\'re done with it.')
 def keydelete(argv):
-  pass
+  es.keydelete(*argv)
 
-@Command(con=True, desc='Deletes keys from a keygroup that match or don\'t match a certain value.')
+@Command(syntax='[group] <not/only> <value-name> <value>', desc='Deletes keys from a keygroup that match or don\'t match a certain value.')
 def keygroupfilter(argv):
-  pass
+  es.keygroupfilter(*argv)
 
-@Command(con=True, desc='Rename a key.')
+@Command(syntax='[group] <key> <newkeyname>', desc='Rename a key.')
 def keyrename(argv):
-  pass
+  es.keyrename(*argv)
 
-@Command(con=True, desc='Sets a value within a given key (where the key could be free-floating or associated with a group).')
+@Command(syntax='[group] <key> <valuename> <value>', desc='Sets a value within a given key (where the key could be free-floating or associated with a group).')
 def keysetvalue(argv):
-  pass
+  es.keysetvalue(*argv)
 
-@Command(con=True, desc='Gets a value within a given key (where the key could be free-floating or associated with a group).')
+@Command(syntax='<var> [group] <key> <valuename>', desc='Gets a value within a given key (where the key could be free-floating or associated with a group).')
 def keygetvalue(argv):
-  pass
-  
+  es.keygetvalue(*argv)
+
 @Command(syntax='<var> in <groupname> <keyname> <command>', desc='EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name.')
 def foreachval(argv):
   var, isin, keygroup, key, commands = argv[:5]

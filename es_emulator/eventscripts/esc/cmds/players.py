@@ -1,29 +1,38 @@
 from . import Command
+import es
 
-@Command(con=True, desc='Allows you to control listening players.')
+@Command(syntax='<command> [variable] <to_userid> <from_userid>', desc='Allows you to control listening players.')
 def voicechat(argv):
-  pass
+  es.voicechat(*argv)
 
-@Command(con=True, desc='Forces a userid to execute a command in their console.')
+@Command(syntax='<userid> <commandstring>', desc='Forces a userid to execute a command in their console.')
 def cexec(argv):
-  pass
-  
-@Command(con=True, desc='Forces a userid to execute a command on the server console (bypassing client console).')
+  es.cexec(*argv)
+
+@Command(syntax='<commandstring>', desc='Forces all users to execute a command in their console.')
+def cexec_all(argv):
+  es.cexec_all(*argv)
+
+@Command(syntax='<userid> <commandstring>', desc='Forces a userid to execute a command on the server console (bypassing client console).')
 def sexec(argv):
-  pass
-  
-@Command(con=True, desc='Teleports a player.')
+  es.sexec(*argv)
+
+@Command(syntax='<commandstring>', desc='Forces all users to execute a command on the server console.')
+def sexec_all(argv):
+  es.sexec_all(*argv)
+
+@Command(syntax='<userid> <x> <y> [z]', desc='Teleports a player.')
 def setpos(argv):
-  pass
+  es.setpost(*argv)
 
-@Command(con=True, desc='Sets player view angle.')
+@Command(syntax='<userid> <pitch> <yaw> [roll]', desc='Sets player view angle.')
 def setang(argv):
-  pass
-  
-@Command(con=True, desc='Changes the team of the player.')
-def changeteam(argv):
-  pass
+  es.setang(*argv)
 
-@Command(con=True, desc='Adds a console command that refers to a particular block.')
+@Command(syntax='<userid> <teamnum>', desc='Changes the team of the player.')
+def changeteam(argv):
+  es.changeteam(*argv)
+
+@Command(syntax='<userid> [entity-index]', desc='Adds a console command that refers to a particular block.')
 def setview(argv):
-  pass
+  es.setview(*argv)
