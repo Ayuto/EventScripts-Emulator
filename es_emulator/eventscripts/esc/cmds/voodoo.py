@@ -1,4 +1,5 @@
 from . import Command
+from ..val import sv, VAR
 import es
 
 @Command(syntax='<userid> <target> [action] [value] [delay]', desc='Fires an entity trigger.')
@@ -25,33 +26,44 @@ def give(argv):
 def entcreate(argv):
   es.entcreate(*argv)
 
-@Command(syntax='<userid> <model>', desc='Interface with the Source physics engine (physics gravity, object velocity, etc).')
+@Command(syntax='<command> [options]', desc='Interface with the Source physics engine (physics gravity, object velocity, etc).')
 def physics(argv):
+  # TODO
   es.physics(*argv)
 
-@Command(syntax='<variable> <entity-name>', desc='Gets the index for the first named entity found by that name. Returns -1 if not found.')
+@Command(syntax='<variable> <entity-name>', types=VAR, desc='Gets the index for the first named entity found by that name. Returns -1 if not found.')
 def getentityindex(argv):
-  es.getentityindex(*argv)
+  sv[argv[0]] = es.getentityindex(*argv[1:])
 
-@Command(syntax='<variable> <userid> <propertypath>', desc='Gets a server class property for a particular player')
+@Command(syntax='<variable> <userid> <propertypath>', types=VAR, desc='Gets a server class property for a particular player')
 def getplayerprop(argv):
-  es.getplayerprop(*argv)
+  result = es.getplayerprop(*argv[1:])
+  if result is not None:
+    sv[argv[0]] = result
 
-@Command(syntax='<variable> <index> <propertypath>', desc='Gets a server class property for a particular entity index')
+@Command(syntax='<variable> <index> <propertypath>', types=VAR, desc='Gets a server class property for a particular entity index')
 def getindexprop(argv):
-  es.getindexprop(*argv)
+  result = es.getindexprop(*argv[1:])
+  if result is not None:
+    sv[argv[0]] = result
 
-@Command(syntax='[var] <modelpath>', desc='Precache a decal and return its index.')
+@Command(syntax='[var] <modelpath>', types=VAR, desc='Precache a decal and return its index.')
 def precachedecal(argv):
-  es.precachedecal(*argv)
+  if len(argv) > 1:
+    sv[argv[0]] = es.precachedecal(*argv[1:])
+  else:
+    es.precachedecal(*argv)
 
-@Command(syntax='[var] <modelpath>', desc='Precache a model and return its index.')
+@Command(syntax='[var] <modelpath>', types=VAR, desc='Precache a model and return its index.')
 def precachemodel(argv):
-  es.precachemodel(*argv)
+  if len(argv) > 1:
+    sv[argv[0]] = es.precachemodel(*argv[1:])
+  else:
+    es.precachemodel(*argv)
 
-@Command(syntax='<variable> <userid>', desc='Gets the handle for a player class property using an entity handle (Untested)')
+@Command(syntax='<variable> <userid>', types=VAR, desc='Gets the handle for a player class property using an entity handle (Untested)')
 def getplayerhandle(argv):
-  es.getplayerhandle(*argv)
+  sv[argv[0]] = es.getplayerhandle(*argv[1:])
 
 @Command(syntax='<userid> <name>', desc='Names the entity the player is looking at. (DOES NOT SET PLAYER NAME)')
 def entsetname(argv):
@@ -63,11 +75,11 @@ def remove(argv):
 
 @Command(desc='Dumps to the console all server classes.')
 def dumpserverclasses(argv):
-  es.dumpserverclasses(*argv)
+  es.dumpserverclasses()
 
 @Command(desc='Dumps to console all server classes and properties for all entities.')
 def dumpentities(argv):
-  es.dumpentities(*argv)
+  es.dumpentities()
 
 @Command(syntax='<stylenum> <stylestring>', desc='Set light style.')
 def lightstyle(argv):

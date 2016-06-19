@@ -350,7 +350,8 @@ def dumpconcommandbase():
     print('Total: {}\tCommands: {}\tVariables: {}'.format(
         command_count+convar_count, command_count, convar_count))
 
-def dumpentities():
+@command
+def dumpentities(argv):
     """Dumps to console all server classes and properties for all entities."""
     for entity in EntityIter():
         server_class = entity.server_class
@@ -361,7 +362,8 @@ def dumpentities():
                 entity.index, entity.classname, server_class.name)
         )
 
-def dumpserverclasses():
+@command
+def dumpserverclasses(argv):
     """Dumps to the console all server classes."""
     current = server_game_dll.all_server_classes
     while current:
@@ -425,18 +427,21 @@ def enable(*args):
     """Enables a script that has been loaded."""
     raise NotImplementedError
 
-def entcreate(userid, entity, *args):
+@command
+def entcreate(argv):
     """Creates an entity where a player is looking."""
     try:
-        player = Player.from_userid(atoi(userid))
+        player = Player.from_userid(atoi(argv[1]))
     except ValueError:
         return
 
+    entity = argv[2]
+    if not entity:
+        return
+
     with _last_give_enabled():
-        _exec_client_cheat_command(
-            player,
-            'ent_create {}'.format(entity, ' '.join(map(str, args))).rstrip()
-        )
+        _exec_client_cheat_command(player, 'ent_create {} {}'.format(
+            entity, ' '.join(argv.args[2:])))
 
 def entitygetvalue(index, value_name):
     """Get a value name for a given entity."""
@@ -446,14 +451,15 @@ def entitysetvalue(index, value_name, value):
     """Set a value name for a given entity."""
     BaseEntity(index).set_key_value_string(value_name, value)
 
-def entsetname(userid, targetname):
+@command
+def entsetname(argv):
     """Names the entity the player is looking at. (DOES NOT SET PLAYER NAME)"""
     try:
-        player = Player.from_userid(atoi(userid))
+        player = Player.from_userid(atoi(argv[1]))
     except ValueError:
         return
 
-    _exec_client_cheat_command(player, 'ent_setname {}'.format(targetname))
+    _exec_client_cheat_command(player, 'ent_setname {}'.format(argv[2]))
 
 def escinputbox(*args):
     """Sends an ESC input box to a player."""
@@ -549,16 +555,16 @@ def fadevolume(userid, percent, fadetime, holdtime, fadeintime):
     engine_server.fade_client_volume(
         edict, atof(percent), atof(fadetime), atof(holdtime), atof(fadeintime))
 
-def fire(userid, target, action='', value='', delay=''):
+@command
+def fire(argv):
     """Fires an entity trigger."""
     try:
-        player = Player.from_userid(atoi(userid))
+        player = Player.from_userid(atoi(argv[1]))
     except ValueError:
         return
 
-    command = 'ent_fire {} {} {} {}'.format(
-        target, action, value, delay).rstrip()
-    _exec_client_cheat_command(player, command)
+    _exec_client_cheat_command(
+        player, 'ent_fire {} {} {} {}'.format(argv.arg_string))
 
 def flags(action, flag_name, convar_name):
     """Adds or removes the cheat flag from a command or variable. (EXPERIMENTAL/UNSUPPORTED)"""
@@ -685,8 +691,10 @@ def getcmduserid():
     """Gets the commandstring passed to the current Valve console command."""
     return command_info.userid
 
-def getentityindex(classname):
+@command
+def getentityindex(argv):
     """Gets the index for the first named entity found by that name. Returns -1 if not found."""
+    classname = argv[1]
     entity = Entity.find(classname)
     return -1 if entity is None else entity.index
 
@@ -727,10 +735,15 @@ def getindexfromhandle(inthandle):
     except ValueError:
         return 0
 
-def getindexprop(index, prop):
+@command
+def getindexprop(argv):
     """Gets a server class property for a particular entity index"""
-    entity = BaseEntity(index)
-    prop_type, offset = _get_prop_info(prop)
+    try:
+        entity = BaseEntity(atoi(argv[1]))
+    except ValueError:
+        return
+
+    prop_type, offset = _get_prop_info(argv[2])
     if prop_type is None:
         return None
 
@@ -801,9 +814,13 @@ def getplayercount(argv):
 
     return count
 
-def getplayerhandle(userid):
+@command
+def getplayerhandle(argv):
     """Gets the handle for a player class property using an entity handle (Untested)"""
-    return Player.from_userid(atoi(userid)).inthandle
+    try:
+        return Player.from_userid(atoi(argv[0])).inthandle
+    except ValueError:
+        return 0
 
 @command
 def getplayerlocation(argv):
@@ -844,9 +861,21 @@ def getplayername(argv):
 
     return None
 
-def getplayerprop(userid, prop):
+@command
+def getplayerprop(argv):
     """Gets a server class property for a particular player"""
-    return getindexprop(index_from_userid(atoi(userid)), prop)
+    userid = atoi(argv[1])
+    if userid > 0:
+        try:
+            index = index_from_userid(atoi(userid))
+        except ValueError:
+            dbgmsg(0, 'Entity doesn\'t exist.')
+            return
+
+        return getindexprop(index, argv[2])
+
+    dbgmsg(0, 'ERROR: Userid must be greater than 0.')
+    _set_last_error('Invalid arguments')
 
 @command
 def getplayersteamid(argv):
@@ -878,11 +907,16 @@ def getuserid(*args):
     """Looks-up a userid based on the string provided. Checks it against a userid, steamid, exact name, and partial name. (Based on Mani's algorithm.)"""
     raise NotImplementedError
 
-def give(userid, entity):
+@command
+def give(argv):
     """Gives the player a named item."""
     try:
-        player = Player.from_userid(atoi(userid))
+        player = Player.from_userid(atoi(argv[1]))
     except ValueError:
+        return
+
+    entity = argv[2]
+    if not entity:
         return
 
     with _last_give_enabled(entity):
@@ -1056,9 +1090,13 @@ def keysetvalue(*args):
     """Sets a value within a given key (where the key could be free-floating or associated with a group)."""
     raise NotImplementedError
 
-def lightstyle(style, value):
+@command
+def lightstyle(argv):
     """Set light style."""
-    engine_server.light_style(int(style), value)
+    style = atoi(argv[1])
+    value = argv[2]
+    engine_server.light_style(style, value)
+    dbgmsg(1, 'Setting lightstyle: {}, {}'.format(style, value))
 
 def load(addon=None):
     """Loads a script or lists all loaded scripts if no script is provided."""
@@ -1142,17 +1180,20 @@ def playsound(userid, sound, volume=''):
         1
     )
 
-def precachedecal(modelpath):
+@command
+def precachedecal(argv):
     """Precache a decal and return its index."""
-    engine_server.precache_decal(modelpath)
+    return engine_server.precache_decal(argv[1])
 
-def precachemodel(modelpath):
+@command
+def precachemodel(argv):
     """Precache a model and return its index."""
-    engine_server.precache_model(modelpath)
+    return engine_server.precache_model(argv[1])
 
-def precachesound(soundpath):
+@command
+def precachesound(argv):
     """Precache sound."""
-    engine_server.precache_sound(soundpath)
+    engine_server.precache_sound(argv[1])
 
 def printmsg(*args):
     """Outputs a message to the console."""
@@ -1266,10 +1307,16 @@ def reload(addon):
     es.unloadModuleAddon(addon)
     es.loadModuleAddon(addon)
 
-def remove(entity):
+@command
+def remove(argv):
     """Removes an entity class"""
+    if len(argv) < 2:
+        dbgmsg(0, 'Syntax: es_xremove <entity>')
+        _set_last_error('Not enough arguments.')
+        return
+
     with _cheats_enabled():
-        ForceServerCommand('ent_remove {}'.format(entity))
+        ForceServerCommand('ent_remove {}'.format(argv[1]))
 
 def scriptpacklist(*args):
     """Lists the script packs running on the server. If a userid is provided, will es_tell the list to the user."""
@@ -1334,21 +1381,27 @@ def setentitypropoffset(index, offset, type, value):
         ptr.set_float(y, offset + 4)
         ptr.set_float(z, offset + 8)
 
-def setindexprop(index, prop, value):
+@command
+def setindexprop(argv):
     """Sets a server class property for the given entity index"""
-    entity = BaseEntity(atoi(index))
-    prop_type, offset = _get_prop_info(prop)
+    try:
+        entity = BaseEntity(atoi(argv[1]))
+    except ValueError:
+        return
+
+    prop_type, offset = _get_prop_info(argv[2])
     if prop_type is None:
         return None
 
+    value = argv[3]
     ptr = entity.pointer
     if prop_type == SendPropType.INT:
-        return ptr.set_int(int(value), offset)
+        ptr.set_int(atoi(value), offset)
 
-    if prop_type == SendPropType.FLOAT:
-        return ptr.set_float(int(value), offset)
+    elif prop_type == SendPropType.FLOAT:
+        ptr.set_float(atof(value), offset)
 
-    if prop_type == SendPropType.VECTOR:
+    elif prop_type == SendPropType.VECTOR:
         x, y, z = splitvectorstring(value)
         ptr.set_float(x, offset + 0)
         ptr.set_float(y, offset + 4)
@@ -1358,9 +1411,15 @@ def setinfo(name, value):
     """Adds a new server/global variable."""
     _set_convar(name, value)
 
-def setplayerprop(userid, prop, value):
+@command
+def setplayerprop(argv):
     """Sets a server class property for the given player"""
-    setindexprop(index_from_userid(atoi(userid)), prop, value)
+    try:
+        index = index_from_userid(atoi(argv[1]))
+    except ValueError:
+        pass
+    else:
+        setindexprop(index, argv[2], argv[3])
 
 def setpos(userid, *args):
     """Teleports a player."""
@@ -1407,9 +1466,18 @@ def spawnplayer(userid):
     """Spawn a player with the given userid."""
     Player.from_userid(atoi(userid)).spawn()
 
-def splitvectorstring(vectorstring):
+@command
+def splitvectorstring(argv):
     """Stores the vector's current x, y, and z as read from the vector in string form."""
-    return tuple(map(float, vectorstring.split(',')))
+    try:
+        result = tuple(map(float, argv[1].split(',')))
+    except ValueError:
+        return (0.0, 0.0, 0.0)
+
+    if len(result) != 3:
+        return (0.0, 0.0, 0.0)
+
+    return result
 
 def sql(*args):
     """Local database support"""
@@ -1450,15 +1518,13 @@ def toptext(*args):
     """Sends HUD message to one player."""
     raise NotImplementedError
 
-def trick(operation, *args):
+@command
+def trick(argv):
     """Miscellaneous tricky things."""
-    if len(args) == 0:
-        return
-
-    operation = operation.lower()
+    operation = argv[1].lower()
     if operation == 'greenblock':
         try:
-            player = Player.from_userid(atoi(args[0]))
+            player = Player.from_userid(atoi(argv[2]))
         except ValueError:
             return
 
@@ -1467,16 +1533,17 @@ def trick(operation, *args):
     elif operation == 'entity':
         with _last_give_enabled():
             with _cheats_enabled():
-                ForceServerCommand('Test_CreateEntity {}'.format(args[0]))
+                ForceServerCommand('Test_CreateEntity {}'.format(argv[2]))
 
     elif operation == 'dispatcheffect':
         try:
-            player = Player.from_userid(atoi(args[0]))
+            player = Player.from_userid(atoi(argv[2]))
         except ValueError:
             return
 
         _exec_client_cheat_command(
-            player, 'test_dispatcheffect {}'.format(' '.join(args[1:])))
+            player, 'test_dispatcheffect {} {} {} {}'.format(
+                argv[3], argv[4], argv[5], argv[6]).rstrip())
 
 def unload(addon):
     """Unloads a script that has been loaded."""
