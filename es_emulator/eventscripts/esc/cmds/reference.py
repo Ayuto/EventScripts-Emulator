@@ -12,15 +12,20 @@ def exists(argv):
 
 @Command(syntax='<varname> <userid>', desc='Stores the player\'s money value in a variable. (CS:S only)')
 def getmoney(argv):
-  raise NotImplementedError
+  arg_string = ' '.join(argv)
+  pre_parsed_command = 'es_xgetplayerprop {} CCSPlayer.m_iAccount'.format(arg_string)
+  es.dbgmsg(2, 'es_xgetmoney executing: {}'.format(pre_parsed_command))
+  es.InsertServerCommand(pre_parsed_command)
 
 @Command(syntax='<variable> [string]', desc='Looks-up a userid based on the string provided. Checks it against a userid, steamid, exact name, and partial name. (Based on Mani\'s algorithm.)')
 def getuserid(argv):
   es.getuserid(*argv)
 
-@Command(syntax='<var> <userid> <varname>', desc='Reads a console variable from a given player.')
+@Command(syntax='<var> <userid> <varname>', types=VAR, desc='Reads a console variable from a given player.')
 def getclientvar(argv):
-  es.getclientvar(*argv)
+  result = es.getclientvar(*argv[1:])
+  if result is not None:
+    sv[argv[0]] = result
 
 @Command(syntax='<keygroupname> [entity-class]', desc='Creates a keygroup for an entity class or for all entities.')
 def createentitylist(argv):
@@ -30,21 +35,29 @@ def createentitylist(argv):
 def createplayerlist(argv):
   es.createplayerlist(*argv)
 
-@Command(syntax='<var> [team number]', desc='Stores the count of players on the server into a variable. Optionally a team can be specified. Returns -1 on error.')
+@Command(syntax='<var> [team number]', types=VAR, desc='Stores the count of players on the server into a variable. Optionally a team can be specified. Returns -1 on error.')
 def getplayercount(argv):
-  es.getplayercount(*argv)
+  result = es.getplayercount(*argv[1:])
+  if result is not None:
+    sv[argv[0]] = result
 
-@Command(syntax='<var> [team number]', desc='Stores the count of living players on the server into a variable. Optionally a team can be specified. Returns -1 on error.')
+@Command(syntax='<var> [team number]', types=VAR, desc='Stores the count of living players on the server into a variable. Optionally a team can be specified. Returns -1 on error.')
 def getlivingplayercount(argv):
-  es.getlivingplayercount(*argv)
+  result = es.getlivingplayercount(*argv[1:])
+  if result is not None:
+    sv[argv[0]] = result
 
-@Command(syntax='<var>', desc='Stores the maximum number of player slots the server allows.')
+@Command(syntax='<var>', types=VAR, desc='Stores the maximum number of player slots the server allows.')
 def getmaxplayercount(argv):
-  es.getmaxplayercount(*argv)
+  sv[argv[0]] = es.getmaxplayercount(*argv[1:])
 
-@Command(syntax='<var forwardmove> <var sidemove> <var upmove> <userid>', desc='Stores the player\'s current forward movement value, side movement value, and upward movement value (in 3 different variables).')
+@Command(syntax='<var forwardmove> <var sidemove> <var upmove> <userid>', types=(VAR, VAR, VAR), desc='Stores the player\'s current forward movement value, side movement value, and upward movement value (in 3 different variables).')
 def getplayermovement(argv):
-  es.getplayermovement(*argv)
+  result = es.getplayermovement(*argv[3:])
+  if result is not None:
+    sv[argv[0]] = result[0]
+    sv[argv[1]] = result[1]
+    sv[argv[2]] = result[2]
 
 @Command(syntax='<var x> <var y> <var z> <userid>', desc='Stores the player\'s current x, y, and z location (in 3 different variables).')
 def getplayerlocation(argv):
@@ -72,9 +85,9 @@ def getplayerteam(argv):
 def createscriptlist(argv):
   pass
 
-@Command(syntax='<variable>', desc='Returns the name of the Source game being played.')
+@Command(syntax='<variable>', types=VAR, desc='Returns the name of the Source game being played.')
 def getgame(argv):
-  es.getgame(*argv)
+  sv[argv[0]] = es.getgame(*argv[1:])
 
 @Command(syntax='<userid> <variable-name>', desc='Sends a request to query a client\'s console variable.')
 def queryclientvar(argv):

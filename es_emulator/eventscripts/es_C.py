@@ -668,15 +668,18 @@ def getargv(index):
     """Gets the command parameter passed to the current ES console command."""
     return command_info.get_argv(index)
 
-def getclientvar(userid, var_name):
+@command
+def getclientvar(argv):
     """Reads a console variable from a given player."""
+    userid = argv[1]
     try:
         index = index_from_userid(atoi(userid))
     except ValueError:
         dbgmsg(0, 'userid not found: {}'.format(userid))
+        _set_last_error('Userid not valid')
         return
 
-    return engine_server.get_client_convar_value(var_name)
+    return engine_server.get_client_convar_value(index, argv[2]) or ''
 
 def getcmduserid():
     """Gets the commandstring passed to the current Valve console command."""
@@ -701,7 +704,8 @@ def getentitypropoffset(index, offset, prop_type):
 
     return None
 
-def getgame():
+@command
+def getgame(argv):
     """Returns the name of the Source game being played."""
     return server_game_dll.game_description
 
@@ -745,8 +749,19 @@ def getindexprop(index, prop):
 
     return None
 
-def getlivingplayercount(team=None):
+@command
+def getlivingplayercount(argv):
     """Stores the count of living players on the server into a variable. Optionally a team can be specified. Returns -1 on error."""
+    if len(argv) < 1 or len(argv) > 2:
+        dbgmsg(0, 'Syntax: es_xgetplayercount <var> [team number]')
+        _set_last_error('Not enough arguments.')
+        return
+
+    if len(argv) == 0:
+        team = None
+    else:
+        team = atoi(argv[1])
+
     count = 0
     for player in PlayerIter():
         if _is_dead(player):
@@ -759,12 +774,24 @@ def getlivingplayercount(team=None):
 
     return count
 
-def getmaxplayercount():
+@command
+def getmaxplayercount(argv):
     """Stores the maximum number of player slots the server allows."""
     return global_vars.max_clients
 
-def getplayercount(team):
+@command
+def getplayercount(argv):
     """Stores the count of players on the server into a variable. Optionally a team can be specified. Returns -1 on error."""
+    if len(argv) < 1 or len(argv) > 2:
+        dbgmsg(0, 'Syntax: es_xgetplayercount <var> [team number]')
+        _set_last_error('Not enough arguments.')
+        return
+
+    if len(argv) == 0:
+        team = None
+    else:
+        team = atoi(argv[1])
+
     count = 0
     for player in PlayerIter():
         if team is None:
@@ -782,10 +809,15 @@ def getplayerlocation(userid):
     """Stores the player's current x, y, and z location (in 3 different variables or a 3-tuple in Python)."""
     return tuple(Player.from_userid(atoi(userid)).origin)
 
-def getplayermovement(userid):
+@command
+def getplayermovement(argv):
     """Stores the player's current forward movement value, side movement value, and upward movement value (in 3 different variables or Python 3-tuple)."""
-    bcmd = Player.from_userid(atoi(userid)).last_user_command
-    return (bcmd.forward_move, bcmd.side_move, bcmd.up_move)
+    try:
+        bcmd = Player.from_userid(atoi(argv[1])).playerinfo.last_user_command
+    except ValueError:
+        return None
+
+    return bcmd and (bcmd.forward_move, bcmd.side_move, bcmd.up_move)
 
 @command
 def getplayername(argv):
