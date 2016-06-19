@@ -284,19 +284,21 @@ def createscriptlist(scriptname=None):
     """Creates a new keygroup containing the current list of players."""
     raise NotImplementedError
 
-def createvectorfrompoints(a, b):
+@command
+def createvectorfrompoints(argv):
     """Creates a vector-string that goes from point/vector A to point/vector B."""
-    vec1 = splitvectorstring(a)
-    vec2 = splitvectorstring(b)
+    vec1 = splitvectorstring(argv[1])
+    vec2 = splitvectorstring(argv[2])
     return createvectorstring(
         vec2[0] - vec1[0],
         vec2[1] - vec1[1],
         vec2[2] - vec1[2]
     )
 
-def createvectorstring(x, y, z):
+@command
+def createvectorstring(argv):
     """Creates a string form of three x y z variables representing a vector."""
-    return '{},{},{}'.format(x, y, z)
+    return '{},{},{}'.format(atof(argv[1]), atof(argv[2]), atof(argv[3]))
 
 def dbgmsg(level, *args):
     """Outputs a message to the console."""
@@ -717,7 +719,8 @@ def getgame(argv):
     """Returns the name of the Source game being played."""
     return server_game_dll.game_description
 
-def getgravityvector(*args):
+@command
+def getgravityvector(argv):
     """Returns the gravity vector."""
     raise NotImplementedError
 
