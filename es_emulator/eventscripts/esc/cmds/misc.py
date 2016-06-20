@@ -142,7 +142,7 @@ def _get_stack_length(argv):
       var_name = argv[1]
       var = cvar.find_var(var_name)
       if var is not None:
-        var.set_string(len(stack))
+        var.set_string(str(len(stack)))
       else:
         es.dbgmsg(0, 'The var "{}" could not be set'.format(var_name))
 
