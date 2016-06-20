@@ -37,6 +37,7 @@ from .cvars import botcexec_cvar
 from .cvars import deadflag_cvar
 from .cvars import lastgive_cvar
 from .cvars import error_cvar
+from .cvars import escape_cvar
 
 
 # =============================================================================
@@ -113,8 +114,17 @@ class PyCommand(Command):
 def command(func):
     # TODO: Add all decorated functions to __all__
     def wrapper(*args):
+        buffer = 'es_x{}'.format(func.__name__)
+        for arg in args:
+            arg = str(arg)
+            buffer += ' '
+            if any(x in arg for x in escape_cvar.get_string()) or '//' in arg:
+                buffer += '"{}"'.format(arg)
+            else:
+                buffer += arg
+
         c = PyCommand()
-        c.tokenize('es_x{} {}'.format(func.__name__, ' '.join(map(str, args))))
+        c.tokenize(buffer)
         import es
         es.dbgmsg(5, 'Command: {} {};'.format(c[0], c.arg_string))
         return func(c)
@@ -126,7 +136,7 @@ def command(func):
 # =============================================================================
 def _set_last_error(msg):
     error_cvar.set_string(msg)
-    
+
 
 # =============================================================================
 # >> CONVAR HELPERS

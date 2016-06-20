@@ -55,12 +55,6 @@ datadir_cvar = ConVar(
     'Specifies an alternate directory for output files.'
 )
 
-escape_cvar = ConVar(
-    'eventscripts_escapechars',
-    '; {}()\':',
-    'Lists the characters for that cause variable expansion to require quotes to prevent parsing issues. (Leave this alone unless you know what you\'re doing.)'
-)
-
 execmd_cvar = ConVar(
     'eventscripts_exec-cmd',
     'exec',
@@ -244,6 +238,12 @@ timeformat_cvar = ConVar(
     'eventscripts_timeformat',
     '%Y-%m-%d %H:%M:%S (%Z)',
     'Format for time strings retrieved by es_gettimestring.'
+)
+
+escape_cvar = ConVar(
+    'eventscripts_escapechars',
+    '; {}()\':',
+    'Lists the characters for that cause variable expansion to require quotes to prevent parsing issues. (Leave this alone unless you know what you\'re doing.)'
 )
 
 
