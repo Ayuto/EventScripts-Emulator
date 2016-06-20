@@ -55,7 +55,7 @@ def math_bench():
             a = 5;
         a = c + (28/a) - c;
     StopProfiling(g_Prof);
-    print "int benchmark: %f seconds" % GetProfilerTime(g_Prof)
+    print("int benchmark: %f seconds" % GetProfilerTime(g_Prof))
     StartProfiling(g_Prof)	
     fa = 0.0
     fb = 0.0
@@ -82,7 +82,7 @@ def math_bench():
             fa = 5.0
         fa = fc + (float(28)/fa) - math.floor(fc);
     StopProfiling(g_Prof)
-    print "float benchmark : %f seconds" % GetProfilerTime(g_Prof)
+    print("float benchmark : %f seconds" % GetProfilerTime(g_Prof))
 
 key1 = "LVWANBAGVXSXUGB"
 key2 = "IDYCVNWEOWNND"
@@ -104,7 +104,7 @@ def string_bench():
         buffer = buffer + "There are %d in this %d" % (i, len(buffer))
         buffer = buffer +  "There are %d in this %d" % (i, len(buffer))
     StopProfiling(g_Prof);
-    print "format() benchmark: %f seconds" % GetProfilerTime(g_Prof)
+    print("format() benchmark: %f seconds" % GetProfilerTime(g_Prof))
 
     fmtbuf = "4567899"
     StartProfiling(g_Prof);
@@ -113,7 +113,7 @@ def string_bench():
         i = i -1
         int(fmtbuf)
     StopProfiling(g_Prof);
-    print "str benchmark: %f seconds" % GetProfilerTime(g_Prof)
+    print("str benchmark: %f seconds" % GetProfilerTime(g_Prof))
 
 
     StartProfiling(g_Prof);
@@ -125,7 +125,7 @@ def string_bench():
         fmtbuf = fmtbuf.replace("SDF", "")
         fmtbuf = fmtbuf.replace("string", "gnirts")
     StopProfiling(g_Prof);
-    print "replace benchmark: %f seconds" % GetProfilerTime(g_Prof)
+    print("replace benchmark: %f seconds" % GetProfilerTime(g_Prof))
 
 import random
 import types
@@ -148,16 +148,16 @@ def dictlike_bench(typ, num):
     if typ == keyvalues.KeyValues:
       itertarget = src
     else:
-      itertarget = src.values()
+      itertarget = list(src.values())
     for item in itertarget:
       val = item["top"]
       if val > top:
         top = val
     StopProfiling(g_Prof);
-    print "%s benchmark: %f seconds" % (typ, GetProfilerTime(g_Prof))
+    print("%s benchmark: %f seconds" % (typ, GetProfilerTime(g_Prof)))
 
 def dict_bench():
-  dictlike_bench(types.DictType, 10000)
+  dictlike_bench(dict, 10000)
   
 def keyalues_bench():
   dictlike_bench(keyvalues.KeyValues, 10000)

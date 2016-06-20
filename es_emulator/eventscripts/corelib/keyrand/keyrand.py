@@ -24,9 +24,9 @@ def keyrand_cmd(args):
         if es.exists('keygroup', keygroup):
             kv = keyvalues.getKeyGroup(keygroup)
             if not len(args) > 2:
-                es.ServerVar(args[0]).set(str(random.choice(kv.keys())))
+                es.ServerVar(args[0]).set(str(random.choice(list(kv.keys()))))
             elif es.exists('key', keygroup, args[2]):
-                es.ServerVar(args[0]).set(str(random.choice(kv[args[2]].keys())))
+                es.ServerVar(args[0]).set(str(random.choice(list(kv[args[2]].keys()))))
             else:
                 es.dbgmsg(0, 'keyrand: Invalid key for keygroup "%s" provided: %s' % (keygroup, args[2]))
         else:

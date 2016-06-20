@@ -114,7 +114,7 @@ def func_steamid(args):
 
 def func_playerprop(args):
     temp = '0'
-    exec 'temp = es.getplayerprop(' + pythonargs(args, 2) + ')'
+    exec('temp = es.getplayerprop(' + pythonargs(args, 2) + ')')
     return temp
 
 def func_string(args):
@@ -159,7 +159,7 @@ def func_sv(args):
 
 def func_indexprop(args):
     temp = '0'
-    exec 'temp = es.getindexprop(' + pythonargs(args, 2) + ')'
+    exec('temp = es.getindexprop(' + pythonargs(args, 2) + ')')
     return temp
 
 def func_playerzloc(args):

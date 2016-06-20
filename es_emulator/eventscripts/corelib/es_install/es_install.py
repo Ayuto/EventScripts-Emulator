@@ -5,7 +5,7 @@ import es
 import esamlib
 import installlib
 import os.path
-import StringIO
+import io
 import time
 
 import psyco
@@ -112,7 +112,7 @@ def install_cmd(args):
    elif not argc:
       addonlist = installlib.infomanager.getInstalled()
       if addonlist:
-         maxlength = max(map(len, addonlist))
+         maxlength = max(list(map(len, addonlist)))
 
          es.dbgmsg(0, ' %s   Autoloaded\n %s   ----------' % ('Basename'.ljust(maxlength), '--------'.ljust(maxlength)))
          for addon in addonlist:
@@ -168,7 +168,7 @@ def uninstall_cmd(args):
    """
    if len(args) == 1:
       basename  = args[0]
-      installer = installlib.getInstaller(basename, StringIO.StringIO())
+      installer = installlib.getInstaller(basename, io.StringIO())
 
       status = installer.uninstall()
       if status == installer.STATUS_SUCCESSFUL:

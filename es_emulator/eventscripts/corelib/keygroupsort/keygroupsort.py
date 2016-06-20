@@ -20,41 +20,41 @@ def keygroupsort_cmd(args):
             dc = {}
             kv = keyvalues.getKeyGroup(keygroup)
             sortfield = args[1]
-            if es.exists('keyvalue', keygroup, kv.keys()[0], sortfield) or keygroup == sortfield:
+            if es.exists('keyvalue', keygroup, list(kv.keys())[0], sortfield) or keygroup == sortfield:
                 if len(args) > 3:
                     sortorder = 'asc' if args[2].lower() == 'asc' else 'des'
                     sorttype = '#alpha' if args[3].lower() == '#alpha' else '#numeric'
                 else:
                     sortorder = 'des'
                     sorttype = '#numeric'
-                for key in kv.keys():
+                for key in list(kv.keys()):
                     dc[key] = {}
-                    for keyvalue in kv[key].keys():
+                    for keyvalue in list(kv[key].keys()):
                         dc[key][keyvalue] = kv[key][keyvalue]
                 if keygroup == sortfield:
                     if sortorder == 'asc' and sorttype == '#alpha':
                         keylist = sorted(dc.keys())
                     elif sortorder == 'des' and sorttype == '#alpha':
-                        keylist = sorted(dc.keys(), reverse=True)
+                        keylist = sorted(list(dc.keys()), reverse=True)
                     elif sortorder == 'asc' and sorttype == '#numeric':
-                        keylist = sorted(dc.keys(), key=lambda x: int(x) if str(x).isdigit() else x)
+                        keylist = sorted(list(dc.keys()), key=lambda x: int(x) if str(x).isdigit() else x)
                     else:
-                        keylist = sorted(dc.keys(), key=lambda x: int(x) if str(x).isdigit() else x, reverse=True)
+                        keylist = sorted(list(dc.keys()), key=lambda x: int(x) if str(x).isdigit() else x, reverse=True)
                 else:
                     if sortorder == 'asc' and sorttype == '#alpha':
-                        keylist = map(lambda x: x[0], sorted(dc.items(), key=lambda x: x[1][sortfield]))
+                        keylist = [x[0] for x in sorted(list(dc.items()), key=lambda x: x[1][sortfield])]
                     elif sortorder == 'des' and sorttype == '#alpha':
-                        keylist = map(lambda x: x[0], sorted(dc.items(), key=lambda x: x[1][sortfield], reverse=True))
+                        keylist = [x[0] for x in sorted(list(dc.items()), key=lambda x: x[1][sortfield], reverse=True)]
                     elif sortorder == 'asc' and sorttype == '#numeric':
-                        keylist = map(lambda x: x[0], sorted(dc.items(), key=lambda x: int(x[1][sortfield]) if str(x[1][sortfield]).isdigit() else x[1][sortfield]))
+                        keylist = [x[0] for x in sorted(list(dc.items()), key=lambda x: int(x[1][sortfield]) if str(x[1][sortfield]).isdigit() else x[1][sortfield])]
                     else:
-                        keylist = map(lambda x: x[0], sorted(dc.items(), key=lambda x: int(x[1][sortfield]) if str(x[1][sortfield]).isdigit() else x[1][sortfield], reverse=True))
+                        keylist = [x[0] for x in sorted(list(dc.items()), key=lambda x: int(x[1][sortfield]) if str(x[1][sortfield]).isdigit() else x[1][sortfield], reverse=True)]
                 # Let's re-create our keygroup with classic ES commands 
                 es.keygroupdelete(keygroup)
                 es.keygroupcreate(keygroup)
                 for key in keylist:
                     es.keycreate(keygroup, key)
-                    for keyvalue in dc[key].keys():
+                    for keyvalue in list(dc[key].keys()):
                         es.keysetvalue(keygroup, key, keyvalue, dc[key][keyvalue])
             else:
                 es.dbgmsg(0, 'keygroupsort: Invalid field to sort provided: %s' % sortfield)

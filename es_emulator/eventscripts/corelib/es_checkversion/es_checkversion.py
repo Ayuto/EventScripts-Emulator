@@ -1,7 +1,7 @@
 # Copyright 2010, EventScripts Development Team
 #   Prototyped by freddukes, updated by Mattie and the team.
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 import es
 import cmdlib
@@ -59,15 +59,15 @@ class Connection(object):
         try:
             if self.data is not None:
                 formattedData = ""
-                for key, value in self.data.iteritems():
+                for key, value in self.data.items():
                     formattedData += "%s=%s&" % (key, value)
                 formattedData = formattedData[:-1]
-                self.connection = urllib2.urlopen(self.url, formattedData)
+                self.connection = urllib.request.urlopen(self.url, formattedData)
             else:
-                self.connection = urllib2.urlopen(self.url)
+                self.connection = urllib.request.urlopen(self.url)
             self.status = self.__class__.CONNECTED
             return self.connection
-        except Exception, e:
+        except Exception as e:
             # An error occured, pass it to debug message to be logged.
             error = "[EventScripts] ERROR: Cannot retrieve data from the url: %s"
             es.dbgmsg(1, error % self.url)

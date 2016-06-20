@@ -8,14 +8,14 @@ def load():
 def vectors():
     y = es.createvectorstring(3.5,4.5,6.8)
     if y != "3.500000,4.500000,6.800000":
-        print "failed",y
+        print("failed",y)
     else:
-        print "success1",y
+        print("success1",y)
     z = es.splitvectorstring(y)
     if z[0] != 3.5 or z[1] != 4.5 or round(z[2],1) != 6.8:
-        print "failed2",z
+        print("failed2",z)
     else:
-        print "success2",z
+        print("success2",z)
 
 def cmdtest():
     cmdtest_register()
@@ -26,4 +26,4 @@ def cmdtest_register():
     
 def cmdtest_run():
     es.set("cmdtest_pass2", 1)
-    print "cmdtest()"
+    print("cmdtest()")

@@ -4,7 +4,7 @@ import es
 
 
 def load():
-  print "msgtests loaded, waiting for player to say !go"
+  print("msgtests loaded, waiting for player to say !go")
   
   
 def player_say(event_var):
@@ -29,7 +29,7 @@ def player_say(event_var):
     kv["color"] = "255 255 0 255"
     kv["time"] = 20
     for x in kv:
-      print x.getName(), kv[x.getName()]
+      print(x.getName(), kv[x.getName()])
     msglib.sendVguiDialog(event_var['userid'], msglib.VguiType.TEXT, kv)
 
     

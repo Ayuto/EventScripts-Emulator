@@ -33,11 +33,11 @@ def keyfilter_cmd(args):
                     else:
                         keyfiltervalue = None
                     if action == 'not':
-                        for keyvar in kv[key].keys():
+                        for keyvar in list(kv[key].keys()):
                             if keyfiltervar in keyvar and (str(kv[key][keyvar]) == keyfiltervalue or not keyfiltervalue):
                                 keyfilterlist.append(keyvar)
                     elif action == 'only':
-                        for keyvar in kv[key].keys():
+                        for keyvar in list(kv[key].keys()):
                             if not keyfiltervar in keyvar or (str(kv[key][keyvar]) != keyfiltervalue and keyfiltervalue):
                                 keyfilterlist.append(keyvar)
                     for keyvar in keyfilterlist:

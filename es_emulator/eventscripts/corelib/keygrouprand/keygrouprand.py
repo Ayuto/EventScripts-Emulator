@@ -27,25 +27,25 @@ def keygrouprand_cmd(args):
                 if len(args) > 2 and args[2].isdigit():
                     keylimit = int(args[2])
                 else:
-                    keylimit = len(kv.keys())
-                for key in kv.keys():
+                    keylimit = len(list(kv.keys()))
+                for key in list(kv.keys()):
                     dc[key] = {}
-                    for keyvalue in kv[key].keys():
+                    for keyvalue in list(kv[key].keys()):
                         dc[key][keyvalue] = kv[key][keyvalue]
                 if target == '#all' or target == '#key':
-                    keylist = random.sample(dc.keys(), keylimit)
+                    keylist = random.sample(list(dc.keys()), keylimit)
                 else:
-                    keylist = dc.keys()[:keylimit]
+                    keylist = list(dc.keys())[:keylimit]
                 # Let's re-create our keygroup with classic ES commands 
                 es.keygroupdelete(keygroup)
                 es.keygroupcreate(keygroup)
                 for key in keylist:
                     es.keycreate(keygroup, key)
                     if target == '#all' or target == '#keyvalue':
-                        for keyvalue in random.sample(dc[key].keys(), len(dc[key])):
+                        for keyvalue in random.sample(list(dc[key].keys()), len(dc[key])):
                             es.keysetvalue(keygroup, key, keyvalue, dc[key][keyvalue])
                     else:
-                        for keyvalue in dc[key].keys():
+                        for keyvalue in list(dc[key].keys()):
                             es.keysetvalue(keygroup, key, keyvalue, dc[key][keyvalue])
             else:
                 es.dbgmsg(0, 'keygrouprand: Invalid target provided: %s' % target)

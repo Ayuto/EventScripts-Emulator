@@ -12,7 +12,7 @@ info.author   = "Mattie"
 pytests = unittest.TestSuite()
 
 def addTestCase(testcase):
-    print "[Tests] Adding testcase: ", testcase.__name__
+    print("[Tests] Adding testcase: ", testcase.__name__)
     ldr = unittest.TestLoader()
     pytests.addTests(ldr.loadTestsFromTestCase(testcase)._tests)
 
@@ -106,7 +106,7 @@ def cmdtest_run():
     es.set("cmdtest_pass", es.getargv(1))
     #print "cmdtest(), args: %s, argc: %d" % (es.getargs(), es.getargc())
     if es.getargc() != 2:
-      print "cmdtest0_failed,", es.getargc()
+      print("cmdtest0_failed,", es.getargc())
     es.doblock("pyunittest/cmdtest_block")
 
 def cmdtest_block():

@@ -91,9 +91,12 @@ def ForceServerCommand(command_str):
     if not c.tokenize(command_str):
         return 1
 
-    command = cvar.find_command(c[0])
-    if command:
-        command.dispatch(c)
+    con_command = cvar.find_command(c[0])
+    if con_command:
+        try:
+            con_command.dispatch(c)
+        except Exception as e:
+            raise Exception(e, con_command.name, c)
     else:
         convar = cvar.find_var(c[0])
         if convar:
@@ -341,6 +344,8 @@ def dbgmsg(level, msg):
     """Outputs a message to the console."""
     # TODO: Create a proper implementation
     print(level, msg)
+    with open('es.log', 'a') as f:
+        f.write('{:02d}: {}\n'.format(level, msg))
 
 def dbgmsgv(level, convar_name):
     """Prints a debug message for EventScripts"""
@@ -1595,9 +1600,18 @@ def setview(argv):
     print(player_edict.classname, view_edict.classname)
     engine_server.set_view(player_edict, view_edict)
 
-def sexec(userid, commandstring):
+@command
+def sexec(argv):
     """Forces a userid to execute a command on the server console (bypassing client console)."""
-    Player.from_userid(atoi(userid)).client_command(commandstring, True)
+    if 'jointeam' not in argv.arg_string:
+        try:
+            player = Player.from_userid(atoi(argv[1]))
+        except ValueError:
+            return
+
+        player.client_command(argv.arg_string[len(argv[1]):].lstrip(), True)
+    else:
+        dbgmsg(0, 'jointeam not supported on bots')
 
 def sexec_all(commandstring):
     """Forces all users to execute a command on the server console."""

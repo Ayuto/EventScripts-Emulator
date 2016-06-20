@@ -95,10 +95,10 @@ def services_proxy():
     responsevar = None
     if service=="auth":
       # fix the case of the function
-      for caser in returnvarlist.keys():
+      for caser in list(returnvarlist.keys()):
         if caser.lower() == function.lower():
           function = caser
-      responsevarn = returnvarlist[function] if returnvarlist.has_key(function) else 0
+      responsevarn = returnvarlist[function] if function in returnvarlist else 0
       if responsevarn:
         responsevar = es.ServerVar(es.getargv(responsevarn))
     
