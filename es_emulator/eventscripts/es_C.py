@@ -1618,6 +1618,7 @@ def sexec_all(commandstring):
     for player in PlayerIter():
         player.client_command(commandstring, True)
 
+# Pure Python function
 def showMenu(duration, userid, msg, options=''):
     """Sends an AMX-Style menu to the users"""
     userid = int(userid)
@@ -1638,17 +1639,33 @@ def showMenu(duration, userid, msg, options=''):
         -1 if duration == 0 else duration
     ).send(index)
 
-def soon(commandstring):
+@command
+def soon(argv):
     """Adds a command to the end of the command queue."""
-    engine_server.server_command(commandstring)
+    engine_server.server_command(argv.arg_string)
 
-def spawnentity(entity_index):
+@command
+def spawnentity(argv):
     """Spawn a given entity index."""
-    BaseEntity(entity_index).spawn()
+    index = atoi(argv[1])
+    try:
+        BaseEntity(index).spawn()
+    except ValueError:
+        es.dbgmsg(0, 'Could not spawn entity: {}'.format(index))
 
-def spawnplayer(userid):
+@command
+def spawnplayer(argv):
     """Spawn a player with the given userid."""
-    Player.from_userid(atoi(userid)).spawn()
+    userid = argv[1]
+    try:
+        index = index_from_userid(atoi(userid))
+    except ValueError:
+        es.dbgms(0, 'Could not spawn userid: {}'.format(userid))
+    else:
+        try:
+            BaseEntity(index).spawn()
+        except ValueError:
+            es.dbgmsg(0, 'Could not spawn entity: {}'.format(index))
 
 @command
 def splitvectorstring(argv):
