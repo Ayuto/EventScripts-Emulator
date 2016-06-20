@@ -4,11 +4,7 @@ from . import Command
 
 @Command(syntax='<var> <type> [optional] [optional] <name-to-check>', types=VAR, desc='Checks whether a keygroup, keys, variable, or function exists.')
 def exists(argv):
-  var = argv[0]
-  if argv[1] == 'variable':
-    sv[var] = int(sv.exists(argv[2]))
-  else:
-    sv[var] = int(es.exists(*argv[1:]))
+  sv[argv[0]] = es.exists(*argv[1:])
 
 @Command(syntax='<varname> <userid>', desc='Stores the player\'s money value in a variable. (CS:S only)')
 def getmoney(argv):
