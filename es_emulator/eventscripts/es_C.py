@@ -126,19 +126,19 @@ def ServerCommand(command_str):
 
 def _disable(*args):
     """EventScripts internal command."""
-    raise NotImplementedError
+    # No need to implement
 
 def _foreachkey(*args):
     """EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name."""
-    raise NotImplementedError
+    # No need to implement
 
 def _foreachval(*args):
     """EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name."""
-    raise NotImplementedError
+    # No need to implement
 
 def _unload(*args):
     """EventScripts internal command."""
-    raise NotImplementedError
+    # No need to implement
 
 @command
 def botsetvalue(argv):
@@ -156,13 +156,17 @@ def botsetvalue(argv):
         dbgmsg(1, 'Set client var: {}, {} = {}'.format(
             userid, convar_name, value))
 
-def centermsg(msg):
+@command
+def centermsg(argv):
     """Broadcasts a centered HUD message to all players."""
-    TextMsg(msg).send()
+    TextMsg(argv.arg_string).send()
 
-def centertell(userid, msg):
+@command
+def centertell(argv):
     """Sends a centered HUD message to all players."""
-    userid = atoi(userid)
+    str_userid = argv[1]
+    userid = atoi(str_userid)
+    msg = argv.arg_string[len(str_userid)+1]
     if userid > 0:
         try:
             index = index_from_userid(userid)
@@ -173,30 +177,34 @@ def centertell(userid, msg):
     else:
         centermsg(msg)
 
-def cexec(userid, command_str):
+@command
+def cexec(argv):
     """Forces a userid to execute a command in their console."""
+    userid = argv[1]
     try:
         player = Player.from_userid(atoi(userid))
     except ValueError:
         return
 
-    _cexec(player, command_str)
+    _cexec(player, argv.arg_string[len(userid)+1])
 
-def cexec_all(command_str):
+@command
+def cexec_all(argv):
     """Forces all users to execute a command in their console."""
     for player in PlayerIter():
-        _cexec(player, command_str)
+        _cexec(player, argv.arg_string)
 
-def changeteam(userid, team):
+@command
+def changeteam(argv):
     """Changes the team of the player."""
-    userid = atoi(userid)
+    userid = atoi(argv[1])
     try:
         player = Player.from_userid(userid)
     except ValueError:
         dbgmsg(0, 'Player doesn\'t exist: {}'.format(userid))
         return
 
-    player.team = atoi(team)
+    player.team = atoi(argv[2])
 
 # Pure Python function
 def cmdargc(*args):
@@ -227,10 +235,32 @@ def commandv(argv):
         dbgmsg(0,'ERROR: variable {} does not exist.'.format(name))
         _set_last_error('Variable does not exist')
 
-def copy(var1_name, var2_name):
+@command
+def copy(argv):
     """Reads the server variable referenced by varname2 and copies it into the variable referenced by varname."""
-    var1 = cvar.find_var(var1_name)
+    if len(argv) != 3:
+        dbgmsg(0, 'Syntax: es_xcopy <varname> <varname2>')
+        _set_last_error('Not enough arguments.')
+        return
+
+    var1_name = argv[1]
+    var2_name = argv[2]
+    if var1_name == '' or var2_name == '':
+        dbgmsg(0, 'Specify a variable!')
+        _set_last_error('Not enough arguments.')
+        return
+
+
     var2 = cvar.find_var(var2_name)
+    if var2 is None:
+        dbgmsg(0, 'The var "{}" could not be found'.format(var2_name))
+        return
+
+    var1 = cvar.find_var(var1_name)
+    if var1 is None:
+        dbgmsg(0, 'The var "{}" could not be set.'.format(var1_name))
+        return
+
     var1.set_string(var2.get_string())
 
 @command
@@ -250,19 +280,20 @@ def createentity(argv):
 
     return entity.index
 
-def createentityindexlist(classname=None):
+@command
+def createentityindexlist(argv):
     """Creates a keygroup (or dictionary) of all indexes for an entity class or for all entities."""
-    # TODO: Validate if this is the correct structure
     result = {}
-    for entity in EntityIter(classname):
+    for entity in EntityIter(argv[1]):
         result[entity.index] = entity.classname
 
     return result
 
-def createentitylist(classname=None):
+@command
+def createentitylist(argv):
     """Creates a keygroup (or dictionary) for an entity class or for all entities."""
     result = {}
-    for entity in EntityIter(classname):
+    for entity in EntityIter(argv[1]):
         temp = result[entity.index] = {}
         temp['classname'] = entity.classname
         temp['handle'] = entity.inthandle
@@ -270,12 +301,13 @@ def createentitylist(classname=None):
 
     return result
 
-def createplayerlist(userid=None):
+@command
+def createplayerlist(argv):
     """Creates a new keygroup containing the current list of players."""
-    if userid is None:
+    if len(argv) == 1:
         players = PlayerIter()
     else:
-        players = [Player.from_userid(atoi(userid))]
+        players = [Player.from_userid(atoi(argv[1]))]
 
     result = {}
     for player in players:
@@ -347,26 +379,35 @@ def dbgmsg(level, msg):
     with open('es.log', 'a') as f:
         f.write('{:02d}: {}\n'.format(level, msg))
 
-def dbgmsgv(level, convar_name):
+@command
+def dbgmsgv(argv):
     """Prints a debug message for EventScripts"""
+    convar_name = argv[2]
     convar = cvar.find_var(convar_name)
     if convar is not None:
-        dbgmsg(level, convar.get_string())
+        dbgmsg(atoi(argv[1]), convar.get_string())
     else:
         dbgmsg(0, 'ERROR: variable {} does not exist.'.format(convar_name))
 
-def delayed(delay, commandstring):
+@command
+def delayed(argv):
     """Will run <commandstring>, after <seconds> seconds."""
-    Delay(delay, engine_server.server_command, commandstring)
+    if len(argv) != 3:
+        command_string = argv.arg_string[len(argv[1]):]
+    else:
+        command_string = argv[2]
+
+    Delay(atof(argv[1]), engine_server.server_command, command_string)
 
 def disable(*args):
     """Disables a script that has been loaded."""
-    raise NotImplementedError
+    # No need to implement
 
-def doblock(blockname):
+@command
+def doblock(argv):
     """Executes a block."""
     import es
-    es.addons.callBlock(blockname)
+    es.addons.callBlock(argv.arg_string)
 
 def dosql(*args):
     """Does some SQL."""
@@ -433,13 +474,14 @@ def dumpserverclasses(argv):
 
         current = current.next
 
-def dumpstringtable(table_name, path):
+@command
+def dumpstringtable(argv):
     """Outputs a specific string table item"""
-    string_table = string_tables[table_name]
+    string_table = string_tables[argv[1]]
     if string_table is None:
         return
 
-    index = string_table[path]
+    index = string_table[argv[2]]
     if index != INVALID_STRING_INDEX:
         dbgmsg(0, 'Data:\n{}'.format(string_table[index]))
         dbgmsg(0, 'Data:\n{}'.format(string_table.get_user_data(index)))
@@ -448,26 +490,40 @@ def effect(*args):
     """Performs a particular effect."""
     raise NotImplementedError
 
-def emitsound(emitter_type, emitter, sound, volume, attenuation, flags=0, pitch=Pitch.NORMAL):
+@command
+def emitsound(argv):
     """Plays a sound from an entity."""
+    sound = argv[3]
+    engine_server.precache_sound(sound)
+
     index = 0
+    emitter_type = argv[1]
+    emitter = atoi(argv[2])
     if emitter_type == 'player':
         try:
-            index = index_from_userid(atoi(emitter))
+            index = index_from_userid(emitter)
         except ValueError:
             pass
     elif emitter_type == 'entity':
-        index = atoi(emitter)
+        index = emitter
 
     if not index:
         return
 
-    engine_sound.emit_sound(RecipientFilter(), index, 0, sound, atof(volume),
-        atof(attenuation), atoi(flags), atoi(pitch))
+    flags = 0
+    if len(argv) > 6:
+        flags = atoi(argv[6])
+
+    pitch = Pitch.NORMAL
+    if len(argv) > 7:
+        pitch = atoi(argv[7])
+
+    engine_sound.emit_sound(RecipientFilter(), index, 0, sound, atof(argv[4]),
+        atof(argv[5]), flags, pitch)
 
 def enable(*args):
     """Enables a script that has been loaded."""
-    raise NotImplementedError
+    # No need to implement
 
 @command
 def entcreate(argv):
