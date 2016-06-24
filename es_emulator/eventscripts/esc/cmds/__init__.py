@@ -142,4 +142,4 @@ class Command(object):
 
 
 from ..cmds import addons, conditions, comp, expansion, install, keygroups, maths, \
-  misc, output, players, reference, sounds, time, run, usercommands, vars, vectors, voodoo, stack
+  misc, output, players, reference, sounds, time, run, usercommands, vars, vectors, voodoo, stack_cmd
