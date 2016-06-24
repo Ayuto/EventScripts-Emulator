@@ -52,6 +52,8 @@ from mathlib import Vector
 #   Stringtables
 from stringtables import string_tables
 from stringtables import INVALID_STRING_INDEX
+#   KeyValues
+from keyvalues import KeyValues
 
 # ES Emulator
 #   Logic
@@ -62,6 +64,9 @@ from es_emulator.logic import client_command_proxies
 from es_emulator.logic import command_info
 #   Helpers
 from es_emulator.helpers import *
+#   Cvars
+from es_emulator.cvars import datadir_cvar
+from es_emulator.cvars import scriptdir_cvar
 
 
 # =============================================================================
@@ -76,6 +81,48 @@ from es_emulator.helpers import *
 # =============================================================================
 # Helper variable for es.event()
 _current_event = None
+
+# Helpers for KeyValues stuff
+user_keys = KeyValues('UserKeys')
+
+user_groups = KeyValues('UserGroups')
+user_keys.add_sub_key(user_groups)
+
+ungrouped = KeyValues('Ungrouped')
+user_keys.add_sub_key(ungrouped)
+
+def _find_group(argv):
+    if len(argv) == 3:
+        name = argv[1]
+        group = user_groups.find_key(name)
+        if group is None:
+            dbgmsg(0, 'ERROR: Eventscripts cannot find the {} group!'.format(name))
+            _set_last_error('Keygroup not found')
+
+        return group, argv[2]
+
+    return ungrouped, argv[1]
+
+def _get_full_path(argv):
+    if len(argv) == 3:
+        if argv[2][0] == '|':
+            full_path = KEYGROUP_LOAD_FORMAT.format(
+                'addons/source-python/plugins/es_emulator/eventscripts',
+                argv[2][1:], argv[1])
+        else:
+            full_path = KEYGROUP_LOAD_FORMAT.format(
+                datadir_cvar.get_string(), argv[2], argv[1])
+    else:
+        full_path = KEYGROUP_LOAD_FORMAT.format(
+            datadir_cvar.get_string(), scriptdir_cvar.get_string(), argv[1])
+
+    return full_path
+
+
+# =============================================================================
+# >> CONSTANTS
+# =============================================================================
+KEYGROUP_LOAD_FORMAT = '{}/{}/es_{}_db.txt'
 
 
 # =============================================================================
@@ -609,45 +656,75 @@ def event(command, event_name, value_name=None, value=None):
         elif command == 'setstring':
             _current_event.set_string(value_name, value)
 
-def exists(identifier, value, *args):
+@command
+def exists(argv):
     """Checks whether a keygroup, keys, variable, or function exists."""
+    identifier = argv[1].lower()
+    name = argv[2]
+    name2 = argv[3] if len(argv) > 3 else None
+    name3 = argv[4] if len(argv) > 4 else None
     if identifier == 'variable':
-        return int(cvar.find_var(value) is not None)
+        return int(cvar.find_var(name) is not None)
 
     if identifier == 'map':
-        return int(engine_server.is_map_valid(value))
+        return int(engine_server.is_map_valid(name))
 
     if identifier == 'saycommand':
-        return int(value in SayCommandGenerator())
+        return int(name in SayCommandGenerator())
 
     if identifier == 'clientcommand':
-        return int(value in ClientCommandGenerator())
+        return int(name in ClientCommandGenerator())
 
     if identifier == 'command':
-        return int(cvar.find_command(value) is not None)
+        return int(cvar.find_command(name) is not None)
 
     if identifier == 'keygroup':
-        raise NotImplementedError
+        return int(user_groups.find_key(name) is not None)
 
     if identifier == 'userid':
         try:
-            edict_from_userid(atoi(value))
+            edict_from_userid(atoi(name))
         except ValueError:
             return 0
 
         return 1
 
     if identifier == 'key':
-        raise NotImplementedError
+        if name2 is not None:
+            group = user_groups.find_key(name)
+            if group is None:
+                return 0
+
+            key_name = name2
+        else:
+            group = ungrouped
+            key_name = name
+
+        return int(group.find_key(key_name) is not None)
 
     if identifier == 'keyvalue':
-        raise NotImplementedError
+        if len(argv) > 4:
+            group = user_groups.find_key(name)
+            if group is None:
+                return 0
 
-    if identifier == 'script':
-        raise NotImplementedError
+            key_name = name2
+        else:
+            group = ungrouped
+            key_name = name
 
-    if identifier == 'block':
-        raise NotImplementedError
+        new_key = group.find_key(key_name)
+        if new_key is None:
+            return 0
+
+        if len(argv) > 4:
+            value = new_key.find_key(name3)
+        else:
+            value = new_key.find_key(name2)
+
+        return int(value is not None)
+
+    # "script" and "block" gets monkeypatched by esc
 
     return 0
 
@@ -1096,161 +1173,387 @@ def isdedicated():
     """Returns 1 in the variable if the server a dedicated server."""
     return engine_server.is_dedicated_server()
 
-def keycreate(*args):
+@command
+def keycreate(argv):
     """Creates a key that can be free-floating or associated with a group. Must call es_keydelete to free this memory when you're done."""
-    raise NotImplementedError
+    group, key_name = _find_group(argv)
+    if group is None:
+        return
 
-def keydelete(*args):
+    new_key = group.find_key(key_name, True)
+    if new_key is None:
+        dbgmsg(0, 'ERROR: Eventscripts cannot find/create the {} key!'.format(key_name))
+        _set_last_error('Key could not be found or created')
+
+@command
+def keydelete(argv):
     """Deletes a key from memory so that it's not leaked when you're done with it."""
-    raise NotImplementedError
+    group, key_name = _find_group(argv)
+    if group is None:
+        return
 
-def keygetvalue(*args):
+    new_key = group.find_key(key_name)
+    if new_key is None:
+        dbgmsg(0, 'ERROR: Eventscripts cannot find the {} key!'.format(key_name))
+        _set_last_error('Key could not be found or created')
+    else:
+        group.remove_sub_key(new_key)
+
+@command
+def keygetvalue(argv):
     """Gets a value within a given key (where the key could be free-floating or associated with a group)."""
-    raise NotImplementedError
+    if len(argv) == 5:
+        group = user_groups.find_key(argv[2])
+        if group is None:
+            dbgmsg(0, 'ERROR: Eventscripts cannot find the {} group!'.format(argv[2]))
+            _set_last_error('Keygroup not found')
+            return None
 
-def keygroupcopy(*args):
+        key_name = argv[3]
+        value_name = argv[4]
+    else:
+        group = ungrouped
+        key_name = argv[2]
+        value_name = argv[3]
+
+    new_key = group.find_key(key_name)
+    if new_key is None:
+        keynum = atoi(key_name)
+        if keynum > 0:
+            new_key = group.first_true_sub_key
+            for x in range(keynum):
+                new_key = new_key.next_true_sub_key
+
+        if new_key is None:
+            dbgmsg(0, 'ERROR: Eventscripts cannot find the {} key!'.format(key_name))
+            _set_last_error('Key not found')
+            return None
+
+    return new_key.get_string(value_name)
+
+@command
+def keygroupcopy(argv):
     """Copies a keygroup."""
-    raise NotImplementedError
+    group = user_groups.find_key(argv[1])
+    if group is None:
+        dbgmsg(0, 'ERROR: Eventscripts cannot find the {} group!'.format(argv[1]))
+        _set_last_error('Key not found')
+        return
 
-def keygroupcreate(*args):
+    # TODO: Expose KeyValues::MakeCopy()
+    new_group = group.make_copy()
+    new_group.name = argv[2]
+
+    # TODO: Expose KeyValues::SetNextKey()
+    new_group.next_key = group.next_key
+    group.next_key = new_group
+
+@command
+def keygroupcreate(argv):
     """Creates a keygroup that can be loaded and saved to a file. Must call es_keygroupdelete to free this memory!"""
-    raise NotImplementedError
+    new_group = user_groups.find_key(argv[1], True)
+    if new_group is None:
+        dbgmsg(0, 'ERROR: EventScripts couldn\'t create the user group.')
 
-def keygroupdelete(*args):
+@command
+def keygroupdelete(argv):
     """Deletes a keygroup from memory so that it's not leaked."""
-    raise NotImplementedError
+    new_group = user_groups.find_key(argv[1])
+    if new_group is None:
+        dbgmsg(1, 'EventScripts couldn\'t find the user group {}'.format(argv[1]))
+        return
 
-def keygroupfilter(*args):
+    user_groups.remove_sub_key(new_group)
+
+@command
+def keygroupfilter(argv):
     """Deletes keys from a keygroup that match or don't match a certain value."""
-    raise NotImplementedError
+    if len(argv) > 4:
+        group = user_groups.find_key(argv[1])
+        if group is None:
+            dbgmsg(0, 'ERROR: Eventscripts cannot find the {} group!'.format(argv[1]))
+            _set_last_error('Keygroup not found')
+            return
 
+        op = argv[2]
+        value_name = argv[3]
+        value_data = argv[4]
+    else:
+        group = ungrouped
+        op = argv[1]
+        value_name = argv[2]
+        value_data = argv[3]
+
+    # Filter here
+    only = op.lower() == 'only'
+    key = group.first_true_sub_key
+    while key:
+        found = False
+        value = key.first_value
+        while value:
+            if value.get_string().lower() == value_data.lower() and value.name == value_name:
+                found = True
+                break
+
+            value = value.next_value
+
+        if found:
+            if only:
+                key = key.next_true_sub_key
+            else:
+                temp = key
+                key = key.next_true_sub_key
+                group.remove_sub_key(temp)
+        else:
+            if only:
+                temp = key
+                key = key.next_true_sub_key
+                group.remove_sub_key(temp)
+            else:
+                key = key.next_true_sub_key
+
+# Pure Python function
 def keygroupgetpointer(*args):
     """Returns the C++ pointer to a keygroup."""
     raise NotImplementedError
 
-def keygroupload(*args):
+@command
+def keygroupload(argv):
     """Loads a keygroup from file based on its name."""
-    raise NotImplementedError
+    full_path = _get_full_path(argv)
+    new_group = user_groups.find_key(argv[1], True)
+    if not new_group.load_from_file(full_path):
+        dbgmsg(0, 'ERROR: Could not load keygroup: {}!'.format(full_path))
+        _set_last_error('Keygroup not found')
+
+    dbgmsg(1, 'Loaded: {}'.format(full_path))
 
 def keygroupmsg(*args):
     """Sends a keygroup-based message to a player."""
     raise NotImplementedError
 
-def keygrouprename(*args):
+@command
+def keygrouprename(argv):
     """Renames an existing keygroup."""
-    raise NotImplementedError
+    new_group = user_groups.find_key(argv[1])
+    if new_group is None:
+        dbgmsg(0, 'EventScripts couldn\'t find the user group {}'.format(argv[1]))
+        _set_last_error('Key not found')
+        return
 
-def keygroupsave(*args):
+    new_group.name = argv[2]
+
+@command
+def keygroupsave(argv):
     """Saves a keygroup to a file based on its name."""
-    raise NotImplementedError
+    full_path = _get_full_path(argv)
+    new_group = user_groups.find_key(argv[1])
+    if new_group is None:
+        dbgmsg(0, 'EventScripts couldn\'t find the user group {}'.format(argv[1]))
+        _set_last_error('Key not found')
+        return
 
-def keylist(*args):
+    if not new_group.save_to_file(full_path):
+        dbgmsg(0, 'ERROR: Could not save keygroup file: {}'.format(full_path))
+        _set_last_error('Keygroup could not be saved')
+
+    dbgmsg(1, 'Saved: {}'.format(full_path))
+
+@command
+def keylist(argv):
     """Lists all key values in memory that aren't groups. Optionally can look up a group, if you provide one."""
-    raise NotImplementedError
+    if len(argv) == 2:
+        group = user_groups.find_key(argv[1])
+        if group is None:
+            dbgmsg(0, 'ERROR: Eventscripts cannot find the {} group!'.format(argv[1]))
+            _set_last_error('Key not found')
+            return
+    else:
+        group = ungrouped
 
+    dbgmsg(0, '----------------------')
+    key = group.first_true_sub_key
+    while key:
+        dbgmsg(0, 'Key: {}'.format(key.name))
+        value = key.first_value
+        while value:
+            dbgmsg(0, '   Name: {}\n  Value: {}'.format(value.name, value.get_string()))
+            value = value.next_value
+
+        key = key.next_true_sub_key
+
+    dbgmsg(0, '----------------------')
+
+# Pure Python function
 def keypcreate(*args):
     """Returns the C++ pointer to a new keyvalues object."""
     raise NotImplementedError
 
+# Pure Python function
 def keypcreatesubkey(*args):
     """Creates a subkey as an integer."""
     raise NotImplementedError
 
+# Pure Python function
 def keypdelete(*args):
     """Deletes a key by pointer (not recommended)"""
     raise NotImplementedError
 
+# Pure Python function
 def keypdetachsubkey(*args):
     """Detaches a subkey by pointer."""
     raise NotImplementedError
 
+# Pure Python function
 def keypfindsubkey(*args):
     """Finds or creates a subkey by a particular name."""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetdatatype(*args):
     """Returns the data type id of the value in the key."""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetfirstsubkey(*args):
     """Retrieves the first subkey underneath this pointer"""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetfirsttruesubkey(*args):
     """Retrieves the first true subkey for this pointer."""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetfirstvaluekey(*args):
     """Retrieves the first value in this pointer."""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetfloat(*args):
     """Retrieves the float value in this pointer by name."""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetint(*args):
     """Retrieves the int value in this pointer by name."""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetname(*args):
     """Gets a key name by pointer"""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetnextkey(*args):
     """Retrieves the next key (peer) to this pointer."""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetnexttruesubkey(*args):
     """Retrieves the next true subkey to this pointer (ignores 'values')"""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetnextvaluekey(*args):
     """Retrieves the next value in this pointer."""
     raise NotImplementedError
 
+# Pure Python function
 def keypgetstring(*args):
     """Retrieves the string value in this pointer by name."""
     raise NotImplementedError
 
+# Pure Python function
 def keypisempty(*args):
     """Check if the keyvalue pointer is empty."""
     raise NotImplementedError
 
+# Pure Python function
 def keyploadfromfile(*args):
     """Saves the keyvalue pointer to filepath with all subkeys and values"""
     raise NotImplementedError
 
+# Pure Python function
 def keyprecursivekeycopy(*args):
     """Recursively copies a key into another key"""
     raise NotImplementedError
 
+# Pure Python function
 def keypsavetofile(*args):
     """Saves the keyvalue pointer to filepath with all subkeys and values"""
     raise NotImplementedError
 
+# Pure Python function
 def keypsetfloat(*args):
     """Sets the float value in this pointer by name."""
     raise NotImplementedError
 
+# Pure Python function
 def keypsetint(*args):
     """Sets the int value in this pointer by name."""
     raise NotImplementedError
 
+# Pure Python function
 def keypsetname(*args):
     """Sets a key name by pointer"""
     raise NotImplementedError
 
+# Pure Python function
 def keypsetstring(*args):
     """Sets the string value in this pointer by name."""
     raise NotImplementedError
 
-def keyrename(*args):
+@command
+def keyrename(argv):
     """Rename a key."""
-    raise NotImplementedError
+    if len(argv) == 4:
+        group = user_groups.find_key(argv[1])
+        if group is None:
+            dbgmsg(0, 'ERROR: Eventscripts cannot find the {} group!'.format(argv[1]))
+            _set_last_error('Keygroup not found')
+            return
 
-def keysetvalue(*args):
+        key_name = argv[2]
+    else:
+        group = ungrouped
+        key_name = argv[1]
+
+    new_key = group.find_key(key_name)
+    if new_key is None:
+        dbgmsg(0, 'ERROR: Eventscripts cannot find the {} key.'.format(key_name))
+        _set_last_error('Key not found')
+        return
+
+    new_key.name = argv[3] if len(argv) == 4 else argv[2]
+
+@command
+def keysetvalue(argv):
     """Sets a value within a given key (where the key could be free-floating or associated with a group)."""
-    raise NotImplementedError
+    if len(argv) == 5:
+        group = user_groups.find_key(argv[1])
+        if group is None:
+            dbgmsg(0, 'ERROR: Eventscripts cannot find the %s group!'.format(argv[1]))
+            _set_last_error('Keygroup not found')
+            return
+
+        key_name = argv[2]
+        value_name = argv[3]
+        value = argv[4]
+    else:
+        group = ungrouped
+        key_name = argv[1]
+        value_name = argv[2]
+        value = argv[3]
+
+    new_key = group.find_key(key_name)
+    if new_key is None:
+        dbgmsg(0, 'ERROR: Eventscripts cannot find/create the {} key!'.format(key_name))
+        _set_last_error('Key could not be found or created')
+        return
+
+    new_key.set_string(value_name, value)
+    dbgmsg(1, '{} key\'s {} value was set to {}.'.format(key_name, value_name, value))
 
 @command
 def lightstyle(argv):
