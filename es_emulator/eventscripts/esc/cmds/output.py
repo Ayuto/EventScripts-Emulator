@@ -2,6 +2,7 @@ import es
 from ..val import sv, VAR
 from . import Command
 from engines.server import engine_server
+from engines.server import global_vars
 from es_emulator.helpers import atoi
 
 @Command(syntax='[color] <msg>', desc='Broadcasts a message to all players. Will not expand any EventScripts variables. If the first word of the message is \'GREEN\', or \'LIGHTGREEN\' then the message is displayed in that color.')
@@ -74,3 +75,7 @@ def logq(argv):
 @Command(syntax='[userid]', desc='Lists the script packs running on the server. If a userid is provided, will es_tell the list to the user.')
 def scriptpacklist(argv):
   es.scriptpacklist(*argv)
+
+@Command(pre=False, desc='Prints the current gameframe count')
+def printcount(argv):
+  es.dbgmsg(0, str(global_vars.frame_count))
