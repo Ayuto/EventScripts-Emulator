@@ -128,7 +128,6 @@ def load():
     """
     cmdlib.registerServerCommand("es_checkversion", checkUpdateCommand,
                                  "Check for any later EventScripts updates")
-    es.set()
 
 def unload():
     """
