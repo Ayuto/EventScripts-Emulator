@@ -8,9 +8,6 @@ import os.path
 import io
 import time
 
-import psyco
-psyco.full()
-
 
 installlib._executeAutoLoad() # Automatically loads installed addons marked for autoload
 
