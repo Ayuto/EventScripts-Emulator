@@ -137,6 +137,7 @@ def pre_fire_event(args):
         return
 
     current_event_vars.clear()
+    current_event_vars['es_event'] = event.name
     current_event_vars.update(event.variables.as_dict())
 
     userid = current_event_vars.get('userid', 0)
