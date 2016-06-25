@@ -62,6 +62,7 @@ __all__ = (
     '_set_convar',
     'command',
     '_set_last_error',
+    'Msg',
 )
 
 
@@ -70,6 +71,7 @@ __all__ = (
 # =============================================================================
 # TODO: On Linux it's probably libc
 runtimelib = memory.find_binary('msvcrt.dll')
+tier1 = memory.find_binary('bin/tier0')
 
 sv_cheats = cvar.find_var('sv_cheats')
 
@@ -77,23 +79,23 @@ sv_cheats = cvar.find_var('sv_cheats')
 # =============================================================================
 # >> C FUNCTIONS
 # =============================================================================
-_atoi = runtimelib['atoi'].make_function(
+atoi = runtimelib['atoi'].make_function(
     Convention.CDECL,
     [DataType.STRING],
     DataType.INT
 )
 
-def atoi(value):
-    return _atoi(str(value))
-
-_atof = runtimelib['atof'].make_function(
+atof = runtimelib['atof'].make_function(
     Convention.CDECL,
     [DataType.STRING],
     DataType.FLOAT
 )
 
-def atof(value):
-    return _atof(str(value))
+Msg = tier1['Msg'].make_function(
+    Convention.CDECL,
+    [DataType.STRING],
+    DataType.VOID
+)
 
 
 # =============================================================================

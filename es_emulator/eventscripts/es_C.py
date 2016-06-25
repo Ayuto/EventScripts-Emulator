@@ -1343,11 +1343,8 @@ def keygroupcopy(argv):
         _set_last_error('Key not found')
         return
 
-    # TODO: Expose KeyValues::MakeCopy()
     new_group = group.make_copy()
     new_group.name = argv[2]
-
-    # TODO: Expose KeyValues::SetNextKey()
     new_group.next_key = group.next_key
     group.next_key = new_group
 
@@ -1916,7 +1913,7 @@ def printmsg(msg):
     if not isinstance(msg, str):
         raise TypeError
 
-    raise NotImplementedError # Call Msg(msg)
+    Msg(msg)
     return 1
 
 @command
@@ -2468,13 +2465,15 @@ def voicechat(argv):
     try:
         to_index = index_from_userid(atoi(argv[2]))
     except ValueError:
-        # TODO: ErrorMsg
+        dbgmsg(0, 'Incorrect userids provided.')
+        _set_last_error('Syntax Error')
         return
 
     try:
         from_index = index_from_userid(atoi(argv[3]))
     except ValueError:
-        # TODO: ErrorMsg
+        dbgmsg(0, 'Incorrect userids provided.')
+        _set_last_error('Syntax Error')
         return
 
     operation = argv[1].lower()
