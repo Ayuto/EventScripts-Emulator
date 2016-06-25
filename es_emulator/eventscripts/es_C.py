@@ -813,13 +813,14 @@ def fadevolume(argv):
 @command
 def fire(argv):
     """Fires an entity trigger."""
+    userid = argv[1]
     try:
-        player = Player.from_userid(atoi(argv[1]))
+        player = Player.from_userid(atoi(userid))
     except ValueError:
         return
 
     _exec_client_cheat_command(
-        player, 'ent_fire {} {} {} {}'.format(argv.arg_string))
+        player, 'ent_fire {}'.format(argv.arg_string[len(userid)+1:]))
 
 @command
 def flags(argv):
