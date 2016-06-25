@@ -627,33 +627,39 @@ def esctextbox(*args):
     """Sends an ESC textbox to a player."""
     raise NotImplementedError
 
-def event(command, event_name, value_name=None, value=None):
+@command
+def event(argv):
     """Create and fire events to signal to plugins that an event has happened. It must be an event loaded via es_loadevents."""
     global _current_event
+    operation = argv[1]
+    event_name = argv[2]
+    value_name = argv[3] if len(argv) > 3 else None
+    value = argv[4] if len(argv) > 4 else None
     if _current_event is not None and _current_event.name != event_name:
         dbgmsg(
             0,
-            ('WARNING: A script is calling \'es_event {}\' for {} when the exis' +
-             'ting event {} has not been cancelled or fired. Trying to continue' +
-             ' anyway...').format(command, event_name, _current_event.name)
+            ('WARNING: A script is calling \'es_event {}\' for {} when the ' +
+             'existing event {} has not been cancelled or fired. Trying to ' +
+             'continue anyway...').format(
+                operation, event_name, _current_event.name)
         )
 
-    if command == 'initialize':
+    if operation == 'initialize':
         _current_event = game_event_manager.create_event(event_name, True)
-    elif command == 'cancel':
+    elif operation == 'cancel':
         if _current_event is not None:
             game_event_manager.free_event(_current_event)
             _current_event = None
-    elif command == 'fire':
+    elif operation == 'fire':
         if _current_event is not None:
             game_event_manager.fire_event(_current_event)
             _current_event = None
     elif value_name is not None and value is not None:
-        if command == 'setint':
+        if operation == 'setint':
             _current_event.set_int(value_name, atoi(value))
-        elif command == 'setfloat':
+        elif operation == 'setfloat':
             _current_event.set_float(value_name, atof(value))
-        elif command == 'setstring':
+        elif operation == 'setstring':
             _current_event.set_string(value_name, value)
 
 @command
@@ -725,19 +731,19 @@ def exists(argv):
         return int(value is not None)
 
     # "script" and "block" gets monkeypatched by esc
-
     return 0
 
-def fadevolume(userid, percent, fadetime, holdtime, fadeintime):
+@command
+def fadevolume(argv):
     """Fades the volume for a client."""
     try:
-        edict = edict_from_userid(atoi(userid))
+        edict = edict_from_userid(atoi(argv[1]))
     except ValueError:
         dbgmsg(0, 'FadeClientVolume: Unable to find player')
         return
 
     engine_server.fade_client_volume(
-        edict, atof(percent), atof(fadetime), atof(holdtime), atof(fadeintime))
+        edict, atof(argv[2]), atof(argv[3]), atof(argv[4]), atof(argv[5]))
 
 @command
 def fire(argv):
@@ -750,23 +756,31 @@ def fire(argv):
     _exec_client_cheat_command(
         player, 'ent_fire {} {} {} {}'.format(argv.arg_string))
 
-def flags(action, flag_name, convar_name):
+@command
+def flags(argv):
     """Adds or removes the cheat flag from a command or variable. (EXPERIMENTAL/UNSUPPORTED)"""
+    convar_name = argv[3]
     convar = cvar.find_base(convar_name)
     if convar is None:
         dbgmsg(0, 'Could not find var or command: {}'.format(convar_name))
         return
 
+    if not _can_change(convar):
+        return
+
+    action = argv[1].lower()
+    flag_name = argv[2].lower()
     if action == 'add':
         convar.add_flags(_get_convar_flag(flag_name))
     elif action == 'remove':
         convar.remove_flags(_get_convar_flag(flag_name))
 
-def forcecallbacks(name):
+@command
+def forcecallbacks(argv):
     """Calls all global convar callbacks for a particular server variable."""
-    convar = cvar.find_var(name)
+    convar = cvar.find_var(argv[1])
     if convar:
-        convar.call_global_change_callbacks(
+        cvar.call_global_change_callbacks(
             convar, convar.get_string(), convar.get_float())
 
 def forcevalue(*args):
@@ -785,6 +799,7 @@ def formatqv(*args):
     """Allows you to format a string by filling in a list of strings into a format string."""
     raise NotImplementedError
 
+# Pure Python function
 def getCurrentEventVarFloat(name):
     """Returns the value of a named event variable in integer form."""
     if not isinstance(name, str):
@@ -792,6 +807,7 @@ def getCurrentEventVarFloat(name):
 
     return float(current_event_vars.get(name, 0))
 
+# Pure Python function
 def getCurrentEventVarInt(name):
     """Returns the value of a named event variable in integer form."""
     if not isinstance(name, str):
@@ -799,6 +815,7 @@ def getCurrentEventVarInt(name):
 
     return int(current_event_vars.get(name, 0))
 
+# Pure Python function
 def getCurrentEventVarIsEmpty(name):
     """Returns 1 if the named event variable doesn't exist."""
     if not isinstance(name, str):
@@ -806,6 +823,7 @@ def getCurrentEventVarIsEmpty(name):
 
     return int(name not in current_event_vars)
 
+# Pure Python function
 def getCurrentEventVarString(name):
     """Returns the value of a named event variable in string form."""
     return getEventInfo(name)
@@ -1533,7 +1551,7 @@ def keysetvalue(argv):
     if len(argv) == 5:
         group = user_groups.find_key(argv[1])
         if group is None:
-            dbgmsg(0, 'ERROR: Eventscripts cannot find the %s group!'.format(argv[1]))
+            dbgmsg(0, 'ERROR: Eventscripts cannot find the {} group!'.format(argv[1]))
             _set_last_error('Keygroup not found')
             return
 
@@ -1563,38 +1581,49 @@ def lightstyle(argv):
     engine_server.light_style(style, value)
     dbgmsg(1, 'Setting lightstyle: {}, {}'.format(style, value))
 
-def load(addon=None):
+@command
+def load(argv):
     """Loads a script or lists all loaded scripts if no script is provided."""
     import es
-    if addon is None:
+    if len(argv) < 2:
         es.printScriptList()
     else:
-        es.loadModuleAddon(addon)
+        es.loadModuleAddon(argv[1])
 
-def loadevents(*args):
+@command
+def loadevents(argv):
     """Reads an event file and registers EventScripts as a handler for those events."""
-    if len(args) == 1:
-        game_event_manager.load_events_from_file(args[0])
-    elif len(args) == 2:
-        # Unnecessary to implement, because the event system is using a pre-hook
-        pass
+    if len(argv) > 2:
+        game_event_manager.load_events_from_file(argv[2])
+
+    # No need to register for event file, because we are using pre-hooks
 
 @command
 def log(argv):
     """Logs a message to the server log."""
     engine_server.log_print(argv.arg_string.replace('"', '') + '\n')
 
-def logv(name):
+@command
+def logv(argv):
     """Logs the text inside of a variable."""
-    convar = cvar.find_var(name)
-    if convar:
-        log(convar.get_string())
+    convar = cvar.find_var(argv[1])
+    if convar is None:
+        dbgmsg(0, 'ERROR: variable {} does not exist.'.format(argv[1]))
+        _set_last_error('Variable does not exist')
+    else:
+        engine_server.log_print(convar.get_string() + '\n')
 
-def makepublic(name):
+@command
+def makepublic(argv):
     """Makes a console variable public such that changes to it are announced to clients."""
-    convar = cvar.find_var(name)
-    if convar:
+    convar_name = argv[1]
+    convar = cvar.find_var(convar_name)
+    if convar is None:
+        dbgmsg(0, 'The var "{}" could not be found'.format(convar_name))
+        _set_last_error('Variable couldn\'t be found.')
+    else:
         convar.make_public()
+        forcecallbacks(convar_name)
 
 def mathparse(*args):
     """Adds a say command that refers to a particular block."""
@@ -1807,12 +1836,15 @@ def sendkeypmsg(*args):
     """Sends a client message based on a KeyValues pointer. sendkeypmsg(userid,type,keyid)"""
     raise NotImplementedError
 
-def set(name, value, description=None):
+@command
+def set(argv):
     """Adds/sets a new server/global variable."""
-    if description is None:
-        _set_convar(name, value, True)
+    name = argv[1]
+    value = argv[2]
+    if len(argv) > 3:
+        _set_convar(name, value, True, argv[3])
     else:
-        _set_convar(name, value, True, description)
+        _set_convar(name, value, True)
 
 # Pure Python function
 def setFloat(name, value):
@@ -1915,9 +1947,10 @@ def setindexprop(argv):
         ptr.set_float(y, offset + 4)
         ptr.set_float(z, offset + 8)
 
-def setinfo(name, value):
+@command
+def setinfo(argv):
     """Adds a new server/global variable."""
-    _set_convar(name, value)
+    _set_convar(argv[1], argv[2], True)
 
 @command
 def setplayerprop(argv):
@@ -1972,10 +2005,14 @@ def sexec(argv):
     else:
         dbgmsg(0, 'jointeam not supported on bots')
 
-def sexec_all(commandstring):
+@command
+def sexec_all(argv):
     """Forces all users to execute a command on the server console."""
+    if 'jointeam' in argv.arg_string:
+        return
+
     for player in PlayerIter():
-        player.client_command(commandstring, True)
+        player.client_command(argv.arg_string, True)
 
 # Pure Python function
 def showMenu(duration, userid, msg, options=''):
@@ -2043,18 +2080,23 @@ def sql(*args):
     """Local database support"""
     raise NotImplementedError
 
-def stopsound(userid, sound):
+@command
+def stopsound(argv):
     """Stops a specific sound for a player."""
+    userid = atoi(argv[1])
     try:
-        index = index_from_userid(atoi(userid))
+        index = index_from_userid(userid)
     except ValueError:
         dbgmsg(0, 'StopSound: Unable to find player {}'.format(userid))
         return
 
-    engine_sound.stop_sound(index, 0, sound)
+    engine_sound.stop_sound(index, 0, argv[2])
 
-def stringtable(table_name, string):
+@command
+def stringtable(argv):
     """Update an entry in a stringtable"""
+    table_name = argv[1]
+    string = argv[2]
     table = string_tables[table_name]
     if table is None:
         dbgmsg(0, 'Could not add strings: {} to table {}'.format(
@@ -2062,7 +2104,7 @@ def stringtable(table_name, string):
         return
 
     table.add_string(string, is_server=False, length=len(string)+1)
-    dbgmsg(1, 'Added string: %s to table %s'.format(string, table_name))
+    dbgmsg(1, 'Added string: {} to table {}'.format(string, table_name))
 
 @command
 def tell(argv):
@@ -2105,37 +2147,44 @@ def trick(argv):
             player, 'test_dispatcheffect {} {} {} {}'.format(
                 argv[3], argv[4], argv[5], argv[6]).rstrip())
 
-def unload(addon):
+@command
+def unload(argv):
     """Unloads a script that has been loaded."""
-    import es
-    es.unloadModuleAddon(addon)
+    if len(argv) > 1:
+        import es
+        es.unloadModuleAddon(argv[1])
 
-def unregclientcmd(command):
+@command
+def unregclientcmd(argv):
     """Removes a client command that refers to a particular block."""
+    command_name = argv[1]
     try:
-        proxy = client_command_proxies.pop(command)
+        proxy = client_command_proxies.pop(command_name)
     except KeyError:
-        dbgmsg(0, 'unregclientcmd: Did not find command: {}'.format(command))
+        dbgmsg(0, 'unregclientcmd: Did not find command: {}'.format(command_name))
     else:
-        get_client_command(command).remove_callback(proxy)
+        get_client_command(command_name).remove_callback(proxy)
 
-def unregsaycmd(command):
+@command
+def unregsaycmd(argv):
     """Removes a say command that refers to a particular block."""
+    command_name = argv[1]
     try:
-        proxy = say_command_proxies.pop(command)
+        proxy = say_command_proxies.pop(command_name)
     except KeyError:
-        dbgmsg(0, 'unregsaycmd: Did not find command: {}'.format(command))
+        dbgmsg(0, 'unregsaycmd: Did not find command: {}'.format(command_name))
     else:
-        get_say_command(command).remove_callback(proxy)
+        get_say_command(command_name).remove_callback(proxy)
 
-def usermsg(operation, *args):
+@command
+def usermsg(argv):
     """Create and send a usermsg to a client."""
-    args_str = '{} {}'.format(operation, ' '.join(map(str, args)))
-    operation = operation.lower()
+    operation = argv[1].lower()
 
     if operation == 'create':
-        if len(args) > 1:
-            msg_name, msg_type_name = args
+        if len(argv) > 3:
+            msg_name = argv[2]
+            msg_type_name = argv[3]
             try:
                 data = _UserMessageData.data_store[msg_name]
             except KeyError:
@@ -2144,11 +2193,11 @@ def usermsg(operation, *args):
             else:
                 data.name = msg_type_name
         else:
-            dbgmsg(0, 'Not enough parameters: {}'.format(args_str))
+            dbgmsg(0, 'Not enough parameters: {}'.format(argv.arg_string))
 
     elif operation == 'delete':
-        if len(args) > 0:
-            msg_name = args[0]
+        if len(argv) > 2:
+            msg_name = argv[2]
             try:
                 del _UserMessageData.data_store[msg_name]
                 dbgmsg(1, 'Key deleted: {}'.format(msg_name))
@@ -2156,19 +2205,19 @@ def usermsg(operation, *args):
                 pass
 
     elif operation == 'send':
-        if len(args) > 1:
-            msg_name, userid = args
+        if len(argv) > 3:
+            msg_name = argv[2]
             try:
                 data = _UserMessageData.data_store[msg_name]
             except KeyError:
                 dbgmsg(0, 'Key does not exist, please create it: {}'.format(
                     msg_name))
             else:
-                data.send(userid)
+                data.send(argv[3])
 
     else:
-        if len(args) > 2:
-            data_type, msg_name, value = args
+        if len(argv) > 4:
+            data_type, msg_name, value = (argv[2], argv[3], argv[4])
             if operation == 'write':
                 _UserMessageData.write_user_message_data(
                     data_type, msg_name, value)
@@ -2184,25 +2233,26 @@ def usermsg(operation, *args):
             else:
                 dbgmsg(0, 'Unknown user message command: {}'.format(operation))
         else:
-            dbgmsg(0, 'Not enough parameters: {}'.format(args_str))
+            dbgmsg(0, 'Not enough parameters: {}'.format(argv.arg_string))
 
-def voicechat(command, to_userid, from_userid):
+@command
+def voicechat(argv):
     """Allows you to control listening players."""
     try:
-        to_index = index_from_userid(atoi(to_userid))
+        to_index = index_from_userid(atoi(argv[2]))
     except ValueError:
         # TODO: ErrorMsg
         return
 
     try:
-        from_index = index_from_userid(atoi(from_userid))
+        from_index = index_from_userid(atoi(argv[3]))
     except ValueError:
         # TODO: ErrorMsg
         return
 
-    command = command.lower()
-    if command == 'islistening':
+    operation = argv[1].lower()
+    if operation == 'islistening':
         return int(voice_server.get_client_listening(to_index, from_index))
-    elif command == 'listen' or command == 'nolisten':
+    elif operation == 'listen' or operation == 'nolisten':
         voice_server.set_client_listening(
-            to_index, from_index, command == 'listen')
+            to_index, from_index, operation == 'listen')
