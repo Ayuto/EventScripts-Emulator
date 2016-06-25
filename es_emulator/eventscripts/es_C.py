@@ -398,9 +398,26 @@ def createplayerlist(argv):
 
     return result
 
-def createscriptlist(scriptname=None):
+@command
+def createscriptlist(argv):
     """Creates a new keygroup containing the current list of players."""
-    raise NotImplementedError
+    if len(argv) <= 1:
+        return None
+
+    # Fix cyclic import
+    from esc import addons
+
+    result = {}
+    for name in addons:
+        if len(argv) > 1:
+            if name.lower() != argv[2].lower():
+                continue
+
+        result[name] = dict(
+            status='{}abled'.format('dis' if addons[name].disabled else 'en'),
+            type='txt')
+
+    return result
 
 @command
 def createvectorfrompoints(argv):
@@ -795,9 +812,24 @@ def foreachval(*args):
     """EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name."""
     raise NotImplementedError
 
-def formatqv(*args):
+@command
+def formatqv(argv):
     """Allows you to format a string by filling in a list of strings into a format string."""
-    raise NotImplementedError
+    formatted = argv[1]
+    for x in range(1, len(argv) - 1):
+        convar_name = argv[x+1]
+        convar = cvar.find_var(convar_name)
+        if convar is None:
+            dbgmsg(0, 'ERROR: variable {} does not exist.'.format(convar_name))
+            _set_last_error('Variable does not exist')
+            return None
+
+        temp = formatted.replace('%{}'.format(x), convar.get_sttring())
+        if temp == formatted:
+            dbgmsg(0, 'ERROR: You did not provide enough parameters for the string you specified.')
+            _set_last_error('Not enough arguments.')
+
+    return formatted
 
 # Pure Python function
 def getCurrentEventVarFloat(name):
@@ -1402,15 +1434,31 @@ def keylist(argv):
 
     dbgmsg(0, '----------------------')
 
+# TODO: The created KeyValues instances probably need to be stored somewhere,
+#       so they don't get freed
+
 # Pure Python function
 def keypcreate(*args):
     """Returns the C++ pointer to a new keyvalues object."""
-    raise NotImplementedError
+    return memory.get_object_pointer(KeyValues(None)).address
+
+def _make_keyvalues(key_ptr):
+    return memory.make_object(KeyValues, memory.Pointer(key_ptr))
+
+def _get_keyvalues_ptr(key):
+    return memory.get_object_pointer(key).address
 
 # Pure Python function
-def keypcreatesubkey(*args):
+def keypcreatesubkey(key_ptr):
     """Creates a subkey as an integer."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    new_key = _make_key_values(key_ptr).create_new_key()
+    return new_key and _get_keyvalues_ptr(new_key)
 
 # Pure Python function
 def keypdelete(*args):
@@ -1418,109 +1466,231 @@ def keypdelete(*args):
     raise NotImplementedError
 
 # Pure Python function
-def keypdetachsubkey(*args):
+def keypdetachsubkey(key_ptr, key_to_remove_ptr):
     """Detaches a subkey by pointer."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int) or not isinstance(key_to_remove_ptr, int):
+        raise TypeError
+
+    if not key_ptr and not key_to_remove_ptr:
+        return
+
+    key = _make_keyvalues(key_ptr)
+    key_to_remove = _make_keyvalues(key_to_remove_ptr)
+    key.remove_sub_key(key_to_remove)
 
 # Pure Python function
-def keypfindsubkey(*args):
+def keypfindsubkey(key_ptr, string, create):
     """Finds or creates a subkey by a particular name."""
-    raise NotImplementedError
+    if (not isinstance(key_ptr, int) or not isinstance(string, str)
+            or not isinstance(create, (int, bool))):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    key = _make_keyvalues(key_ptr)
+    new_key = key.find_key(string, create)
+    return new_key and _get_keyvalues_ptr(new_key)
 
 # Pure Python function
-def keypgetdatatype(*args):
+def keypgetdatatype(key_ptr):
     """Returns the data type id of the value in the key."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _make_keyvalues(key_ptr).get_data_type(None)
 
 # Pure Python function
-def keypgetfirstsubkey(*args):
+def keypgetfirstsubkey(key_ptr):
     """Retrieves the first subkey underneath this pointer"""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _get_keyvalues_ptr(_make_keyvalues(key_ptr).first_sub_key)
 
 # Pure Python function
-def keypgetfirsttruesubkey(*args):
+def keypgetfirsttruesubkey(key_ptr):
     """Retrieves the first true subkey for this pointer."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _get_keyvalues_ptr(_make_keyvalues(key_ptr).first_true_sub_key)
 
 # Pure Python function
-def keypgetfirstvaluekey(*args):
+def keypgetfirstvaluekey(key_ptr):
     """Retrieves the first value in this pointer."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _get_keyvalues_ptr(_make_keyvalues(key_ptr).first_value)
 
 # Pure Python function
-def keypgetfloat(*args):
+def keypgetfloat(key_ptr, string):
     """Retrieves the float value in this pointer by name."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int) or not isinstance(string, str):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _make_keyvalues(key_ptr).get_float(string)
 
 # Pure Python function
-def keypgetint(*args):
+def keypgetint(key_ptr, string):
     """Retrieves the int value in this pointer by name."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int) or not isinstance(string, str):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _make_keyvalues(key_ptr).get_int(string)
 
 # Pure Python function
-def keypgetname(*args):
+def keypgetname(key_ptr):
     """Gets a key name by pointer"""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _make_keyvalues(key_ptr).name
 
 # Pure Python function
-def keypgetnextkey(*args):
+def keypgetnextkey(key_ptr):
     """Retrieves the next key (peer) to this pointer."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _get_keyvalues_ptr(_make_keyvalues(key_ptr).next_key)
 
 # Pure Python function
-def keypgetnexttruesubkey(*args):
+def keypgetnexttruesubkey(key_ptr):
     """Retrieves the next true subkey to this pointer (ignores 'values')"""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _get_keyvalues_ptr(_make_keyvalues(key_ptr).next_true_sub_key)
 
 # Pure Python function
-def keypgetnextvaluekey(*args):
+def keypgetnextvaluekey(key_ptr):
     """Retrieves the next value in this pointer."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _get_keyvalues_ptr(_make_keyvalues(key_ptr).next_value)
 
 # Pure Python function
-def keypgetstring(*args):
+def keypgetstring(key_ptr, string):
     """Retrieves the string value in this pointer by name."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int) or not isinstance(string, str):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return _make_keyvalues(key_ptr).get_string(string)
 
 # Pure Python function
-def keypisempty(*args):
+def keypisempty(key_ptr):
     """Check if the keyvalue pointer is empty."""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    return int(_make_keyvalues(key_ptr).is_empty())
 
 # Pure Python function
-def keyploadfromfile(*args):
+def keyploadfromfile(key_ptr, string):
     """Saves the keyvalue pointer to filepath with all subkeys and values"""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int) or not isinstance(string, str):
+        raise TypeError
+
+    if key_ptr:
+        _make_keyvalues(key_ptr).load_from_file(string)
 
 # Pure Python function
-def keyprecursivekeycopy(*args):
+def keyprecursivekeycopy(key_ptr, key_source_ptr):
     """Recursively copies a key into another key"""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int) or not isinstance(key_source_ptr, int):
+        raise TypeError
+
+    if key_ptr and key_source_ptr:
+        # TODO: Expose RecursiveCopyKeyValues()
+        _make_keyvalues(key_ptr).recursive_copy(
+            _make_keyvalues(key_source_ptr))
 
 # Pure Python function
-def keypsavetofile(*args):
+def keypsavetofile(key_ptr, string):
     """Saves the keyvalue pointer to filepath with all subkeys and values"""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int) or not isinstance(string, str):
+        raise TypeError
+
+    if key_ptr:
+        _make_keyvalues(key_ptr).save_from_file(string)
 
 # Pure Python function
-def keypsetfloat(*args):
+def keypsetfloat(key_ptr, string, value):
     """Sets the float value in this pointer by name."""
-    raise NotImplementedError
+    if (not isinstance(key_ptr, int) or not isinstance(string, str)
+            or not isinstance(value, (int, float))):
+        raise TypeError
+
+    if key_ptr:
+        _make_keyvalues(key_ptr).set_float(string, value)
 
 # Pure Python function
-def keypsetint(*args):
+def keypsetint(key_ptr, string, value):
     """Sets the int value in this pointer by name."""
-    raise NotImplementedError
+    if (not isinstance(key_ptr, int) or not isinstance(string, str)
+            or not isinstance(value, int)):
+        raise TypeError
+
+    if key_ptr:
+        _make_keyvalues(key_ptr).set_int(string, value)
 
 # Pure Python function
-def keypsetname(*args):
+def keypsetname(key_ptr, name):
     """Sets a key name by pointer"""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int) or not isinstance(name, str):
+        raise TypeError
+
+    if key_ptr:
+        _make_keyvalues(key_ptr).name = name
 
 # Pure Python function
-def keypsetstring(*args):
+def keypsetstring(key_ptr, string, value):
     """Sets the string value in this pointer by name."""
-    raise NotImplementedError
+    if (not isinstance(key_ptr, int) or not isinstance(string, str)
+            or not isinstance(value, int)):
+        raise TypeError
+
+    if key_ptr:
+        _make_keyvalues(key_ptr).set_string(string, value)
 
 @command
 def keyrename(argv):
