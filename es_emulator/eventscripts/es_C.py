@@ -931,7 +931,7 @@ def getEventInfo(name):
     if not isinstance(name, str):
         raise TypeError
 
-    return str(current_event_vars.get(args[0], ''))
+    return str(current_event_vars.get(name, ''))
 
 # Pure Python function
 def getFlags(name):

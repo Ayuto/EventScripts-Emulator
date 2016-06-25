@@ -30,6 +30,8 @@ from commands import CommandReturn
 from commands.say import SayFilter
 from commands.client import ClientCommandFilter
 from commands.server import ServerCommand
+#   Paths
+from paths import GAME_PATH
 
 # EventScripts Emulator
 #   Cvars
@@ -42,6 +44,8 @@ from .cvars import nextmap_cvar
 from .cvars import setipcmdline_cvar
 from .cvars import frametimer_cvar
 from .cvars import cmdprefix_cvar
+from .cvars import scriptdir_cvar
+from .cvars import execmd_cvar
 #   Helpers
 from .helpers import _is_dead
 #   Paths
@@ -112,6 +116,7 @@ NOISY_EVENTS = (
 )
 
 current_event_vars = {}
+cfg_scripts = {}
 
 def fill_event_vars(userid, type_str):
     try:
@@ -148,8 +153,36 @@ def pre_fire_event(args):
     if attacker:
         fill_event_vars(attacker, 'attacker')
 
+    exec_all_registered(event.name)
+
+def exec_all_registered(event_name):
     import es
-    es.addons.triggerEvent(event.name)
+
+    exec_cmd = execmd_cvar.get_string()
+    script_dir = scriptdir_cvar.get_string()
+
+    # Execute root scripts
+    cfg_path = '{}/{}.cfg'.format(script_dir, event_name)
+    if GAME_PATH.joinpath('cfg', cfg_path).exists():
+        es.dbgmsg(2, 'Sending {} command for {}.'.format(exec_cmd, event_name))
+        engine_server.server_command('{} {}'.format(exec_cmd, cfg_path))
+
+    # Execute cfg scripts
+    es.dbgmsg(2, 'Script pack registration scanning...')
+    for scriptpack, enabled in cfg_scripts.items():
+        if not enabled:
+            continue
+
+        cfg_path = '{}/{}/{}.cfg'.format(script_dir, scriptpack, event_name)
+        if GAME_PATH.joinpath('cfg', cfg_path).exists():
+            es.dbgmsg(2, 'Sending {} command for {}.'.format(exec_cmd, cfg_path))
+            engine_server.server_command('{} {}'.format(exec_cmd, cfg_path))
+        else:
+            es.dbgmsg(1, 'File doesn\'t exist: {}'.format(cfg_path))
+
+    # Execute Python addons
+    es.dbgmsg(2, 'Checking all scripts...')
+    es.addons.triggerEvent(event_name)
 
 
 # =============================================================================

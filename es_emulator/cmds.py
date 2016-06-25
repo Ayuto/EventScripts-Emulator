@@ -7,6 +7,14 @@ from commands.typed import TypedServerCommand
 from commands.server import ServerCommand
 #   Engines
 from engines.server import engine_server
+#   Events
+from events.manager import game_event_manager
+
+# ES Emulator
+#   Logic
+from .logic import cfg_scripts
+#   Cvars
+from .cvars import scriptdir_cvar
 
 
 # =============================================================================
@@ -21,16 +29,60 @@ PLUGIN_VERSION_DESCRIPTION = 'Mattie\'s EventScripts, http://www.eventscripts.co
 # TODO:
 # Description: prints the version of Mattie's EventScripts plugin
 @ServerCommand('eventscripts_version')
-def on_eventscripts_version(command):
+def eventscripts_version(command):
     import es
     es.dbgmsg(0, PLUGIN_VERSION_DESCRIPTION)
 
 # TODO:
 # Description: logs the version of Mattie's EventScripts plugin
 @ServerCommand('eventscripts_log')
-def on_eventscripts_log(command):
+def eventscripts_log(command):
     engine_server.log_print(PLUGIN_VERSION_DESCRIPTION)
     engine_server.log_print('\n')
+
+
+# =============================================================================
+# >> COMMANDS FOR OLD ES CFG SCRIPTS
+# =============================================================================
+# TODO:
+# Description: Syntax : eventscripts_register [subdirectory]\n  Registers a script pack subdirectory or, with no parameters, lists all registered script packs.
+@ServerCommand('eventscripts_register')
+def eventscripts_register(command):
+    if len(command) < 2:
+        print_all_registered_cfg_scripts()
+        return
+
+    import es
+
+    scriptpack = command[1]
+    cfg_scripts[scriptpack] = 1
+    es.setinfo('{}_dir'.format(scriptpack), '"{}/{}/"'.format(
+        scriptdir_cvar.get_string(), scriptpack))
+
+    es.dbgmsg(0, '[EventScripts] Registered script pack: {}'.format(command.arg_string))
+
+    event = game_event_manager.create_event('es_scriptpack_register', True)
+    event.set_string('scriptpack', scriptpack)
+    game_event_manager.fire_event(event)
+
+# TODO:
+# Description: Syntax : eventscripts_unregister [subdirectory]\n  Unregisters/disables a script pack subdirectory, or, with no parameters, lists all registered script packs.
+@ServerCommand('eventscripts_unregister')
+def eventscripts_unregister(command):
+    if len(command) < 2:
+        print_all_registered_cfg_scripts()
+        return
+
+    import es
+    scriptpack = command[1]
+
+    event = game_event_manager.create_event('es_scriptpack_unregister', True)
+    event.set_string('scriptpack', scriptpack)
+    game_event_manager.fire_event(event)
+
+    cfg_scripts[scriptpack] = 0
+    es.dbgmsg(0, '[EventScripts] Unregistered script pack: {}'.format(
+        command.arg_string))
 
 
 # =============================================================================

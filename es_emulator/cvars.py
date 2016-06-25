@@ -43,24 +43,6 @@ debuglog_cvar = ConVar(
     'Will send debug messages to server log as well as console if this is set to 1.'
 )
 
-scriptdir_cvar = ConVar(
-    'eventscripts_subdirectory',
-    '',
-    'Specifies an alternate directory for configuration files. Must be a subdirectory of your cfg directory.'
-)
-
-datadir_cvar = ConVar(
-    'eventscripts_datadirectory',
-    'cfg',
-    'Specifies an alternate directory for output files.'
-)
-
-execmd_cvar = ConVar(
-    'eventscripts_exec-cmd',
-    'exec',
-    'The name of the \'exec\' command that EventScripts uses internally.'
-)
-
 serverdll_cvar = ConVar(
     'eventscripts_servergamedll_ver',
     '',
@@ -244,6 +226,24 @@ escape_cvar = ConVar(
     'eventscripts_escapechars',
     '; {}()\':',
     'Lists the characters for that cause variable expansion to require quotes to prevent parsing issues. (Leave this alone unless you know what you\'re doing.)'
+)
+
+scriptdir_cvar = ConVar(
+    'eventscripts_subdirectory',
+    'events',
+    'Specifies an alternate directory for configuration files. Must be a subdirectory of your cfg directory.'
+)
+
+execmd_cvar = ConVar(
+    'eventscripts_exec-cmd',
+    'exec',
+    'The name of the \'exec\' command that EventScripts uses internally.'
+)
+
+datadir_cvar = ConVar(
+    'eventscripts_datadirectory',
+    'cfg',
+    'Specifies an alternate directory for output files.'
 )
 
 
