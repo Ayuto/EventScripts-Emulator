@@ -14,6 +14,8 @@ from commands.say import get_say_command
 from commands.client import ClientCommandGenerator
 from commands.client import get_client_command
 from commands.server import get_server_command
+#   Effects
+from effects.base import TempEntity
 #   Engines
 from engines.server import engine_server
 from engines.server import global_vars
@@ -406,9 +408,8 @@ def createscriptlist(argv):
 
     result = {}
     for name in addons:
-        if len(argv) > 1:
-            if name.lower() != argv[2].lower():
-                continue
+        if len(argv) > 1 and name.lower() != argv[2].lower():
+            continue
 
         result[name] = dict(
             status='{}abled'.format('dis' if addons[name].disabled else 'en'),
@@ -547,9 +548,59 @@ def dumpstringtable(argv):
         dbgmsg(0, 'Data:\n{}'.format(string_table[index]))
         dbgmsg(0, 'Data:\n{}'.format(string_table.get_user_data(index)))
 
-def effect(*args):
+@command
+def effect(argv):
     """Performs a particular effect."""
-    raise NotImplementedError
+    operation = argv[1].lower()
+    if operation == 'sparks':
+        entity = TempEntity('Sparks')
+        entity.magnitude = atoi(argv[3])
+        entity.trail_length = atoi(argv[4])
+        entity.direction = Vector(*splitvectorstring(argv[5])) if len(argv) > 4 else None
+        entity.origin = Vector(*splitvectorstring(argv[2]))
+    elif operation == 'smoke':
+        entity = TempEntity('Smoke')
+        entity.scale = atof(argv[4]) * 0.1 # This is done in CEffectsServer
+        entity.frame_rate = atof(argv[5])
+        entity.model_index = atoi(argv[3])
+        entity.origin = Vector(*splitvectorstring(argv[2]))
+    elif operation == 'beam':
+        if len(argv) <= 17:
+            dbgmsg(1, 'Incorrect syntax for es_effect beam.')
+            return
+
+        entity = TempEntity('BeamPoints')
+        entity.alpha = atoi(argv[16])
+        entity.blue = atoi(argv[15])
+        entity.green = atoi(argv[14])
+        entity.red = atoi(argv[13])
+        entity.amplitude = atoi(argv[12])
+        entity.end_width = atoi(argv[10])
+        entity.life_time = atoi(argv[8])
+        entity.start_width = atoi(argv[9])
+        entity.fade_length = atoi(argv[11])
+        entity.frame_rate = atoi(argv[7])
+        entity.halo_index = atoi(argv[5])
+        entity.model_index = atoi(argv[4])
+        entity.speed = atoi(argv[17])
+        entity.start_frame = atoi(argv[6])
+        entity.end_point = Vector(*splitvectorstring(argv[3]))
+        entity.start_point = Vector(*splitvectorstring(argv[2]))
+    elif operation == 'dust':
+        entity = TempEntity('Dust')
+        entity.size = atof(argv[4])
+        entity.speed = atof(argv[5])
+        entity.direction = Vector(*splitvectorstring(argv[3]))
+        entity.origin = Vector(*splitvectorstring(argv[2]))
+    elif operation == 'energysplash':
+        entity = TempEntity('Energy Splash')
+        entity.explosive = bool(atoi(argv[4]))
+        entity.direction = Vector(*splitvectorstring(argv[3]))
+        entity.position = Vector(*splitvectorstring(argv[2]))
+    else:
+        return
+
+    entity.create(RecipientFilter())
 
 @command
 def emitsound(argv):
