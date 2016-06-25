@@ -140,10 +140,7 @@ def ForceServerCommand(command_str):
 
     con_command = cvar.find_command(c[0])
     if con_command:
-        try:
-            con_command.dispatch(c)
-        except Exception as e:
-            raise Exception(e, con_command.name, c)
+        con_command.dispatch(c)
     else:
         convar = cvar.find_var(c[0])
         if convar:
@@ -804,13 +801,17 @@ def forcevalue(*args):
     """Forces a variable to a particular value"""
     raise NotImplementedError
 
-def foreachkey(*args):
+@command
+def foreachkey(argv):
     """EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name."""
-    raise NotImplementedError
+    # Use the esc implementation
+    ForceServerCommand('foreachkey {}'.format(argv.arg_string))
 
-def foreachval(*args):
+@command
+def foreachval(argv):
     """EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name."""
-    raise NotImplementedError
+    # Use the esc implementation
+    ForceServerCommand('foreachval {}'.format(argv.arg_string))
 
 @command
 def formatqv(argv):
@@ -1363,9 +1364,13 @@ def keygroupfilter(argv):
                 key = key.next_true_sub_key
 
 # Pure Python function
-def keygroupgetpointer(*args):
+def keygroupgetpointer(string):
     """Returns the C++ pointer to a keygroup."""
-    raise NotImplementedError
+    if not isinstance(string, str):
+        raise TypeError
+
+    key = user_groups.find_key(string)
+    return 0 if key is None else _get_keyvalues_ptr(key)
 
 @command
 def keygroupload(argv):
