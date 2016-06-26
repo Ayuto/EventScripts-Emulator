@@ -15,6 +15,8 @@ from events.manager import game_event_manager
 from .logic import cfg_scripts
 #   Cvars
 from .cvars import scriptdir_cvar
+#   Helpers
+from .helpers import _print_all_registered_cfg_scripts
 
 
 # =============================================================================
@@ -49,7 +51,7 @@ def eventscripts_log(command):
 @ServerCommand('eventscripts_register')
 def eventscripts_register(command):
     if len(command) < 2:
-        print_all_registered_cfg_scripts()
+        _print_all_registered_cfg_scripts()
         return
 
     import es
@@ -70,7 +72,7 @@ def eventscripts_register(command):
 @ServerCommand('eventscripts_unregister')
 def eventscripts_unregister(command):
     if len(command) < 2:
-        print_all_registered_cfg_scripts()
+        _print_all_registered_cfg_scripts()
         return
 
     import es

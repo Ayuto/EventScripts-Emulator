@@ -28,6 +28,7 @@ from entities.props import SendPropType
 from entities.helpers import index_from_edict
 #   Players
 from players.helpers import index_from_userid
+from players.entity import Player
 #   Filters
 from filters.recipients import RecipientFilter
 #   Messages
@@ -35,6 +36,7 @@ from messages import UserMessage
 from messages import get_message_index
 
 # ES Emulator
+#   Cvars
 from .cvars import botcexec_cvar
 from .cvars import deadflag_cvar
 from .cvars import lastgive_cvar
@@ -66,6 +68,7 @@ __all__ = (
     '_set_last_error',
     'Msg',
     '_color_from_string',
+    '_print_all_registered_cfg_scripts',
 )
 
 
@@ -172,6 +175,44 @@ def _set_convar(name, value, create=False, description='Custom server variable.'
             es.dbgmsg(1, 'Can\'t change variable: {}'.format(name))
 
     return convar
+
+
+# =============================================================================
+# >> HELPER TO PRINT ALL REGISTERED CFG SCRIPTS
+# =============================================================================
+def _print_all_registered_cfg_scripts(userid=0):
+    import es
+    from .logic import cfg_scripts
+
+    if userid > 0:
+        try:
+            player = Player.from_userid(userid)
+        except ValueError:
+            return
+    else:
+        player = None
+
+    header = 'EventScripts Script packs:'
+    sep = '------------------------------------------'
+    if player is not None:
+        player.client_command('echo {}'.format(header))
+        player.client_command('echo {}'.format(sep))
+    else:
+        es.dbgmsg(0, header)
+        es.dbgmsg(0, sep)
+
+    for index, (scriptpack, enabled) in enumerate(cfg_scripts.items()):
+        msg = '{:02d}   {}   "{}"'.format(index, '[on]' if enabled else '[off]', scriptpack)
+        if player is not None:
+            player.client_command('echo {}'.format(msg))
+        else:
+            es.dbgmsg(0, msg)
+
+
+    if player is not None:
+        player.client_command('echo {}'.format(sep))
+    else:
+        es.dbgmsg(0, sep)
 
 
 # =============================================================================

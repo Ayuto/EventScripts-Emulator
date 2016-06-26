@@ -2054,9 +2054,14 @@ def remove(argv):
     with _cheats_enabled():
         ForceServerCommand('ent_remove {}'.format(argv[1]))
 
-def scriptpacklist(*args):
+@command
+def scriptpacklist(argv):
     """Lists the script packs running on the server. If a userid is provided, will es_tell the list to the user."""
-    raise NotImplementedError
+    userid = 0
+    if len(argv) > 1:
+        userid = atoi(argv[1])
+        
+    _print_all_registered_cfg_scripts(userid)
 
 def sendkeypmsg(*args):
     """Sends a client message based on a KeyValues pointer. sendkeypmsg(userid,type,keyid)"""
