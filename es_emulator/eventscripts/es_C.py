@@ -28,6 +28,8 @@ from events.manager import game_event_manager
 from messages import TextMsg
 from messages import SayText2
 from messages import ShowMenu
+from messages import DialogType
+from messages.dialog import create_message
 #   Players
 from players.entity import Player
 from players.helpers import index_from_userid
@@ -2340,9 +2342,44 @@ def tell(argv):
 
     SayText2(_prepare_msg(argv, 2, 1)).send(index)
 
-def toptext(*args):
+@command
+def toptext(argv):
     """Sends HUD message to one player."""
-    raise NotImplementedError
+    duration = atoi(argv[2])
+    if duration < 1:
+        dbgmsg(0, '{}: The duration of your message was set too low'.format(duration))
+        return
+
+    try:
+        player = edict_from_userid(atoi(argv[1]))
+    except ValueError:
+        return
+
+    msg = argv.arg_string[len(argv[1])+len(argv[2])+1:]
+    msg = msg[2:] if msg[0] == '"' else msg[1:]
+
+    color_str = ''
+    for x in range(32):
+        if x >= len(msg) or msg[x] == ' ':
+            break
+
+        color_str += msg[x]
+
+    found, color = _color_from_string(color_str)
+    if found:
+        if len(msg) <= len(color_str):
+            dbgmsg(0, 'You must send a message')
+            return
+
+        msg = msg[len(color_str)+1:]
+
+    msg = msg.replace('"', '')
+    data = KeyValues('msg')
+    data.set_string('title', msg)
+    data.set_color('color', color)
+    data.set_int('level', 5)
+    data.set_int('time', duration)
+    create_message(player, DialogType.MSG, data)
 
 @command
 def trick(argv):

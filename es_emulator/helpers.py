@@ -7,6 +7,8 @@ import re
 from contextlib import contextmanager
 
 # Source.Python
+#   Colors
+from colors import Color
 #   Cvars
 from cvars import cvar
 from cvars import ConVar
@@ -63,6 +65,7 @@ __all__ = (
     'command',
     '_set_last_error',
     'Msg',
+    '_color_from_string',
 )
 
 
@@ -197,6 +200,35 @@ def _prepare_msg(argv, color_index, skip):
         msg = ' '.join(argv.args[skip:])
 
     return msg
+
+
+# =============================================================================
+# >> es.toptext()
+# =============================================================================
+TOPTEXT_COLORS = {
+    '#red': Color(255, 0, 0, 255),
+    '#green': Color(0, 255, 0, 255),
+    '#blue': Color(0, 0, 255, 255),
+    '#orange': Color(255, 130, 0, 255),
+    '#purple': Color(144, 0, 226, 255),
+    '#violet': Color(144, 0, 226, 255),
+    '#pink': Color(226, 0, 165, 255),
+    '#cyan': Color(0, 255, 255, 255),
+    '#yellow': Color(255, 255, 0, 255),
+    '#white': Color(255, 255, 255, 255),
+    '#black': Color(0, 0, 0, 255),
+    '#darkgreen': Color(0, 145, 0, 255),
+    '#darkblue': Color(0, 0, 145, 255),
+    '#darkred': Color(145, 0, 0, 255),
+    '#gray': Color(120, 120, 120, 255),
+    '#grey': Color(120, 120, 120, 255),
+}
+
+def _color_from_string(string):
+    try:
+        return True, TOPTEXT_COLORS[string]
+    except KeyError:
+        return False, Color(255, 255, 255, 255)
 
 
 # =============================================================================
