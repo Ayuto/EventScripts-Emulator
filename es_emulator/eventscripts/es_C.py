@@ -2060,12 +2060,24 @@ def scriptpacklist(argv):
     userid = 0
     if len(argv) > 1:
         userid = atoi(argv[1])
-        
+
     _print_all_registered_cfg_scripts(userid)
 
-def sendkeypmsg(*args):
+# Pure Python command
+def sendkeypmsg(userid, type, key_ptr):
     """Sends a client message based on a KeyValues pointer. sendkeypmsg(userid,type,keyid)"""
-    raise NotImplementedError
+    if not isinstance(userid, int) or not isinstance(type, int) or not isinstance(key_ptr, int):
+        raise TypeError
+
+    try:
+        edict = edict_from_userid(userid)
+    except ValueError:
+        dbgmsg(0, 'Error: "{}" is an invalid userid.'.format(userid))
+
+    if not key_ptr:
+        dbgmsg(0, 'Error: Invalid key for sending VGUI message.')
+
+    create_message(edict, type, _make_keyvalues(key_ptr))
 
 @command
 def set(argv):
