@@ -682,9 +682,29 @@ def entsetname(argv):
 
     _exec_client_cheat_command(player, 'ent_setname {}'.format(argv[2]))
 
-def escinputbox(*args):
+@command
+def escinputbox(argv):
     """Sends an ESC input box to a player."""
-    raise NotImplementedError
+    duration = atoi(argv[1])
+    if not (10 <= duration <= 200):
+        dbgmsg(0, 'Error: "{}" is an invalid specifier for <time>.'.format(argv[1]))
+        dbgmsg(0, 'Error: <time> must be at least 10 or at the most 200.')
+        return
+
+    try:
+        edict = edict_from_userid(atoi(argv[2]))
+    except ValueError:
+        dbgmsg(0, 'Error: "{}" is an invalid userid.'.format(argv[2]))
+        return
+
+    data = KeyValues('entryBox')
+    data.set_string('title', argv[3])
+    data.set_int('level', 0)
+    data.set_color('color', Color(255, 255, 255, 255))
+    data.set_int('time', duration)
+    data.set_string('msg', argv[4].replace('\\n', '\n'))
+    data.set_string('command', '"{}"'.format(argv[5]))
+    create_message(edict, DialogType.ENTRY, data)
 
 def escmenu(*args):
     """Sends an ESC menu to a player."""
