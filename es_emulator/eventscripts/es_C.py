@@ -1434,9 +1434,28 @@ def keygroupload(argv):
 
     dbgmsg(1, 'Loaded: {}'.format(full_path))
 
-def keygroupmsg(*args):
+@command
+def keygroupmsg(argv):
     """Sends a keygroup-based message to a player."""
-    raise NotImplementedError
+    userid = argv[1]
+    try:
+        edict = edict_from_userid(atoi(userid))
+    except ValueError:
+        dbgmsg(0, 'Invalid userid: {}'.format(userid))
+        return
+
+    key_group_name = argv[3]
+    kv = user_groups.find_key(key_group_name)
+    if kv is None:
+        dbgmsg(0, 'Error: KeyGroup {} not found.'.format(key_group_name))
+        return
+
+    key_msg = kv.find_key('message')
+    if key_msg is None:
+        dbgmsg(0, 'Error: \'message\' subkey was not found inside keygroup {}'.format(key_group_name))
+        return
+
+    create_message(edict, atoi(argv[2]), key_msg)
 
 @command
 def keygrouprename(argv):
