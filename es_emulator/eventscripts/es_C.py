@@ -35,6 +35,7 @@ from players.entity import Player
 from players.helpers import index_from_userid
 from players.helpers import userid_from_edict
 from players.helpers import edict_from_userid
+from players.helpers import userid_from_inthandle
 from players.voice import voice_server
 #   Entities
 from entities.entity import BaseEntity
@@ -1314,9 +1315,86 @@ def getproptype(argv):
     prop_type, offset = _get_prop_info(argv[1])
     return 0 if prop_type is None else int(prop_type)
 
-def getuserid(*args):
+@command
+def getuserid(argv):
     """Looks-up a userid based on the string provided. Checks it against a userid, steamid, exact name, and partial name. (Based on Mani's algorithm.)"""
-    raise NotImplementedError
+    if len(argv) == 1:
+        dbgmsg(1, 'FindUserIDByString: Look for any connected player')
+        for player in PlayerIter():
+            return player.userid
+
+        return 0
+
+    target_string = argv[1]
+    dbgmsg(1, 'FindUserIDByString: let\'s try to match this: {}'.format(target_string))
+
+    # Search for UserID
+    dbgmsg(1, 'FindUserIDByString: is it a userid?')
+    target_userid = atoi(argv[1])
+    if target_userid != 0:
+        dbgmsg(1, 'FindUserIDByString: Probably is a userid.')
+        try:
+            edict_from_userid(target_userid)
+        except ValueError:
+            pass
+        else:
+            dbgmsg(1, 'FindUserIDByString: Yep, it\'s a userid.')
+            return target_userid
+
+        dbgmsg(1, 'FindUserIDByString: Hmm, maybe it\'s a handle?')
+        try:
+            result = userid_from_inthandle(target_userid)
+        except ValueError:
+            dbgmsg(1, 'FindUserIDByString: Not a handle or userid.')
+        else:
+            dbgmsg(1, 'FindUserIDByString: Yep, it\'s a handle.')
+            return result
+
+    # Search for SteamID
+    dbgmsg(1, 'FindUserIDByString: is it a steamid?')
+
+    # TODO: Fix this to work with SteamID3?
+    if len(target_string) > 6 and target_string.startswith('STEAM_'):
+        dbgmsg(1, 'FindUserIDByString: really looks like a steamid.')
+        for player in PlayerIter():
+            if player.steamid == target_string:
+                dbgmsg(1, 'FindUserIDByString: was a steamid')
+                return player.userid
+
+    # Search for exact name
+    dbgmsg(1, 'FindUserIDByString: Look for exact name?')
+    for player in PlayerIter():
+        if player.name == target_string:
+            dbgmsg(1, 'FindUserIDByString: found exact name')
+            return player.userid
+
+        dbgmsg(1, 'FindUserIDByString: not an exact name')
+
+    # Search for exact name (case-insensitive)
+    dbgmsg(1, 'FindUserIDByString: is there a name case-insensitive?')
+    for player in PlayerIter():
+        if player.name.lower() == target_string.lower():
+            dbgmsg(1, 'FindUserIDByString: yep, there\'s a name case-insensitive!')
+            return player.userid
+
+    dbgmsg(1, 'FindUserIDByString: is it a BOT steamid?')
+    if target_string == 'BOT':
+        dbgmsg(1, 'FindUserIDByString: really looks like a BOT steamid.')
+        for player in PlayerIter('bot'):
+            dbgmsg(1, 'FindUserIDByString: was a steamid')
+            return player.userid
+
+    # Search for partial name
+    dbgmsg(1, 'FindUserIDByString: is it a part of their name!')
+    for player in PlayerIter():
+        if target_string.lower() in player.name.lower():
+            dbgmsg(1, 'FindUserIDByString: it is a part of their name: {}'.format(player.name))
+            return player.userid
+
+        dbgmsg(1, 'FindUserIDByString: didn\'t match: {}'.format(player.name))
+
+    dbgmsg(1, 'FindUserIDByString: not found! {}'.format(target_string))
+    return 0
 
 @command
 def give(argv):
