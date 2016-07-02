@@ -59,6 +59,8 @@ from stringtables import string_tables
 from stringtables import INVALID_STRING_INDEX
 #   KeyValues
 from keyvalues import KeyValues
+#   Physics
+from physics import physics
 
 # ES Emulator
 #   Logic
@@ -1127,7 +1129,14 @@ def getgame(argv):
 @command
 def getgravityvector(argv):
     """Returns the gravity vector."""
-    raise NotImplementedError
+    env = physics.get_active_environment_by_index(0)
+    if env is None:
+        dbgmsg(0, 'No physics environment.')
+        return None
+
+    gravity = env.gravity
+    dbgmsg(1, 'gravity: {}, {}, {}'.format(*gravity))
+    return createvectorstring(*gravity)
 
 @command
 def gethandlefromindex(argv):
@@ -2036,9 +2045,69 @@ def old_mexec(*args):
     """Runs an exec file from memory."""
     raise NotImplementedError
 
-def physics(*args):
+@command
+def physics(argv):
     """Interface with the Source physics engine (physics gravity, object velocity, etc)."""
-    raise NotImplementedError
+    env = physics.get_active_environment_by_index(0)
+    if env is None:
+        dbgmsg(0, 'ERROR: No physics environment.')
+        _set_last_error('Internal error')
+        return None
+
+    operation = argv[1].lower()
+    sub_operation = argv[2].lower()
+    if operation == 'set':
+        if sub_operation == 'gravity':
+            gravity = splitvectorstring(argv[3])
+            env.gravity = Vector(*gravity)
+            dbgmsg(1, 'gravity: {}, {}, {}'.format(*gravity))
+        elif sub_operation == 'airdensity':
+            env.air_density = atof(argv[3])
+    elif operation == 'get':
+        if sub_operation == 'gravity':
+            gravity = env.gravity
+            dbgmsg(1, 'gravity: {}, {}, {}'.format(*gravity))
+            return createvectorstring(*gravity)
+        elif sub_operation == 'airdensity':
+            return env.air_density
+    elif operation == 'start':
+        raise NotImplementedError
+    elif operation == 'active':
+        if sub_operation == 'teleport':
+            obj = env.get_active_object_by_index(atoi(argv[3]))
+            if obj is None:
+                return
+
+            # TOOD: Print address of "obj"
+            dbgmsg(3, 'pObject: {}'.format(id(obj)))
+            vec, ang = obj.position
+            dbgmsg(3, 'Position: {}, {}, {}'.format(*vec))
+            obj.set_position(Vector(*splitvectorstring(argv[4])), ang, True)
+            dbgmsg(2, 'Teleported: {}.'.format(obj.game_index))
+        elif sub_operation == 'setvelocity':
+            obj = env.get_active_object_by_index(atoi(argv[3]))
+            if obj is None:
+                return
+
+            # TOOD: Print address of "obj"
+            dbgmsg(3, 'pObject: {}'.format(id(obj)))
+            vel, ang_vel = obj.velocity
+            dbgmsg(3, 'Position: {}, {}, {}'.format(*vel))
+            obj.set_velocity_instantaneous(Vector(*splitvectorstring(argv[4])), ang_vel)
+            dbgmsg(2, 'Set velocity: {}.'.format(obj.game_index))
+        elif sub_operation == 'applyforce':
+            obj = env.get_active_object_by_index(atoi(argv[3]))
+            if obj is None:
+                return
+
+            # TOOD: Print address of "obj"
+            dbgmsg(3, 'pObject: {}'.format(id(obj)))
+            obj.apply_force_center(Vector(*splitvectorstring(argv[4])))
+            dbgmsg(2, 'Set velocity: {}.'.format(obj.game_index))
+        elif sub_operation == 'setmass':
+            obj = env.get_active_object_by_index(atoi(argv[3]))
+            if obj is not None:
+                obj.mass = atof(argv[4])
 
 @command
 def playsound(argv):
