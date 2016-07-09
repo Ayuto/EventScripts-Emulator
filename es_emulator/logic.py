@@ -48,6 +48,7 @@ from .cvars import defaultevents_cvar
 from .cvars import mapcommands_cvar
 #   Helpers
 from .helpers import _is_dead
+from .helpers import _set_last_error
 #   Paths
 from .paths import ES_EVENTS_PATH
 
