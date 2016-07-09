@@ -9,13 +9,9 @@ import time
 #   Cvars
 from cvars import cvar
 from cvars.flags import ConVarFlags
-#   Memory
-import memory
-
-from memory.hooks import PreHook
 #   Events
-from events import GameEvent
 from events.manager import game_event_manager
+from events.listener import GameEventListener
 #   Engines
 from engines.server import global_vars
 from engines.server import engine_server
@@ -32,6 +28,8 @@ from commands.client import ClientCommandFilter
 from commands.server import ServerCommand
 #   Paths
 from paths import GAME_PATH
+#   KeyValues
+from keyvalues import KeyValues
 
 # EventScripts Emulator
 #   Cvars
@@ -46,6 +44,8 @@ from .cvars import frametimer_cvar
 from .cvars import cmdprefix_cvar
 from .cvars import scriptdir_cvar
 from .cvars import execmd_cvar
+from .cvars import defaultevents_cvar
+from .cvars import mapcommands_cvar
 #   Helpers
 from .helpers import _is_dead
 #   Paths
@@ -135,26 +135,6 @@ def fill_event_vars(userid, type_str):
     current_event_vars['es_{}dead'.format(type_str)] = player.dead
     current_event_vars['es_{}index'.format(type_str)] = player.index
 
-@PreHook(memory.get_virtual_function(game_event_manager, 'FireEvent'))
-def pre_fire_event(args):
-    event = memory.make_object(GameEvent, args[1])
-    if noisy_cvar.get_int() != 1 and event.name in NOISY_EVENTS:
-        return
-
-    current_event_vars.clear()
-    current_event_vars['es_event'] = event.name
-    current_event_vars.update(event.variables.as_dict())
-
-    userid = current_event_vars.get('userid', 0)
-    if userid:
-        fill_event_vars(userid, 'user')
-
-    attacker = current_event_vars.get('attacker', 0)
-    if attacker:
-        fill_event_vars(attacker, 'attacker')
-
-    exec_all_registered(event.name)
-
 def exec_all_registered(event_name):
     import es
 
@@ -184,6 +164,65 @@ def exec_all_registered(event_name):
     es.dbgmsg(2, 'Checking all scripts...')
     es.addons.triggerEvent(event_name)
 
+def default_event_registration():
+    import es
+
+    es.dbgmsg(1, ' ** Registering files...')
+    if not register_for_event_file('resource/modevents.res'):
+        if not register_for_event_file('Resource/modevents.res'):
+            es.dbgmsg(0, 'EventScripts] ERROR: Couldn\'t load modevents.res.')
+
+    if not register_for_event_file('../hl2/resource/gameevents.res'):
+        if not register_for_event_file('resource/gameevents.res'):
+            es.dbgmsg(0, '[EventScripts] ERROR: Couldn\'t load gameevents.res.')
+
+    if not register_for_event_file('../hl2/resource/serverevents.res'):
+        if not register_for_event_file('resource/serverevents.res'):
+            es.dbgmsg(0, '[EventScripts] ERROR: Couldn\'t load serverevents.res.')
+
+    if not register_for_event_file(str(ES_EVENTS_PATH)):
+        es.dbgmsg(0, 'ERROR: COULDN\'T LOAD MATTIE CORE EVENTS!')
+
+    es.dbgmsg(1, ' ** Done registering default event files.')
+
+class ESEventListener(GameEventListener):
+    def fire_game_event(self, event):
+        if noisy_cvar.get_int() != 1 and event.name in NOISY_EVENTS:
+            return
+
+        current_event_vars.clear()
+        current_event_vars['es_event'] = event.name
+        current_event_vars.update(event.variables.as_dict())
+
+        userid = current_event_vars.get('userid', 0)
+        if userid:
+            fill_event_vars(userid, 'user')
+
+        attacker = current_event_vars.get('attacker', 0)
+        if attacker:
+            fill_event_vars(attacker, 'attacker')
+
+        exec_all_registered(event.name)
+
+es_event_listener = ESEventListener()
+
+def register_for_event_file(file_name):
+    events = KeyValues('event')
+    if not events.load_from_file(file_name):
+        _set_last_error('Couldn\'t load events file.')
+        return False
+
+    import es
+
+    kv = events.first_sub_key
+    while kv:
+        es.dbgmsg(1, 'Added: {}'.format(kv.name))
+        game_event_manager.add_listener(es_event_listener, kv.name, True)
+        kv = kv.next_key
+
+    es.dbgmsg(1, 'Done loading events.')
+    return True
+
 
 # =============================================================================
 # >> CURRENT MAP & AUTO REFRESH PUBLIC CVARS
@@ -191,7 +230,10 @@ def exec_all_registered(event_name):
 @OnLevelInit
 def on_level_init(map_name):
     currentmap_cvar.set_string(map_name)
+    if defaultevents_cvar.get_int() != 0:
+        default_event_registration()
 
+    # TODO: Fire es_map_start
     if autorefreshvars_cvar.get_int() > 0:
         import es
         es.refreshpublicvars()
@@ -276,6 +318,9 @@ if protectrcon_cvar.get_int() > 0:
 # =============================================================================
 if game_event_manager.load_events_from_file(str(ES_EVENTS_PATH)) == 0:
     raise ValueError('Failed to load mattie_eventscripts.res')
+
+if defaultevents_cvar.get_int() != 0:
+    default_event_registration()
 
 
 # =============================================================================

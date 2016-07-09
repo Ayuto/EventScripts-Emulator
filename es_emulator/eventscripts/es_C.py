@@ -69,6 +69,7 @@ from es_emulator.logic import server_command_proxies
 from es_emulator.logic import say_command_proxies
 from es_emulator.logic import client_command_proxies
 from es_emulator.logic import command_info
+from es_emulator.logic import register_for_event_file
 #   Helpers
 from es_emulator.helpers import *
 #   Cvars
@@ -1993,10 +1994,12 @@ def load(argv):
 @command
 def loadevents(argv):
     """Reads an event file and registers EventScripts as a handler for those events."""
+    pos = 1
     if len(argv) > 2:
-        game_event_manager.load_events_from_file(argv[2])
+        pos = 2
+        game_event_manager.load_events_from_file(argv[pos])
 
-    # No need to register for event file, because we are using pre-hooks
+    register_for_event_file(argv[pos])
 
 @command
 def log(argv):

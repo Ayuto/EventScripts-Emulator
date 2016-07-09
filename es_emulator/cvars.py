@@ -246,6 +246,12 @@ datadir_cvar = ConVar(
     'Specifies an alternate directory for output files.'
 )
 
+defaultevents_cvar = ConVar(
+    'eventscripts_defaultevents',
+    '1',
+    'If set to 1, EventScripts will try to register for the default event files on each new map.'
+)
+
 
 # =============================================================================
 # >> UNUSED CVARS
@@ -266,12 +272,6 @@ maxmessages_cvar = ConVar(
     'eventscripts_maxmsg',
     '28',
     'Maximum number of usermessages supported by the mod. Do not change unless instructed to do so.'
-)
-
-defaultevents_cvar = ConVar(
-    'eventscripts_defaultevents',
-    '1',
-    'If set to 1, EventScripts will try to register for the default event files on each new map.'
 )
 
 shellengine_cvar = ConVar(
