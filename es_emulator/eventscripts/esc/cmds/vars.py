@@ -99,7 +99,7 @@ def strcmp(argv):
 @Command(syntax='<returnvar> [string-to-measure]', types=VAR, desc='Returns the length of a string.')
 def strlen(argv):
     length = 0
-    if len(argv) > 0:
+    if len(argv) > 1:
         length = len(argv[1])
 
     sv[argv[0]] = length
