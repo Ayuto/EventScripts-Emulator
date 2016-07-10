@@ -5,6 +5,7 @@ import math
 import weaponlib
 
 import collections
+import operator
 
 
 # Plugin information
@@ -117,16 +118,18 @@ class Player(object):
             return float(self.value)
         def __bool__(self):
             return bool(int(self))
-        def __coerce__(self, other):
-            if isinstance(other, str):
-                return self.value, other
-            elif isinstance(other, int):
-                return int(self), other
-            elif isinstance(other, bool):
-                return bool(self), other
-            elif isinstance(other, float):
-                return float(self), other
-            return None
+        def __lt__(self, other):
+            return es._compare_value(self, other, operator.lt)
+        def __le__(self, other):
+            return es._compare_value(self, other, operator.le)
+        def __eq__(self, other):
+            return es._compare_value(self, other, operator.eq)
+        def __ne__(self, other):
+            return es._compare_value(self, other, operator.ne)
+        def __ge__(self, other):
+            return es._compare_value(self, other, operator.ge)
+        def __gt__(self, other):
+            return es._compare_value(self, other, operator.gt)
 
     class AttributeLevel(object):
         """ Provides a sub-attribute level for any get/set attributes requiring it. """

@@ -269,10 +269,15 @@ class AddonINI(ConfigObj):
    def __str__(self):
       return self.filename
 
-   def __coerce__(self, other):
+   def __eq__(self, other):
       if isinstance(str, other):
-         return self.filename, other
-      return None
+         return self.filename == other
+      return False
+
+   def __ne__(self, other):
+      if isinstance(str, other):
+         return self.filename != other
+      return False
 
 
    """ Static methods """

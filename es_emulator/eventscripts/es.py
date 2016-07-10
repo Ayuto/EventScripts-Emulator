@@ -17,6 +17,7 @@ import sys
 import traceback
 import langlib
 import re
+import operator
 
 class SourceServer:
   splitcmds = re.compile('(?:"[^\n"]+"|[^;\n"]+)+')
@@ -96,15 +97,18 @@ class EntityProp():
   def set(self, value):
     setentitypropoffset(self.index, self._propoffset, self._proptype, value)
     return
-  def __coerce__(self, other):
-    if isinstance(other, str):
-      return str(self), other
-    elif isinstance(other, int):
-      return int(self), other
-    elif isinstance(other, float):
-      return float(self), other
-    else:
-      return None
+  def __lt__(self, other):
+    return _compare_value(self, other, operator.lt, (str, int, float))
+  def __le__(self, other):
+    return _compare_value(self, other, operator.le, (str, int, float))
+  def __eq__(self, other):
+    return _compare_value(self, other, operator.eq, (str, int, float))
+  def __ne__(self, other):
+    return _compare_value(self, other, operator.ne, (str, int, float))
+  def __ge__(self, other):
+    return _compare_value(self, other, operator.ge, (str, int, float))
+  def __gt__(self, other):
+    return _compare_value(self, other, operator.gt, (str, int, float))
 
 # intelligent class to wrap a specific server variable
 class ServerVar():
@@ -131,17 +135,18 @@ class ServerVar():
     else:
       setString(self._name, str(value))
     return
-  def __coerce__(self, other):
-    if isinstance(other, str):
-      return str(self), other
-    elif isinstance(other, bool):
-      return bool(self), other
-    elif isinstance(other, int):
-      return int(self), other
-    elif isinstance(other, float):
-      return float(self), other
-    else:
-      return None
+  def __lt__(self, other):
+    return _compare_value(self, other, operator.lt)
+  def __le__(self, other):
+    return _compare_value(self, other, operator.le)
+  def __eq__(self, other):
+    return _compare_value(self, other, operator.eq)
+  def __ne__(self, other):
+    return _compare_value(self, other, operator.ne)
+  def __ge__(self, other):
+    return _compare_value(self, other, operator.ge)
+  def __gt__(self, other):
+    return _compare_value(self, other, operator.gt)
   def copy(self, source):
     sourcevar = source
     if isinstance(source, ServerVar):
@@ -484,6 +489,12 @@ def local_language():
     ''' Returns the server's local language abbreviation
     '''
     return langlib.getLangAbbreviation(str(ServerVar("eventscripts_language")))
+
+def _compare_value(self, other, comparison, _types=(str, int, float, bool)):
+  for type_ in _types:
+    if isinstance(other, type_):
+      return comparison(type_(self), other)
+  return False
 
 # initialize the language libraries
 langlib.loadLanguages("%s/_libs/python/deflangs.ini" % ServerVar("eventscripts_addondir"))
