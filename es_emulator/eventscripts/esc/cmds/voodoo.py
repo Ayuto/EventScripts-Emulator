@@ -28,8 +28,13 @@ def entcreate(argv):
 
 @Command(syntax='<command> [options]', desc='Interface with the Source physics engine (physics gravity, object velocity, etc).')
 def physics(argv):
-  # TODO
-  es.physics(*argv)
+  operation = argv[0].lower()
+  if operation == 'get':
+    result = es.physics(*argv[:-1])
+    if result is not None:
+        sv[argv[-1]] = result
+  else:
+    es.physics(*argv)
 
 @Command(syntax='<variable> <entity-name>', types=VAR, desc='Gets the index for the first named entity found by that name. Returns -1 if not found.')
 def getentityindex(argv):
@@ -147,6 +152,3 @@ def setentitypropoffset(argv):
 @Command(syntax='<index>', desc='Spawn a given entity index.')
 def spawnentity(argv):
   es.spawnentity(*argv)
-  
-
-  

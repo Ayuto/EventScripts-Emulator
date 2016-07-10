@@ -96,11 +96,15 @@ def flags(argv):
 def strcmp(argv):
   raise NotImplementedError
 
-@Command(syntax='<returnvar> "string-to-measure"', desc='Returns the length of a string.')
+@Command(syntax='<returnvar> [string-to-measure]', types=VAR, desc='Returns the length of a string.')
 def strlen(argv):
-  raise NotImplementedError
+    length = 0
+    if len(argv) > 0:
+        length = len(argv[1])
 
-@Command(syntax='<userid> <convar-name> "<convar-value>"', desc='Sets a convar value for a fake client.')
+    sv[argv[0]] = length
+
+@Command(syntax='<userid> <convar-name> <convar-value>', desc='Sets a convar value for a fake client.')
 def botsetvalue(argv):
   es.botsetvalue(*argv)
 
@@ -115,4 +119,3 @@ def forcecallbacks(argv):
 @Command(desc='Outputs all the console commands and variables.')
 def refreshpublicvars(argv):
   es.refreshpublicvars()
-  

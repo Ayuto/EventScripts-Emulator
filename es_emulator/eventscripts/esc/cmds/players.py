@@ -1,9 +1,15 @@
 from . import Command
+from ..val import sv
 import es
 
 @Command(syntax='<command> [variable] <to_userid> <from_userid>', desc='Allows you to control listening players.')
 def voicechat(argv):
-  es.voicechat(*argv)
+  if len(argv) == 3:
+    result = es.voicechat(*argv[1:])
+    if result is not None:
+      sv[argv[0]] = result
+  else:
+    es.voicechat(*argv)
 
 @Command(syntax='<userid> <commandstring>', desc='Forces a userid to execute a command in their console.')
 def cexec(argv):

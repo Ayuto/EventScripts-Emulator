@@ -13,10 +13,9 @@ def getmoney(argv):
   es.dbgmsg(2, 'es_xgetmoney executing: {}'.format(pre_parsed_command))
   es.InsertServerCommand(pre_parsed_command)
 
-@Command(syntax='<variable> [string]', desc='Looks-up a userid based on the string provided. Checks it against a userid, steamid, exact name, and partial name. (Based on Mani\'s algorithm.)')
+@Command(syntax='<variable> [string]', types=VAR, desc='Looks-up a userid based on the string provided. Checks it against a userid, steamid, exact name, and partial name. (Based on Mani\'s algorithm.)')
 def getuserid(argv):
-  # TODO
-  es.getuserid(*argv)
+  sv[argv[0]] = es.getuserid(*argv[1:])
 
 @Command(syntax='<var> <userid> <varname>', types=VAR, desc='Reads a console variable from a given player.')
 def getclientvar(argv):
