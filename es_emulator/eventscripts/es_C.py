@@ -1287,7 +1287,7 @@ def getplayerprop(argv):
     userid = atoi(argv[1])
     if userid > 0:
         try:
-            index = index_from_userid(atoi(userid))
+            index = index_from_userid(userid)
         except ValueError:
             dbgmsg(0, 'Entity doesn\'t exist.')
             return
