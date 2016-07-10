@@ -234,9 +234,14 @@ def on_level_init(map_name):
     if defaultevents_cvar.get_int() != 0:
         default_event_registration()
 
-    # TODO: Fire es_map_start
+    event = game_event_manager.create_event('es_map_start')
+    if event is not None:
+        event.set_string('mapname', map_name)
+        game_event_manager.fire_event(event)
+
+    import es
+    es.dbgmsg(3, 'es_map_start fired.')
     if autorefreshvars_cvar.get_int() > 0:
-        import es
         es.refreshpublicvars()
 
 currentmap_cvar.set_string(global_vars.map_name)
