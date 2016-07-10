@@ -15,9 +15,13 @@ from events.listener import GameEventListener
 #   Engines
 from engines.server import global_vars
 from engines.server import engine_server
+from engines.server import QueryCvarStatus
 #   Listeners
 from listeners import OnTick
 from listeners import OnLevelInit
+from listeners import OnNetworkidValidated
+from listeners import OnClientSettingsChanged
+from listeners import OnQueryCvarValueFinished
 #   Players
 from players.entity import Player
 from players.helpers import userid_from_index
@@ -246,6 +250,45 @@ def on_level_init(map_name):
 
 currentmap_cvar.set_string(global_vars.map_name)
 
+@OnNetworkidValidated
+def on_network_id_validated(name, networkid):
+    event = game_event_manager.create_event('es_player_validated')
+    if event is not None:
+        event.set_string('name', name)
+        event.set_string('networkid', networkid)
+        game_event_manager.fire_event(event)
+
+@OnClientSettingsChanged
+def on_client_settings_changed(index):
+    event = game_event_manager.create_event('es_player_setting')
+    if event is not None:
+        event.set_int('userid', userid_from_index(index))
+        game_event_manager.fire_event(event)
+
+QUERY_STATUS = {
+    QueryCvarStatus.SUCCESS: 'success',
+    QueryCvarStatus.NOT_FOUND: 'not found',
+    QueryCvarStatus.INVALID: 'not variable',
+    QueryCvarStatus.PROTECTED: 'protected',
+}
+
+@OnQueryCvarValueFinished
+def on_query_cvar_value_finished(cookie, index, status, cvar_name, cvar_value):
+    event = game_event_manager.create_event('es_player_variable')
+    if event is None:
+        return
+
+    try:
+        userid = userid_from_index(index)
+    except ValueError:
+        userid = 0
+
+    event.set_int('userid', userid)
+    event.set_string('status', QUERY_STATUS.get(status, ''))
+    event.set_string('variable', cvar_name)
+    event.set_string('value', cvar_value)
+    game_event_manager.fire_event(event)
+
 
 # =============================================================================
 # >> TICK LISTENER
@@ -272,14 +315,41 @@ def on_say(command, index, team_only):
         return CommandReturn.CONTINUE
 
     import es
-    # TODO: Fire es_player_chat
+
+    try:
+        userid = userid_from_index(index)
+    except ValueError:
+        userid = 0
+
+    fire_es_player_chat(command, userid, team_only)
+
     # TODO: es.regsaycmd() should be handled here and not with SP's
     #       get_say_command()
-    userid = userid_from_index(index)
     if es.addons.sayFilter(userid, command.arg_string, team_only):
         return CommandReturn.CONTINUE
 
     return CommandReturn.BLOCK
+
+def fire_es_player_chat(command, userid, team_only):
+    if len(command) <= 1:
+        return
+
+    event = game_event_manager.create_event('es_player_chat')
+    if event is None:
+        return
+
+    event.set_int('userid', userid)
+    event.set_bool('teamonly', team_only)
+
+    full_text = command.arg_string
+    if (userid > 0 and full_text[0] == '"'
+            and full_text[-1] == '"'
+            and full_text.count('"') <= 2):
+        event.set_string('text', full_text[1:-1])
+    else:
+        event.set_string('text', full_text)
+
+    game_event_manager.fire_event(event)
 
 
 # =============================================================================
