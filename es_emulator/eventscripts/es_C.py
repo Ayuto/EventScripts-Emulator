@@ -126,6 +126,22 @@ def _get_full_path(argv):
 
     return full_path
 
+_key_values = {}
+
+def _make_keyvalues(key_ptr):
+    return memory.make_object(KeyValues, memory.Pointer(key_ptr))
+
+def _get_keyvalues_ptr(key):
+    return memory.get_object_pointer(key).address
+
+def _store_key_value(kv):
+    addr = memory.get_object_pointer(kv).address
+    _key_values[addr] = kv
+    return addr
+
+def _remove_key_value(addr):
+    _key_values.pop(addr, 0)
+
 
 # =============================================================================
 # >> CONSTANTS
@@ -1665,19 +1681,10 @@ def keylist(argv):
 
     dbgmsg(0, '----------------------')
 
-# TODO: The created KeyValues instances probably need to be stored somewhere,
-#       so they don't get freed
-
 # Pure Python function
 def keypcreate(*args):
     """Returns the C++ pointer to a new keyvalues object."""
-    return memory.get_object_pointer(KeyValues(None)).address
-
-def _make_keyvalues(key_ptr):
-    return memory.make_object(KeyValues, memory.Pointer(key_ptr))
-
-def _get_keyvalues_ptr(key):
-    return memory.get_object_pointer(key).address
+    return _store_key_value(KeyValues(None))
 
 # Pure Python function
 def keypcreatesubkey(key_ptr):
@@ -1692,9 +1699,15 @@ def keypcreatesubkey(key_ptr):
     return new_key and _get_keyvalues_ptr(new_key)
 
 # Pure Python function
-def keypdelete(*args):
+def keypdelete(key_ptr):
     """Deletes a key by pointer (not recommended)"""
-    raise NotImplementedError
+    if not isinstance(key_ptr, int):
+        raise TypeError
+
+    if not key_ptr:
+        return None
+
+    _remove_key_value(key_ptr)
 
 # Pure Python function
 def keypdetachsubkey(key_ptr, key_to_remove_ptr):
@@ -2469,7 +2482,6 @@ def setview(argv):
     else:
         view_edict = player_edict
 
-    print(player_edict.classname, view_edict.classname)
     engine_server.set_view(player_edict, view_edict)
 
 @command
