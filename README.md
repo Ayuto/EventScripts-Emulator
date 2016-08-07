@@ -11,8 +11,8 @@ This is just a fun project and I have actually sworn to not create something lik
 If I would need to guess, I would say 80-90% of the project is implemented.
 
 # TODO:
-1. Implement the last few Python functions.
-2. Implement the last few Shell commands.
+1. Implement the last remaining Python functions.
+2. Implement the last remaining Shell commands.
 3. Add the possibility to unload the emulator.
 4. Do extensive testings.
 
