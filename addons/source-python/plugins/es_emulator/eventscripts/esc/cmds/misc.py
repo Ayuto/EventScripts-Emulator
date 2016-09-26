@@ -2,6 +2,10 @@ from . import Command
 from ..val import sv, VAR
 import es
 
+from stringtables import string_tables
+from messages import get_message_name
+from es_emulator.cvars import maxmessages_cvar
+
 @Command(syntax='<tablename> <string>', desc='Update an entry in a stringtable')
 def stringtable(argv):
   es.stringtable(*argv)
@@ -12,11 +16,19 @@ def dumpstringtable(argv):
 
 @Command(pre=False, desc='Dump string tables.')
 def es_dumpstringtables(argv):
-  raise NotImplementedError
+  for table in string_tables:
+    es.dbgmsg(0, 'StringTable: {}'.format(table.name))
+    for string in table:
+      es.dbgmsg(0, ' --- "{}"'.format(string))
 
 @Command(pre=False, desc='Dump UserMessage list for the Source mod.')
 def es_dumpusermessages(argv):
-  raise NotImplementedError
+  for index in range(maxmessages_cvar.get_int()):
+    name = get_message_name(index)
+    size = 4 # TODO
+    if name is not None:
+      es.dbgmsg(0, ' Id: {:02d}, Size: {}, Message: {}'.format(
+        index, size, name))
 
 # es_xsql open <db> [dbdir]
 # es_xsql close <db>

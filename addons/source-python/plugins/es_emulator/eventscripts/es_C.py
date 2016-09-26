@@ -20,6 +20,7 @@ from effects.base import TempEntity
 from engines.server import engine_server
 from engines.server import global_vars
 from engines.server import server_game_dll
+from engines.server import queue_command_string
 from engines.sound import engine_sound
 from engines.sound import Pitch
 #   Events
@@ -170,7 +171,8 @@ def ForceServerCommand(command_str):
         if convar:
             convar.set_string(c.arg_string)
         else:
-            engine_server.insert_server_command(command_str)
+            queue_command_string(command_str)
+            #engine_server.insert_server_command()
 
     return 1
 
@@ -180,7 +182,8 @@ def InsertServerCommand(command_str):
     if not isinstance(command_str, str):
         raise TypeError
 
-    engine_server.insert_server_command(command_str)
+    queue_command_string(command_str)
+    #engine_server.insert_server_command(command_str)
     return 1
 
 # Pure Python function
@@ -189,7 +192,7 @@ def ServerCommand(command_str):
     if not isinstance(command_str, str):
         raise TypeError
 
-    engine_server.server_command('wait;{}'.format(command_str))
+    queue_command_string('wait;{}'.format(command_str))
     return 1
 
 def _disable(*args):
@@ -298,7 +301,8 @@ def commandv(argv):
     name = argv[1]
     convar = cvar.find_var(name)
     if convar:
-        engine_server.insert_server_command(convar.get_string())
+        queue_command_string(convar.get_string())
+        #engine_server.insert_server_command(convar.get_string())
     else:
         dbgmsg(0,'ERROR: variable {} does not exist.'.format(name))
         _set_last_error('Variable does not exist')
@@ -481,7 +485,7 @@ def delayed(argv):
     else:
         command_string = argv[2]
 
-    Delay(atof(argv[1]), engine_server.server_command, command_string)
+    Delay(atof(argv[1]), queue_command_string, command_string)
 
 def disable(*args):
     """Disables a script that has been loaded."""
@@ -2530,7 +2534,7 @@ def showMenu(duration, userid, msg, options=''):
 @command
 def soon(argv):
     """Adds a command to the end of the command queue."""
-    engine_server.server_command(argv.arg_string)
+    queue_command_string(argv.arg_string)
 
 @command
 def spawnentity(argv):

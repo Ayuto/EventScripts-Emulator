@@ -6,6 +6,7 @@ import sys
 
 # Source.Python
 from cvars import cvar
+from cvars import ConVar
 
 # ES Emulator
 from .paths import ES_PATH
@@ -68,8 +69,13 @@ def unload():
     print('Removing "{}" from sys.path.'.format(str(ES_LIBS_PATH)))
     sys.path.remove(str(ES_LIBS_PATH))
 
-    # TODO:
-    # 1. Delete console variables
+    print('Removing console variables...')
+    from . import cvars
+    for name in dir(cvars):
+        obj = getattr(cvars, name)
+        if isinstance(obj, ConVar):
+            cvar.unregister_base(obj)
+            
     # 2. Delete console commands
 
     print('ES Emulator has been unloaded successfully!')

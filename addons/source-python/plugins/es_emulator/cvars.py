@@ -252,6 +252,12 @@ defaultevents_cvar = ConVar(
     'If set to 1, EventScripts will try to register for the default event files on each new map.'
 )
 
+maxmessages_cvar = ConVar(
+    'eventscripts_maxmsg',
+    '28',
+    'Maximum number of usermessages supported by the mod. Do not change unless instructed to do so.'
+)
+
 
 # =============================================================================
 # >> UNUSED CVARS
@@ -266,12 +272,6 @@ cflags_cvar = ConVar(
     'eventscripts_cflags',
     '902',
     'Obsolete. eventscripts_cflags'
-)
-
-maxmessages_cvar = ConVar(
-    'eventscripts_maxmsg',
-    '28',
-    'Maximum number of usermessages supported by the mod. Do not change unless instructed to do so.'
 )
 
 shellengine_cvar = ConVar(
