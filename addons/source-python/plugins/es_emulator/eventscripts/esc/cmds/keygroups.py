@@ -4,6 +4,8 @@ from .. import stack
 from ..parse import getcode
 from . import Command
 
+from es_C import user_groups
+
 @Command(syntax='<groupname>', desc='Creates a keygroup that can be loaded and saved to a file. Must call es_keygroupdelete to free this memory!')
 def keygroupcreate(argv):
   es.keygroupcreate(*argv)
@@ -58,7 +60,16 @@ def keygetvalue(argv):
 
 @Command(pre=False, desc='Lists all in-memory keygroups.')
 def es_keygrouplist(argv):
-  raise NotImplementedError
+  es.dbgmsg(0, '----------------------')
+  key = user_groups.first_true_sub_key
+  while key:
+    es.dbgmsg(0, 'Key: {}'.format(key.name))
+    value = key.first_value
+    while value:
+        es.dbgmsg(0, '   Name: {}\n  Value: {}'.format(value.name, value.get_string()))
+        value = value.next_value
+        
+    key = key.next_true_sub_key
 
 @Command(syntax='<var> in <groupname> <keyname> <command>', desc='EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name.')
 def foreachval(argv):
