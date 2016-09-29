@@ -4,9 +4,12 @@ A [Source.Python](http://forums.sourcepython.com/) plugin that is able to run [E
 This is just a fun project and I have actually sworn to not create something like this. However, I got bored the other day and was curious how difficult it will be to create it. The first test addons are already working!
 
 # Development status
+Most of the work is already done. The following is a list of things that need to be done.
+
 ## General
 1. Add the possibility to unload the emulator.
 2. Do extensive testings
+3. Add Linux support. Shouldn't be hard as it just means grabbing atoi and atof from a shared library.
 
 ## Python
 1. Implemented es.dosql()
