@@ -2,6 +2,8 @@ from . import Command
 from ..val import sv, VAR
 import es
 
+from es_C import dict_to_keyvalues
+
 @Command(syntax='<userid> <target> [action] [value] [delay]', desc='Fires an entity trigger.')
 def fire(argv):
   es.fire(*argv)
@@ -108,8 +110,7 @@ def entitysetvalue(argv):
 
 @Command(syntax='<keygroupname> [entity-class]', desc='Creates a keygroup (or dictionary) of all indexes for an entity class or for all entities.')
 def createentityindexlist(argv):
-  # TODO
-  es.createentityindexlist(*argv)
+  dict_to_keyvalues(argv[0], es.createentityindexlist(*argv[1:]))
 
 @Command(syntax='<variable> <index> <offset> <type>', types=VAR, desc='Gets a server class property for a particular entity index')
 def getentitypropoffset(argv):

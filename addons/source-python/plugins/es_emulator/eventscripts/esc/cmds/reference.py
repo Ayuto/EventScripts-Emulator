@@ -2,6 +2,8 @@ import es
 from ..val import sv, VAR
 from . import Command
 
+from es_C import dict_to_keyvalues
+
 @Command(syntax='<var> <type> [optional] [optional] <name-to-check>', types=VAR, desc='Checks whether a keygroup, keys, variable, or function exists.')
 def exists(argv):
   sv[argv[0]] = es.exists(*argv[1:])
@@ -25,13 +27,11 @@ def getclientvar(argv):
 
 @Command(syntax='<keygroupname> [entity-class]', desc='Creates a keygroup for an entity class or for all entities.')
 def createentitylist(argv):
-  # TODO
-  es.createentitylist(*argv)
+  dict_to_keyvalues(argv[0], es.createentitylist(*argv[1:]))
 
 @Command(syntax='<keygroup> [userid]', desc='Creates a new keygroup containing the current list of players.')
 def createplayerlist(argv):
-  # TODO
-  es.createplayerlist(*argv)
+  dict_to_keyvalues(argv[0], es.createplayerlist(*argv[1:]))
 
 @Command(syntax='<var> [team number]', types=VAR, desc='Stores the count of players on the server into a variable. Optionally a team can be specified. Returns -1 on error.')
 def getplayercount(argv):
@@ -87,8 +87,11 @@ def getplayerteam(argv):
 
 @Command(syntax='<keygroup> [scriptname]', desc='Creates a new keygroup containing the current list of scripts.')
 def createscriptlist(argv):
-  # TODO
-  raise NotImplementedError
+  result = es.createscriptlist(*argv[1:])
+  if result is None:
+    return
+    
+  dict_to_keyvalues(argv[0], result)
 
 @Command(syntax='<variable>', types=VAR, desc='Returns the name of the Source game being played.')
 def getgame(argv):

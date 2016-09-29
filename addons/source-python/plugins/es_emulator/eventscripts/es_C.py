@@ -142,6 +142,27 @@ def _store_key_value(kv):
 
 def _remove_key_value(addr):
     _key_values.pop(addr, 0)
+    
+def dict_to_keyvalues(name, data):
+    result = user_groups.find_key(name, True)
+    for key, value in data.items():
+        _dict_to_keyvalues(result, key, value)
+        
+    return result
+    
+def _dict_to_keyvalues(result, key, value):
+    if isinstance(value, dict):
+        r = result.find_key(str(key), True)
+        for k, v in value.items():
+            _dict_to_keyvalues(r, k, v)
+    elif isinstance(value, str):
+        result.set_string(key, value)
+    elif isinstance(value, int):
+        result.set_int(key, value)
+    elif isinstance(value, float):
+        result.set_float(key, value)
+    else:
+        raise NotImplementedError
 
 
 # =============================================================================
@@ -356,7 +377,7 @@ def createentity(argv):
 def createentityindexlist(argv):
     """Creates a keygroup (or dictionary) of all indexes for an entity class or for all entities."""
     result = {}
-    for entity in EntityIter(argv[1]):
+    for entity in EntityIter(argv[1] or None):
         result[entity.index] = entity.classname
 
     return result
@@ -365,7 +386,7 @@ def createentityindexlist(argv):
 def createentitylist(argv):
     """Creates a keygroup (or dictionary) for an entity class or for all entities."""
     result = {}
-    for entity in EntityIter(argv[1]):
+    for entity in EntityIter(argv[1] or None):
         temp = result[entity.index] = {}
         temp['classname'] = entity.classname
         temp['handle'] = entity.inthandle

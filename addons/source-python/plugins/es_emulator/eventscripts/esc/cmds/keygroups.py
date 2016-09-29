@@ -70,6 +70,7 @@ def es_keygrouplist(argv):
         value = value.next_value
         
     key = key.next_true_sub_key
+  es.dbgmsg(0, '----------------------')
 
 @Command(syntax='<var> in <groupname> <keyname> <command>', desc='EXPERIMENTAL. Loops through a keygroup and performs a single command on each key, providing a single variable with the key name.')
 def foreachval(argv):
