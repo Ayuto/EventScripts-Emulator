@@ -121,6 +121,12 @@ unused_internal_commands = (
     'es_x_foreachval',
     'es_x_unload',
     '_mexecl',
+    
+    # TODO: cbench just needs to print a few lines
+    'cbench',
+    
+    # TODO: Implement this. Add an extra config file to avoid a security risk?
+    'pycmd_register'
 )
 
 for command in unused_internal_commands:
