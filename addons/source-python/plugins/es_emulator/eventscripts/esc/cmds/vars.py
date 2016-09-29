@@ -94,7 +94,14 @@ def flags(argv):
 
 @Command(syntax='<returnvar> <string1> <string2>', desc='Compares two strings.')
 def strcmp(argv):
-  raise NotImplementedError
+  str1 = argv[1]
+  str2 = argv[2]
+  if str1 < str2:
+    sv[argv[0]] = -1
+  elif str1 > str2:
+    sv[argv[0]] = 1
+  else:
+    sv[argv[0]] = 0
 
 @Command(syntax='<returnvar> [string-to-measure]', types=VAR, desc='Returns the length of a string.')
 def strlen(argv):
