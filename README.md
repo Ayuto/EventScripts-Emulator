@@ -48,8 +48,8 @@ Most of the work is already done. The following is a list of things that need to
 # Usage
 1. Put ``es_emulator`` in ``../addons/source-python/plugins/``
 2. Load the EventScripts Emulator with ``sp load es_emulator``
-3. Put the EventScripts addon you would like to run in ``../addons/source-python/plugins/es_emulator/libs/``.
-4. Load the addon via ``es_load <your addon>``.
+3. Put the EventScripts addon you would like to run in ``../addons/source-python/plugins/es_emulator/eventscripts/``.
+4. Load the addon via ``es_load <your addon>``. You might need to adapt the addon to work with Python 3 (convert it using 2to3.py).
 
 Funny side note: You can also use the EventScripts API in Source.Python plugins.
 
