@@ -25,7 +25,7 @@ def memoryExecuteCommand(pathToConfigFile):
     cfgFolder = path(str(es.ServerVar('eventscripts_gamedir'))).joinpath('cfg')
     individualCFGFile = cfgFolder.joinpath(pathToConfigFile)
 
-    uniqueString = hashlib.md5(str(time.time())).hexdigest()
+    uniqueString = hashlib.md5(str(time.time()).encode('utf-8')).hexdigest()
     configName = '%s.%s.mexec.cfg' % (individualCFGFile.namebase, uniqueString)
     newFile = cfgFolder.joinpath(configName)
 
