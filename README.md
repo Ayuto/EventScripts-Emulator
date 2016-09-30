@@ -9,7 +9,6 @@ Most of the work is already done. The following is a list of things that need to
 ## General
 1. Add the possibility to unload the emulator.
 2. Do extensive testings
-3. Add Linux support. Shouldn't be hard as it just means grabbing atoi and atof from a shared library.
 
 ## Python
 1. Implemented es.dosql()

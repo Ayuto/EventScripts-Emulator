@@ -5,8 +5,11 @@
 import re
 
 from contextlib import contextmanager
+from ctypes.util import find_library
 
 # Source.Python
+#   Core
+from core import PLATFORM
 #   Colors
 from colors import Color
 #   Cvars
@@ -75,9 +78,16 @@ __all__ = (
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
-# TODO: On Linux it's probably libc
-runtimelib = memory.find_binary('msvcrt.dll')
-tier1 = memory.find_binary('bin/tier0')
+if PLATFORM == 'windows':
+    clib = memory.find_binary('msvcrt.dll')
+    tier1 = memory.find_binary('bin/tier0')
+else:
+    clib_path = find_library('c')
+    if clib_path is None:
+        raise ValueError('Unable to find C library.')
+
+    clib = memory.find_binary(clib_path, check_extension=False)
+    tier1 = memory.find_binary('bin/libtier0')
 
 sv_cheats = cvar.find_var('sv_cheats')
 
@@ -85,13 +95,13 @@ sv_cheats = cvar.find_var('sv_cheats')
 # =============================================================================
 # >> C FUNCTIONS
 # =============================================================================
-atoi = runtimelib['atoi'].make_function(
+atoi = clib['atoi'].make_function(
     Convention.CDECL,
     [DataType.STRING],
     DataType.INT
 )
 
-atof = runtimelib['atof'].make_function(
+atof = clib['atof'].make_function(
     Convention.CDECL,
     [DataType.STRING],
     DataType.FLOAT
