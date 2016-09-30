@@ -258,7 +258,7 @@ def centertell(argv):
     """Sends a centered HUD message to all players."""
     str_userid = argv[1]
     userid = atoi(str_userid)
-    msg = argv.arg_string[len(str_userid)+1]
+    msg = argv.arg_string[len(str_userid)+1:]
     if userid > 0:
         try:
             index = index_from_userid(userid)

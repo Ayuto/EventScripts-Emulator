@@ -14,7 +14,6 @@ from events.manager import game_event_manager
 from events.listener import GameEventListener
 #   Engines
 from engines.server import global_vars
-from engines.server import engine_server
 from engines.server import QueryCvarStatus
 from engines.server import queue_server_command
 #   Listeners
