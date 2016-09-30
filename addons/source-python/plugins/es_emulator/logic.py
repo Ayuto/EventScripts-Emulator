@@ -16,6 +16,7 @@ from events.listener import GameEventListener
 from engines.server import global_vars
 from engines.server import engine_server
 from engines.server import QueryCvarStatus
+from engines.server import queue_server_command
 #   Listeners
 from listeners import OnTick
 from listeners import OnLevelInit
@@ -150,7 +151,7 @@ def exec_all_registered(event_name):
     cfg_path = '{}/{}.cfg'.format(script_dir, event_name)
     if GAME_PATH.joinpath('cfg', cfg_path).exists():
         es.dbgmsg(2, 'Sending {} command for {}.'.format(exec_cmd, event_name))
-        engine_server.server_command('{} {}'.format(exec_cmd, cfg_path))
+        queue_server_command(exec_cmd, cfg_path)
 
     # Execute cfg scripts
     es.dbgmsg(2, 'Script pack registration scanning...')
@@ -161,7 +162,7 @@ def exec_all_registered(event_name):
         cfg_path = '{}/{}/{}.cfg'.format(script_dir, scriptpack, event_name)
         if GAME_PATH.joinpath('cfg', cfg_path).exists():
             es.dbgmsg(2, 'Sending {} command for {}.'.format(exec_cmd, cfg_path))
-            engine_server.server_command('{} {}'.format(exec_cmd, cfg_path))
+            queue_server_command(exec_cmd, cfg_path)
         else:
             es.dbgmsg(1, 'File doesn\'t exist: {}'.format(cfg_path))
 
@@ -434,7 +435,7 @@ def on_changelevel(command):
 
     import es
     nextmap_cvar.set_string('')
-    engine_server.server_command('changelevel {}'.format(new_map))
+    queue_server_command('changelevel', new_map)
     es.dbgmsg(0, '[EventScripts] Next map changed from {} to {}.'.format(
         command[1], new_map))
     return CommandReturn.BLOCK
