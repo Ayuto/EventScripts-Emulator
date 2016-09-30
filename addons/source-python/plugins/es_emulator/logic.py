@@ -9,6 +9,7 @@ import time
 #   Cvars
 from cvars import cvar
 from cvars.flags import ConVarFlags
+from cvars import ConVar
 #   Events
 from events.manager import game_event_manager
 from events.listener import GameEventListener
