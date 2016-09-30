@@ -85,7 +85,7 @@ addondir_cvar = ConVar(
 
 gamedir_cvar = ConVar(
     'eventscripts_gamedir',
-    str(GAME_PATH)[:-1],
+    str(GAME_PATH),
     'Full path to the Source mod you\'re playing.'
 )
 
