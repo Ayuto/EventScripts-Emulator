@@ -2175,9 +2175,9 @@ def playsound(argv):
         return
 
     sound = argv[2]
-    engine_server.precache_sound(sound)
+    engine_sound.precache_sound(sound)
     engine_sound.emit_sound(
-        ReclipientFilter(index),
+        RecipientFilter(index),
         index,
         0,
         sound,
