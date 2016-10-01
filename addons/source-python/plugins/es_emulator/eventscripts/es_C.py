@@ -76,6 +76,8 @@ from es_emulator.helpers import *
 #   Cvars
 from es_emulator.cvars import datadir_cvar
 from es_emulator.cvars import scriptdir_cvar
+from es_emulator.cvars import debug_cvar
+from es_emulator.cvars import debuglog_cvar
 
 
 # =============================================================================
@@ -142,14 +144,14 @@ def _store_key_value(kv):
 
 def _remove_key_value(addr):
     _key_values.pop(addr, 0)
-    
+
 def dict_to_keyvalues(name, data):
     result = user_groups.find_key(name, True)
     for key, value in data.items():
         _dict_to_keyvalues(result, key, value)
-        
+
     return result
-    
+
 def _dict_to_keyvalues(result, key, value):
     if isinstance(value, dict):
         r = result.find_key(str(key), True)
@@ -480,13 +482,27 @@ def createvectorstring(argv):
     """Creates a string form of three x y z variables representing a vector."""
     return '{},{},{}'.format(atof(argv[1]), atof(argv[2]), atof(argv[3]))
 
+def _chunk_msg(msg, size):
+    return (msg[0+i:size+i] for i in range(0, len(msg), size))
+
 # Not quite pure Python (console command gets registred differently)
 def dbgmsg(level, msg):
     """Outputs a message to the console."""
-    # TODO: Create a proper implementation
-    print(level, msg)
-    with open('es.log', 'a') as f:
-        f.write('{:02d}: {}\n'.format(level, msg))
+    level = int(level)
+
+    if debug_cvar.get_int() < level:
+        return 1
+
+    if debuglog_cvar.get_int() == 1:
+        output_func = engine_server.log_print
+    else:
+        output_func = Msg
+
+    msg = str(msg)
+    for chunk in _chunk_msg(msg, 1000):
+        output_func(chunk + '\n')
+
+    return 1
 
 @command
 def dbgmsgv(argv):
