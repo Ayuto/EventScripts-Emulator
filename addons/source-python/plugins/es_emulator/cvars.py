@@ -25,22 +25,10 @@ eventscripts_cvar = ConVar(
     ConVarFlags.REPLICATED | ConVarFlags.NOTIFY
 )
 
-debug_cvar = ConVar(
-    'eventscripts_debug',
-    '0',
-    'Turns on debug print output for EventScripts. Use only if you want to debug problems.'
-)
-
 debugfunctions_cvar = ConVar(
     'eventscripts_debug_showfunctions',
     '0',
     'Adds internal ES function names and line numbers to debug strings for parsing.'
-)
-
-debuglog_cvar = ConVar(
-    'eventscripts_debuglog',
-    '0',
-    'Will send debug messages to server log as well as console if this is set to 1.'
 )
 
 serverdll_cvar = ConVar(
@@ -256,6 +244,18 @@ maxmessages_cvar = ConVar(
     'eventscripts_maxmsg',
     '28',
     'Maximum number of usermessages supported by the mod. Do not change unless instructed to do so.'
+)
+
+debug_cvar = ConVar(
+    'eventscripts_debug',
+    '0',
+    'Turns on debug print output for EventScripts. Use only if you want to debug problems.'
+)
+
+debuglog_cvar = ConVar(
+    'eventscripts_debuglog',
+    '0',
+    'Will send debug messages to server log as well as console if this is set to 1.'
 )
 
 
