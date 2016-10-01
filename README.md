@@ -23,7 +23,6 @@ Most of the work is already done. The following is a list of things that need to
 10. es.getuserid() - Fix for SteamID3 or leave it like the original one?
 11. es.createentitylist() - Add full server class dump
 12. es.createplayerlist() - Add packetloss and ping
-13. es.dbgmsg() - Create a proper implementation
 
 ## ESS
 1. es_dumpusermessages - Print size of user message
@@ -36,13 +35,11 @@ Most of the work is already done. The following is a list of things that need to
 
 ## Console variables
 1. Implement mattie_eventscripts
-2. Implement eventscripts_debug
-3. Implement eventscripts_debug_showfunctions
-4. Implement eventscripts_debuglog
-5. Implement eventscripts_servergamedll_ver
-6. Implement eventscripts_servergameclients_ver
-7. Implement eventscripts_quote
-8. Implement mattie_python
+2. Implement eventscripts_debug_showfunctions
+3. Implement eventscripts_servergamedll_ver
+4. Implement eventscripts_servergameclients_ver
+5. Implement eventscripts_quote
+6. Implement mattie_python
 
 # Usage
 1. Put ``es_emulator`` in ``../addons/source-python/plugins/``
