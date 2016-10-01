@@ -4,14 +4,9 @@
 # Python
 import sys
 
-import lib2to3.main
-
 # Source.Python
 from cvars import cvar
 from cvars import ConVar
-
-from commands.typed import TypedServerCommand
-from commands.typed import ValidationError
 
 # ES Emulator
 from .paths import ES_PATH
@@ -84,22 +79,3 @@ def unload():
     # 2. Delete console commands
 
     print('ES Emulator has been unloaded successfully!')
-
-
-# =============================================================================
-# >> SERVER COMMANDS
-# =============================================================================
-@TypedServerCommand(['ese', 'convert'])
-def _convert_addon(info, addon, backup:bool=True):
-    """Convert an addon from Python 2 to Python 3."""
-    args = ['-w']
-    if not backup:
-        args.append('-n')
-
-    addon_path = ES_PATH / addon
-    if not addon_path.isdir():
-        raise ValidationError('Addon "{}" does not exist.'.format(addon))
-
-    args.append(str(addon_path))
-
-    lib2to3.main.main('lib2to3.fixes', args)

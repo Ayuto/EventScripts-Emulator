@@ -26,12 +26,7 @@ Most of the work is already done. The following is a list of things that need to
 
 ## ESS
 1. es_dumpusermessages - Print size of user message
-2. Implement cbench
-3. Implement pycmd_register
-4. Add description to eventscripts_version
-5. Add description to eventscripts_log
-6. Add description to eventscripts_register
-7. Add description to eventscripts_unregister
+2. Implement pycmd_register
 
 ## Console variables
 1. Implement mattie_eventscripts

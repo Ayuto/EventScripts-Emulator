@@ -1,16 +1,21 @@
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
+# Python
+import lib2to3.main
+
 # Source.Python
 #   Commands
 from commands.typed import TypedServerCommand
 from commands.server import ServerCommand
+from commands.typed import ValidationError
 #   Engines
 from engines.server import engine_server
 #   Events
 from events.manager import game_event_manager
 
 # ES Emulator
+from .paths import ES_PATH
 #   Logic
 from .logic import cfg_scripts
 #   Cvars
@@ -26,18 +31,33 @@ PLUGIN_VERSION_DESCRIPTION = 'Mattie\'s EventScripts, http://www.eventscripts.co
 
 
 # =============================================================================
+# >> ES EMULATOR COMMANDS
+# =============================================================================
+@TypedServerCommand(['ese', 'convert'])
+def _convert_addon(info, addon, backup:bool=True):
+    """Convert an addon from Python 2 to Python 3."""
+    args = ['-w']
+    if not backup:
+        args.append('-n')
+
+    addon_path = ES_PATH / addon
+    if not addon_path.isdir():
+        raise ValidationError('Addon "{}" does not exist.'.format(addon))
+
+    args.append(str(addon_path))
+
+    lib2to3.main.main('lib2to3.fixes', args)
+
+
+# =============================================================================
 # >> ES CONSOLE COMMANDS
 # =============================================================================
-# TODO:
-# Description: prints the version of Mattie's EventScripts plugin
-@ServerCommand('eventscripts_version')
+@ServerCommand('eventscripts_version', 'prints the version of Mattie\'s EventScripts plugin')
 def eventscripts_version(command):
     import es
     es.dbgmsg(0, PLUGIN_VERSION_DESCRIPTION)
 
-# TODO:
-# Description: logs the version of Mattie's EventScripts plugin
-@ServerCommand('eventscripts_log')
+@ServerCommand('eventscripts_log', 'logs the version of Mattie\'s EventScripts plugin')
 def eventscripts_log(command):
     engine_server.log_print(PLUGIN_VERSION_DESCRIPTION)
     engine_server.log_print('\n')
@@ -46,9 +66,7 @@ def eventscripts_log(command):
 # =============================================================================
 # >> COMMANDS FOR OLD ES CFG SCRIPTS
 # =============================================================================
-# TODO:
-# Description: Syntax : eventscripts_register [subdirectory]\n  Registers a script pack subdirectory or, with no parameters, lists all registered script packs.
-@ServerCommand('eventscripts_register')
+@ServerCommand('eventscripts_register', 'Syntax : eventscripts_register [subdirectory]\n  Registers a script pack subdirectory or, with no parameters, lists all registered script packs.')
 def eventscripts_register(command):
     if len(command) < 2:
         _print_all_registered_cfg_scripts()
@@ -67,9 +85,7 @@ def eventscripts_register(command):
     event.set_string('scriptpack', scriptpack)
     game_event_manager.fire_event(event)
 
-# TODO:
-# Description: Syntax : eventscripts_unregister [subdirectory]\n  Unregisters/disables a script pack subdirectory, or, with no parameters, lists all registered script packs.
-@ServerCommand('eventscripts_unregister')
+@ServerCommand('eventscripts_unregister', 'Syntax : eventscripts_unregister [subdirectory]\n  Unregisters/disables a script pack subdirectory, or, with no parameters, lists all registered script packs.')
 def eventscripts_unregister(command):
     if len(command) < 2:
         _print_all_registered_cfg_scripts()
@@ -85,6 +101,16 @@ def eventscripts_unregister(command):
     cfg_scripts[scriptpack] = 0
     es.dbgmsg(0, '[EventScripts] Unregistered script pack: {}'.format(
         command.arg_string))
+
+@ServerCommand('cbench', 'Do some benchmarks for C++')
+def cbench(command):
+    import es
+    es.dbgmsg(0, 'starting benchmarks for C++...')
+    es.dbgmsg(0, 'format() benchmark: 0.062670 seconds')
+    es.dbgmsg(0, 'str benchmark: 0.000138 seconds')
+    es.dbgmsg(0, 'replace benchmark: 0.002908 seconds')
+    es.dbgmsg(0, 'int benchmark: 0.000061 seconds')
+    es.dbgmsg(0, 'float benchmark: 0.000101 seconds')
 
 
 # =============================================================================
@@ -121,10 +147,7 @@ unused_internal_commands = (
     'es_x_foreachval',
     'es_x_unload',
     '_mexecl',
-    
-    # TODO: cbench just needs to print a few lines
-    'cbench',
-    
+
     # TODO: Implement this. Add an extra config file to avoid a security risk?
     'pycmd_register'
 )
