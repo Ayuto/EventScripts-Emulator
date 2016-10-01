@@ -608,7 +608,7 @@ def effect(argv):
     elif operation == 'smoke':
         entity = TempEntity('Smoke')
         entity.scale = atof(argv[4]) * 0.1 # This is done in CEffectsServer
-        entity.frame_rate = atof(argv[5])
+        entity.frame_rate = atoi(argv[5])
         entity.model_index = atoi(argv[3])
         entity.origin = Vector(*splitvectorstring(argv[2]))
     elif operation == 'beam':
@@ -1159,7 +1159,7 @@ def getentitypropoffset(argv):
         return pointer.get_float(offset)
 
     if prop_type == SendPropType.VECTOR:
-        return ','.join(memory.make_object(Vector, pointer.get_pointer(offset)))
+        return ','.join(map(str, memory.make_object(Vector, pointer + offset)))
 
     return None
 
@@ -1216,7 +1216,7 @@ def getindexprop(argv):
         return ptr.get_float(offset)
 
     if prop_type == SendPropType.VECTOR:
-        return ','.join(memory.make_object(Vector, ptr.get_pointer(offset)))
+        return ','.join(map(str, memory.make_object(Vector, ptr + offset)))
 
     if prop_type == SendPropType.STRING:
         return ptr.get_string(offset)
