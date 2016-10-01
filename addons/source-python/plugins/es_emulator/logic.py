@@ -14,6 +14,7 @@ from cvars import ConVar
 from events.manager import game_event_manager
 from events.listener import GameEventListener
 #   Engines
+from engines.server import server
 from engines.server import global_vars
 from engines.server import QueryCvarStatus
 from engines.server import queue_server_command
@@ -262,9 +263,15 @@ def on_network_id_validated(name, networkid):
 @OnClientSettingsChanged
 def on_client_settings_changed(index):
     event = game_event_manager.create_event('es_player_setting')
-    if event is not None:
-        event.set_int('userid', userid_from_index(index))
-        game_event_manager.fire_event(event)
+    if event is None:
+        return
+
+    client = server.get_client(index-1)
+    if client is None:
+        return
+
+    event.set_int('userid', client.userid)
+    game_event_manager.fire_event(event)
 
 QUERY_STATUS = {
     QueryCvarStatus.SUCCESS: 'success',
