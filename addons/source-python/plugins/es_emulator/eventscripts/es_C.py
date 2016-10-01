@@ -32,6 +32,7 @@ from messages import ShowMenu
 from messages import DialogType
 from messages.dialog import create_message
 #   Players
+from players import PlayerGenerator
 from players.entity import Player
 from players.helpers import index_from_userid
 from players.helpers import userid_from_edict
@@ -39,8 +40,10 @@ from players.helpers import edict_from_userid
 from players.helpers import userid_from_inthandle
 from players.voice import voice_server
 #   Entities
+from entities import EntityGenerator
 from entities.entity import BaseEntity
 from entities.entity import Entity
+from entities.helpers import index_from_edict
 from entities.helpers import inthandle_from_index
 from entities.helpers import index_from_inthandle
 from entities.helpers import edict_from_index
@@ -379,8 +382,15 @@ def createentity(argv):
 def createentityindexlist(argv):
     """Creates a keygroup (or dictionary) of all indexes for an entity class or for all entities."""
     result = {}
-    for entity in EntityIter(argv[1] or None):
-        result[entity.index] = entity.classname
+
+    arg1 = argv[1]
+    if arg1:
+        generator = EntityGenerator(arg1)
+    else:
+        generator = EntityGenerator()
+
+    for edict in generator:
+        result[index_from_edict(edict)] = edict.classname
 
     return result
 
@@ -1051,8 +1061,14 @@ def getEntityIndexes(classname=None):
         raise TypeError
 
     result = list()
-    for entity in EntityIter(classname):
-        result.append(entity.index)
+
+    if classname is not None:
+        generator = EntityGenerator(classname)
+    else:
+        generator = EntityGenerator()
+
+    for edict in generator:
+        result.append(index_from_edict(edict))
 
     return result
 
@@ -1113,8 +1129,8 @@ def getString(name):
 def getUseridList(*args):
     """Returns a list of the userids of all players on the server."""
     result = list()
-    for player in PlayerIter():
-        result.append(player.userid)
+    for player in PlayerGenerator():
+        result.append(userid_from_edict(player))
 
     return result
 
