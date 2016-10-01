@@ -38,8 +38,7 @@ Most of the work is already done. The following is a list of things that need to
 2. Implement eventscripts_debug_showfunctions
 3. Implement eventscripts_servergamedll_ver
 4. Implement eventscripts_servergameclients_ver
-5. Implement eventscripts_quote
-6. Implement mattie_python
+5. Implement mattie_python
 
 # Usage
 1. Put ``es_emulator`` in ``../addons/source-python/plugins/``

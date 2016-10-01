@@ -43,12 +43,6 @@ serverclients_cvar = ConVar(
     'Version of ServerGameClients interface used by EventScripts. (read only)'
 )
 
-quote_cvar = ConVar(
-    'eventscripts_quote',
-    '"',
-    'A quotation mark. A tool, not a variable.'
-)
-
 python_cvar = ConVar(
     'mattie_python',
     '1',
@@ -256,6 +250,13 @@ debuglog_cvar = ConVar(
     'eventscripts_debuglog',
     '0',
     'Will send debug messages to server log as well as console if this is set to 1.'
+)
+
+# Only used by corelib
+quote_cvar = ConVar(
+    'eventscripts_quote',
+    '"',
+    'A quotation mark. A tool, not a variable.'
 )
 
 
