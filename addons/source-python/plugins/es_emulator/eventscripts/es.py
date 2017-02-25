@@ -97,18 +97,20 @@ class EntityProp():
   def set(self, value):
     setentitypropoffset(self.index, self._propoffset, self._proptype, value)
     return
+
+  # partial __coerce__ replacement
   def __lt__(self, other):
-    return _compare_value(self, other, operator.lt, (str, int, float))
+    return _call_operator(self, other, operator.lt, (str, int, float))
   def __le__(self, other):
-    return _compare_value(self, other, operator.le, (str, int, float))
+    return _call_operator(self, other, operator.le, (str, int, float))
   def __eq__(self, other):
-    return _compare_value(self, other, operator.eq, (str, int, float))
+    return _call_operator(self, other, operator.eq, (str, int, float))
   def __ne__(self, other):
-    return _compare_value(self, other, operator.ne, (str, int, float))
+    return _call_operator(self, other, operator.ne, (str, int, float))
   def __ge__(self, other):
-    return _compare_value(self, other, operator.ge, (str, int, float))
+    return _call_operator(self, other, operator.ge, (str, int, float))
   def __gt__(self, other):
-    return _compare_value(self, other, operator.gt, (str, int, float))
+    return _call_operator(self, other, operator.gt, (str, int, float))
 
 # intelligent class to wrap a specific server variable
 class ServerVar():
@@ -135,18 +137,6 @@ class ServerVar():
     else:
       setString(self._name, str(value))
     return
-  def __lt__(self, other):
-    return _compare_value(self, other, operator.lt)
-  def __le__(self, other):
-    return _compare_value(self, other, operator.le)
-  def __eq__(self, other):
-    return _compare_value(self, other, operator.eq)
-  def __ne__(self, other):
-    return _compare_value(self, other, operator.ne)
-  def __ge__(self, other):
-    return _compare_value(self, other, operator.ge)
-  def __gt__(self, other):
-    return _compare_value(self, other, operator.gt)
   def copy(self, source):
     sourcevar = source
     if isinstance(source, ServerVar):
@@ -161,6 +151,36 @@ class ServerVar():
     flags('remove', flagname, self._name)
   def forcecallbacks(self):
     forcecallbacks(self._name)
+
+  # partial __coerce__ replacement
+  def __lt__(self, other):
+    return _call_operator(self, other, operator.lt)
+  def __le__(self, other):
+    return _call_operator(self, other, operator.le)
+  def __eq__(self, other):
+    return _call_operator(self, other, operator.eq)
+  def __ne__(self, other):
+    return _call_operator(self, other, operator.ne)
+  def __ge__(self, other):
+    return _call_operator(self, other, operator.ge)
+  def __gt__(self, other):
+    return _call_operator(self, other, operator.gt)
+  def __add__(self, other):
+    return _call_operator(self, other, operator.add)
+  def __radd__(self, other):
+    return _call_operator(self, other, lambda x, y: y+x)
+  def __sub__(self, other):
+    return _call_operator(self, other, operator.sub)
+  def __rsub__(self, other):
+    return _call_operator(self, other, lambda x, y: y-x)
+  def __mul__(self, other):
+    return _call_operator(self, other, operator.mul)
+  def __rmul__(self, other):
+    return _call_operator(self, other, lambda x, y: y*x)
+  def __truediv__(self, other):
+    return _call_operator(self, other, operator.truediv)
+  def __rtruediv__(self, other):
+    return _call_operator(self, other, lambda x, y: y/x)
 
 class SourceServerVariables:
   def getObject(self, var):
@@ -490,11 +510,11 @@ def local_language():
     '''
     return langlib.getLangAbbreviation(str(ServerVar("eventscripts_language")))
 
-def _compare_value(self, other, comparison, _types=(str, int, float, bool)):
+def _call_operator(self, other, op, _types=(str, int, float, bool)):
   for type_ in _types:
     if isinstance(other, type_):
-      return comparison(type_(self), other)
-  return False
+      return op(type_(self), other)
+  return None
 
 # initialize the language libraries
 langlib.loadLanguages("%s/_libs/python/deflangs.ini" % ServerVar("eventscripts_addondir"))

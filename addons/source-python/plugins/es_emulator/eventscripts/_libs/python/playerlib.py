@@ -118,18 +118,20 @@ class Player(object):
             return float(self.value)
         def __bool__(self):
             return bool(int(self))
+
+        # partial __coerce__ replacement
         def __lt__(self, other):
-            return es._compare_value(self, other, operator.lt)
+            return es._call_operator(self, other, operator.lt)
         def __le__(self, other):
-            return es._compare_value(self, other, operator.le)
+            return es._call_operator(self, other, operator.le)
         def __eq__(self, other):
-            return es._compare_value(self, other, operator.eq)
+            return es._call_operator(self, other, operator.eq)
         def __ne__(self, other):
-            return es._compare_value(self, other, operator.ne)
+            return es._call_operator(self, other, operator.ne)
         def __ge__(self, other):
-            return es._compare_value(self, other, operator.ge)
+            return es._call_operator(self, other, operator.ge)
         def __gt__(self, other):
-            return es._compare_value(self, other, operator.gt)
+            return es._call_operator(self, other, operator.gt)
 
     class AttributeLevel(object):
         """ Provides a sub-attribute level for any get/set attributes requiring it. """
