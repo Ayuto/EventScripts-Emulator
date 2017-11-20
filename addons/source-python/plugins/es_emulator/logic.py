@@ -214,8 +214,8 @@ class ESEventListener(GameEventListener):
 es_event_listener = ESEventListener()
 
 def register_for_event_file(file_name):
-    events = KeyValues('event')
-    if not events.load_from_file(file_name):
+    events = KeyValues.load_from_file(file_name)
+    if events is None:
         _set_last_error('Couldn\'t load events file.')
         return False
 
