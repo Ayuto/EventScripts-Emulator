@@ -10,6 +10,7 @@ from ctypes.util import find_library
 # Source.Python
 #   Core
 from core import PLATFORM
+from core import SOURCE_ENGINE_BRANCH
 #   Colors
 from colors import Color
 #   Cvars
@@ -73,6 +74,28 @@ __all__ = (
     '_color_from_string',
     '_print_all_registered_cfg_scripts',
 )
+
+
+
+# =============================================================================
+# >> CONSTANTS
+# =============================================================================
+if SOURCE_ENGINE_BRANCH == 'csgo':
+    COLOR_DEFAULT = '\1'
+    COLOR_GREEN = '\4'
+    COLOR_LIGHTGREEN = '\5'
+    COLOR_DARKGREEN = '\6'
+else:
+    COLOR_DEFAULT = '\1'
+    COLOR_GREEN = '\4'
+    COLOR_LIGHTGREEN = '\3'
+    COLOR_DARKGREEN = '\5'
+
+RE_DEFAULT = re.compile('#default', re.IGNORECASE)
+RE_GREEN = re.compile('#green', re.IGNORECASE)
+RE_LIGHTGREEN = re.compile('#lightgreen', re.IGNORECASE)
+RE_DARKGREEN = re.compile('#darkgreen', re.IGNORECASE)
+RE_MULTI = re.compile('#multi', re.IGNORECASE)
 
 
 # =============================================================================
@@ -228,25 +251,20 @@ def _print_all_registered_cfg_scripts(userid=0):
 # =============================================================================
 # >> es.msg() & es.tell()
 # =============================================================================
-RE_DEFAULT = re.compile('#default', re.IGNORECASE)
-RE_GREEN = re.compile('#green', re.IGNORECASE)
-RE_LIGHTGREEN = re.compile('#lightgreen', re.IGNORECASE)
-RE_DARKGREEN = re.compile('#darkgreen', re.IGNORECASE)
-RE_MULTI = re.compile('#multi', re.IGNORECASE)
-
 def _prepare_msg(argv, color_index, skip):
-    if argv[color_index].lower() == '#green':
-        msg = '\4' + ' '.join(argv.args[color_index:])
-    elif argv[color_index].lower() == '#lightgreen':
-        msg = '\3' + ' '.join(argv.args[color_index:])
-    elif argv[color_index].lower() == '#darkgreen':
-        msg = '\5' + ' '.join(argv.args[color_index:])
-    elif argv[color_index].lower() == '#multi':
+    color_name = argv[color_index].lower()
+    if color_name == '#green':
+        msg = COLOR_GREEN + ' '.join(argv.args[color_index:])
+    elif color_name == '#lightgreen':
+        msg = COLOR_LIGHTGREEN + ' '.join(argv.args[color_index:])
+    elif color_name == '#darkgreen':
+        msg = COLOR_DARKGREEN + ' '.join(argv.args[color_index:])
+    elif color_name == '#multi':
         msg = ' '.join(argv.args[color_index:])
-        msg = RE_GREEN.sub('\4', msg)
-        msg = RE_LIGHTGREEN.sub('\3', msg)
-        msg = RE_DARKGREEN.sub('\5', msg)
-        msg = RE_DEFAULT.sub('\1', msg)
+        msg = RE_GREEN.sub(COLOR_GREEN, msg)
+        msg = RE_LIGHTGREEN.sub(COLOR_LIGHTGREEN, msg)
+        msg = RE_DARKGREEN.sub(COLOR_DARKGREEN, msg)
+        msg = RE_DEFAULT.sub(COLOR_DEFAULT, msg)
     else:
         msg = ' '.join(argv.args[skip:])
 
