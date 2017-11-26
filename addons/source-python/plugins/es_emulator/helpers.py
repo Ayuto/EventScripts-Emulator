@@ -409,9 +409,9 @@ def _cexec(player, command_str):
 # =============================================================================
 def _is_dead(player):
     if deadflag_cvar.get_int() > 0:
-        return player.dead
+        return int(player.dead)
 
-    return player.playerinfo.is_dead()
+    return int(player.playerinfo.is_dead())
 
 
 # =============================================================================

@@ -137,9 +137,9 @@ def fill_event_vars(userid, type_str):
     current_event_vars['es_{}team'.format(type_str)] = player.team
     current_event_vars['es_{}armor'.format(type_str)] = player.armor
     current_event_vars['es_{}health'.format(type_str)] = player.health
-    current_event_vars['es_{}deaths'.format(type_str)] = _is_dead(player)
+    current_event_vars['es_{}deaths'.format(type_str)] = player.deaths
     current_event_vars['es_{}kills'.format(type_str)] = player.kills
-    current_event_vars['es_{}dead'.format(type_str)] = player.dead
+    current_event_vars['es_{}dead'.format(type_str)] = _is_dead(player.dead)
     current_event_vars['es_{}index'.format(type_str)] = player.index
 
 def exec_all_registered(event_name):
