@@ -679,7 +679,7 @@ def effect(argv):
 def emitsound(argv):
     """Plays a sound from an entity."""
     sound = argv[3]
-    engine_server.precache_sound(sound)
+    engine_sound.precache_sound(sound)
 
     index = 0
     emitter_type = argv[1]
@@ -2214,7 +2214,7 @@ def precachemodel(argv):
 @command
 def precachesound(argv):
     """Precache sound."""
-    engine_server.precache_sound(argv[1])
+    engine_sound.precache_sound(argv[1])
 
 # Pure Python function
 def printmsg(msg):
