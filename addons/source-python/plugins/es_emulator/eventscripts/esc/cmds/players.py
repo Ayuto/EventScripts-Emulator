@@ -29,7 +29,7 @@ def sexec_all(argv):
 
 @Command(syntax='<userid> <x> <y> [z]', desc='Teleports a player.')
 def setpos(argv):
-  es.setpost(*argv)
+  es.setpos(*argv)
 
 @Command(syntax='<userid> <pitch> <yaw> [roll]', desc='Sets player view angle.')
 def setang(argv):
