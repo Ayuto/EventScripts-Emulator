@@ -73,6 +73,7 @@ __all__ = (
     'Msg',
     '_color_from_string',
     '_print_all_registered_cfg_scripts',
+    'UnsupportedOperation'
 )
 
 
@@ -135,6 +136,13 @@ Msg = tier1['Msg'].make_function(
     [DataType.STRING],
     DataType.VOID
 )
+
+
+# =============================================================================
+# >> EXCEPTIONS
+# =============================================================================
+class UnsupportedOperation(Exception):
+    """Raise this exception if e. g. a function is and will not be supported."""
 
 
 # =============================================================================

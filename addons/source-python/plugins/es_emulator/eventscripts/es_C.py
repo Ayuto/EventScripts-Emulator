@@ -26,6 +26,7 @@ from engines.sound import Pitch
 #   Events
 from events.manager import game_event_manager
 #   Messages
+from messages import UserMessage
 from messages import TextMsg
 from messages import SayText2
 from messages import ShowMenu
@@ -2763,6 +2764,9 @@ def unregsaycmd(argv):
 @command
 def usermsg(argv):
     """Create and send a usermsg to a client."""
+    if UserMessage.is_protobuf():
+        raise UnsupportedOperation('This function is not supported with protobuf.')
+
     operation = argv[1].lower()
 
     if operation == 'create':
