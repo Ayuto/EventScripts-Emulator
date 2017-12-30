@@ -62,6 +62,13 @@ class Val(object):
   def initialize(self):
 
     try:
+      # A little shim to restore behaviour prior to Python 3.6 (PEP 515)
+      # https://www.python.org/dev/peps/pep-0515/
+      # See also:
+      # https://github.com/Ayuto/EventScripts-Emulator/issues/10
+      if '_' in self.strval:
+        raise ValueError
+
       self.floatval = float(self.strval)
       self.intval = int(self.floatval)
       self.nonzero = bool(self.floatval)
