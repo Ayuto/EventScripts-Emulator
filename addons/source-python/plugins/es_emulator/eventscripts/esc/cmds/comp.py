@@ -4,14 +4,6 @@ from .. import aliases, stack
 from . import Command, Alias
 from ..val import sv
 
-# Source.Python
-from core import SOURCE_ENGINE
-
-# A list of games that don't have the 'wait' command
-MISSING_WAIT = [
-    'csgo'
-]
-
 @Command(syntax='[commandname] [[commands]]', pre=False, argsfrom=1, desc='Alias a command.')
 def alias(argv, args):
   if not argv:
@@ -28,7 +20,7 @@ def alias(argv, args):
     else:
       raise RuntimeError('Attempt to alias over an already registered command failed (current ESC limitation)')
     
-@Command(pre=False, reg=SOURCE_ENGINE in MISSING_WAIT)
+@Command(pre=False, reg=False)
 def wait(desc='Delay code execution for one tick'):
   if sv.eventscripts_currentmap:
     stack.kill()
