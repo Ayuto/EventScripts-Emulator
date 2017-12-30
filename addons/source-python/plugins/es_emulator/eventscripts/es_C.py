@@ -361,6 +361,7 @@ def copy(argv):
         return
 
     var1.set_string(var2.get_string())
+    dbgmsg(1, '{} = \"{}"'.format(var1.name, var1.get_string()))
 
 @command
 def createbot(argv):
@@ -2272,7 +2273,7 @@ def queryregclientcmd(argv):
     try:
         return client_command_proxies.get_proxy(command_str).block_name
     except KeyError:
-        dbgmsg(0, 'es_xqueryregclientcmd: ERROR. Command {} doesn\'t exist.'.format(command_str))
+        dbgmsg(2, 'es_xqueryregclientcmd: ERROR. Command {} doesn\'t exist.'.format(command_str))
         return ''
 
 @command
@@ -2282,7 +2283,7 @@ def queryregcmd(argv):
     try:
         return server_command_proxies.get_proxy(command_str).block_name
     except KeyError:
-        dbgmsg(0, 'es_xqueryregcmd: ERROR. Command {} wasn\'t registered.'.format(command_str))
+        dbgmsg(2, 'es_xqueryregcmd: ERROR. Command {} wasn\'t registered.'.format(command_str))
         return ''
 
 @command
@@ -2292,7 +2293,7 @@ def queryregsaycmd(argv):
     try:
         return say_command_proxies.get_proxy(command_str).block_name
     except KeyError:
-        dbgmsg(0, 'es_xqueryregsaycmd: ERROR. Command {} wasn\'t registered.'.format(command_str))
+        dbgmsg(2, 'es_xqueryregsaycmd: ERROR. Command {} wasn\'t registered.'.format(command_str))
         return ''
 
 @command
