@@ -24,6 +24,19 @@ All commands first argument is "users". Users accepts the following formats:
 import es
 import playerlib
 
+# Source.Python
+from colors import Color
+from players.helpers import index_from_userid
+from messages import UserMessage
+from messages import Fade
+from messages import Shake
+from messages import VGUIMenu
+from messages import HintText
+from messages import KeyHintText
+from messages import TextMsg
+from messages import SayText2
+from messages import HudMsg
+
 # Plugin information
 info = es.AddonInfo()
 info['name'] = "Usermsg EventScripts python library"
@@ -34,26 +47,36 @@ info['description'] = "Provides complex usermsg functionality simplified"
 
 def fade(users, type, time, holdTime, red, green, blue, alpha=255):
     '''Fades a players screen.'''
-    es.usermsg('create', 'fade', 'Fade')
-    es.usermsg('write', 'short', 'fade', time)
-    es.usermsg('write', 'short', 'fade', holdTime)
-    es.usermsg('write', 'short', 'fade', type)
-    es.usermsg('write', 'byte', 'fade', red)
-    es.usermsg('write', 'byte', 'fade', green)
-    es.usermsg('write', 'byte', 'fade', blue)
-    es.usermsg('write', 'byte', 'fade', alpha)
+    if UserMessage.is_protobuf():
+        Fade(
+            time,
+            holdTime,
+            Color(red, green, blue, alpha),
+            type).send(_get_sp_users(users))
+    else:
+        es.usermsg('create', 'fade', 'Fade')
+        es.usermsg('write', 'short', 'fade', time)
+        es.usermsg('write', 'short', 'fade', holdTime)
+        es.usermsg('write', 'short', 'fade', type)
+        es.usermsg('write', 'byte', 'fade', red)
+        es.usermsg('write', 'byte', 'fade', green)
+        es.usermsg('write', 'byte', 'fade', blue)
+        es.usermsg('write', 'byte', 'fade', alpha)
 
-    __sendMessage(users, 'fade')
+        __sendMessage(users, 'fade')
 
 def shake(users, magnitude, time):
     '''Shakes a players screen.'''
-    es.usermsg('create', 'shake', 'Shake')
-    es.usermsg('write', 'byte', 'shake', 0)
-    es.usermsg('write', 'float', 'shake', magnitude)
-    es.usermsg('write', 'float', 'shake', 1.0)
-    es.usermsg('write', 'float', 'shake', time)
+    if UserMessage.is_protobuf():
+        Shake(magnitude, time).send(_get_sp_users(users))
+    else:
+        es.usermsg('create', 'shake', 'Shake')
+        es.usermsg('write', 'byte', 'shake', 0)
+        es.usermsg('write', 'float', 'shake', magnitude)
+        es.usermsg('write', 'float', 'shake', 1.0)
+        es.usermsg('write', 'float', 'shake', time)
 
-    __sendMessage(users, 'shake')
+        __sendMessage(users, 'shake')
 
 def motd(users, type, title, message, visible=True):
     '''Shows an info panel to a player.
@@ -88,64 +111,88 @@ def showVGUIPanel(users, panelName, visible, data={}):
      * team -- Team selection panel
      * class -- Class selection panel
     '''
-    # Create the usermessage
-    es.usermsg('create', 'panel', 'VGUIMenu')
-    es.usermsg('write', 'string', 'panel', panelName)
-    es.usermsg('write', 'byte', 'panel', int(visible))
-    es.usermsg('write', 'byte', 'panel', len(data))
+    if UserMessage.is_protobuf():
+        VGUIMenu(panelName, data, visible).send(_get_sp_users(users))
+    else:
+        # Create the usermessage
+        es.usermsg('create', 'panel', 'VGUIMenu')
+        es.usermsg('write', 'string', 'panel', panelName)
+        es.usermsg('write', 'byte', 'panel', int(visible))
+        es.usermsg('write', 'byte', 'panel', len(data))
 
-    # Write KV data
-    for key in data:
-        es.usermsg('write', 'string', 'panel', key)
-        es.usermsg('write', 'string', 'panel', data[key])
+        # Write KV data
+        for key in data:
+            es.usermsg('write', 'string', 'panel', key)
+            es.usermsg('write', 'string', 'panel', data[key])
 
-    # Show message
-    __sendMessage(users, 'panel')
+        # Show message
+        __sendMessage(users, 'panel')
 
 def hudhint(users, msg):
     '''Shows a hint message on a player.'''
-    es.usermsg('create', 'hudhint', 'HintText')
-    es.usermsg('write', 'bool', 'hudhint', 0)
-    es.usermsg('write', 'string', 'hudhint', msg)
+    if UserMessage.is_protobuf():
+        HintText(msg).send(_get_sp_users(users))
+    else:
+        es.usermsg('create', 'hudhint', 'HintText')
+        es.usermsg('write', 'bool', 'hudhint', 0)
+        es.usermsg('write', 'string', 'hudhint', msg)
 
-    __sendMessage(users, 'hudhint')
+        __sendMessage(users, 'hudhint')
 
 def keyhint(users, msg):
     '''Shows a keyhint message on a player.'''
-    es.usermsg('create', 'keyhint', 'KeyHintText')
-    es.usermsg('write', 'byte', 'keyhint', 1)
-    es.usermsg('write', 'string', 'keyhint', msg)
+    if UserMessage.is_protobuf():
+        KeyHintText(msg).send(_get_sp_users(users))
+    else:
+        es.usermsg('create', 'keyhint', 'KeyHintText')
+        es.usermsg('write', 'byte', 'keyhint', 1)
+        es.usermsg('write', 'string', 'keyhint', msg)
 
-    __sendMessage(users, 'keyhint')
+        __sendMessage(users, 'keyhint')
 
 def centermsg(users, msg):
     '''Shows a message in the center of a players screen.'''
-    es.usermsg('create', 'centermsg', 'TextMsg')
-    es.usermsg('write', 'byte', 'centermsg', 4)
-    es.usermsg('write', 'string', 'centermsg', msg)
+    if UserMessage.is_protobuf():
+        TextMsg(msg).send(_get_sp_users(users))
+    else:
+        es.usermsg('create', 'centermsg', 'TextMsg')
+        es.usermsg('write', 'byte', 'centermsg', 4)
+        es.usermsg('write', 'string', 'centermsg', msg)
 
-    __sendMessage(users, 'centermsg')
+        __sendMessage(users, 'centermsg')
 
 def echo(users, msg):
     '''Shows a message in a players console.'''
-    es.usermsg('create', 'echo', 'TextMsg')
-    es.usermsg('write', 'byte', 'echo', 2)
-    es.usermsg('write', 'string', 'echo', msg)
+    if UserMessage.is_protobuf():
+        TextMsg(msg, HudDestination.CONSOLE).send(_get_sp_users(users))
+    else:
+        es.usermsg('create', 'echo', 'TextMsg')
+        es.usermsg('write', 'byte', 'echo', 2)
+        es.usermsg('write', 'string', 'echo', msg)
 
-    __sendMessage(users, 'echo')
+        __sendMessage(users, 'echo')
 
 def saytext2(users, index, msg, arg1=0, arg2=0, arg3=0, arg4=0):
     '''Shows a coloured message in a players chat window.'''
-    es.usermsg('create', 'saytext2','SayText2')
-    es.usermsg('write', 'byte', 'saytext2', index)
-    es.usermsg('write', 'byte', 'saytext2', 1)
-    es.usermsg('write', 'string', 'saytext2', msg)
-    es.usermsg('write', 'string', 'saytext2', arg1)
-    es.usermsg('write', 'string', 'saytext2', arg2)
-    es.usermsg('write', 'string', 'saytext2', arg3)
-    es.usermsg('write', 'string', 'saytext2', arg4)
+    if UserMessage.is_protobuf():
+        SayText2(
+            msg,
+            index,
+            param1=arg1 or '',
+            param2=arg2 or '',
+            param3=arg3 or '',
+            param4=arg4 or '').send(_get_sp_users(users))
+    else:
+        es.usermsg('create', 'saytext2','SayText2')
+        es.usermsg('write', 'byte', 'saytext2', index)
+        es.usermsg('write', 'byte', 'saytext2', 1)
+        es.usermsg('write', 'string', 'saytext2', msg)
+        es.usermsg('write', 'string', 'saytext2', arg1)
+        es.usermsg('write', 'string', 'saytext2', arg2)
+        es.usermsg('write', 'string', 'saytext2', arg3)
+        es.usermsg('write', 'string', 'saytext2', arg4)
 
-    __sendMessage(users, 'saytext2')
+        __sendMessage(users, 'saytext2')
 
 def hudmsg(users, msg, channel=0, x=0.5, y=0.5,
            r1=255, g1=255, b1=255, a1=255, r2=255, g2=255, b2=255, a2=255,
@@ -165,28 +212,41 @@ def hudmsg(users, msg, channel=0, x=0.5, y=0.5,
 
     Holdtime is how long the message stays on screen.
     '''
-    es.usermsg('create','hudmsg','HudMsg')
-    es.usermsg('write','byte','hudmsg', channel & 0xff)
-    es.usermsg('write','float', 'hudmsg', x)
-    es.usermsg('write','float', 'hudmsg', y)
-    es.usermsg('write','byte', 'hudmsg', r1)
-    es.usermsg('write','byte', 'hudmsg', g1)
-    es.usermsg('write','byte', 'hudmsg', b1)
-    es.usermsg('write','byte', 'hudmsg', a1)
-    es.usermsg('write','byte', 'hudmsg', r2)
-    es.usermsg('write','byte', 'hudmsg', g2)
-    es.usermsg('write','byte', 'hudmsg', b2)
-    es.usermsg('write','byte', 'hudmsg', a2)
-    es.usermsg('write','byte', 'hudmsg', effect)
-    es.usermsg('write','float', 'hudmsg', fadein)
-    es.usermsg('write','float', 'hudmsg', fadeout)
-    es.usermsg('write','float', 'hudmsg', holdtime)
-    es.usermsg('write','float', 'hudmsg', fxtime)
-    es.usermsg('write','string', 'hudmsg', msg)
+    if UserMessage.is_protobuf():
+        HudMsg(
+            msg,
+            x, y,
+            Color(r1, g1, b1, a1),
+            Color(r2, g2, b2, a2),
+            effect,
+            fadein,
+            fadeout,
+            holdtime,
+            fxtime,
+            channel).send(_get_sp_users(users))
+    else:
+        es.usermsg('create','hudmsg','HudMsg')
+        es.usermsg('write','byte','hudmsg', channel & 0xff)
+        es.usermsg('write','float', 'hudmsg', x)
+        es.usermsg('write','float', 'hudmsg', y)
+        es.usermsg('write','byte', 'hudmsg', r1)
+        es.usermsg('write','byte', 'hudmsg', g1)
+        es.usermsg('write','byte', 'hudmsg', b1)
+        es.usermsg('write','byte', 'hudmsg', a1)
+        es.usermsg('write','byte', 'hudmsg', r2)
+        es.usermsg('write','byte', 'hudmsg', g2)
+        es.usermsg('write','byte', 'hudmsg', b2)
+        es.usermsg('write','byte', 'hudmsg', a2)
+        es.usermsg('write','byte', 'hudmsg', effect)
+        es.usermsg('write','float', 'hudmsg', fadein)
+        es.usermsg('write','float', 'hudmsg', fadeout)
+        es.usermsg('write','float', 'hudmsg', holdtime)
+        es.usermsg('write','float', 'hudmsg', fxtime)
+        es.usermsg('write','string', 'hudmsg', msg)
 
-    __sendMessage(users, 'hudmsg')
+        __sendMessage(users, 'hudmsg')
 
-def __sendMessage(users, name):
+def _get_users(users):
     # Is a filter
     if str(users)[0] == '#':
         users = playerlib.getUseridList(users)
@@ -194,9 +254,18 @@ def __sendMessage(users, name):
     elif not hasattr(users, '__iter__'):
         users = (users,)
 
-    # Loop through players
     for userid in users:
-        if es.exists('userid', userid): es.usermsg('send', name, userid)
+        if es.exists('userid', userid):
+            yield userid
+
+def _get_sp_users(users):
+    for userid in _get_users(users):
+        yield index_from_userid(int(userid))
+
+def __sendMessage(users, name):
+    # Loop through players
+    for userid in _get_users(users):
+        es.usermsg('send', name, userid)
 
     # Cleanup
     es.usermsg('delete', name)
