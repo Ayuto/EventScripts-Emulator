@@ -3,6 +3,7 @@
 # =============================================================================
 # Python
 import sys
+import muparser
 
 # Source.Python
 from cvars import cvar
@@ -77,5 +78,8 @@ def unload():
             cvar.unregister_base(obj)
 
     # 2. Delete console commands
+
+    print('Unloading MuParser...')
+    muparser.unload_parser()
 
     print('ES Emulator has been unloaded successfully!')

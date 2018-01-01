@@ -1,6 +1,9 @@
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
+# Python
+import muparser
+
 # Source.Python
 #   Memory
 import memory
@@ -2100,9 +2103,28 @@ def makepublic(argv):
         convar.make_public()
         forcecallbacks(convar_name)
 
-def mathparse(*args):
+@command
+def mathparse(argv):
     """Adds a say command that refers to a particular block."""
-    raise NotImplementedError
+    convar_name = argv[1]
+    convar = cvar.find_var(convar_name)
+    if convar is None:
+        dbgmsg(0, 'The var "{}" could not be set'.format(convar_name))
+        _set_last_error('Variable does not exist')
+        return
+
+    if not _can_change(convar):
+        return
+
+    try:
+        result = muparser.parse_expr(argv[2])
+    except RuntimeError as e:
+        dbgmsg(0, 'Exception: {}!'.format(e.message))
+    else:
+        if result - int(result) != 0:
+            convar.set_float(result)
+        else:
+            convar.set_string('%ld'% result)
 
 @command
 def menu(argv):

@@ -4,6 +4,7 @@
 # Python
 import sys
 import time
+import muparser
 
 # Source.Python
 #   Cvars
@@ -250,6 +251,9 @@ def on_level_init(map_name):
     if autorefreshvars_cvar.get_int() > 0:
         es.refreshpublicvars()
 
+    muparser.clear_vars()
+    es.dbgmsg(6, ' Reset variables for muParser.')
+
 currentmap_cvar.set_string(global_vars.map_name)
 
 @OnNetworkidValidated
@@ -451,5 +455,13 @@ def on_changelevel(command):
 # =============================================================================
 # >> POST INITIALIZATION
 # =============================================================================
+def _muparser_parse_var(name):
+    var = cvar.find_var(name)
+    if var is None:
+        return 0
+
+    return var.get_float()
+
 def post_initialization():
     check_ip_cmdline()
+    muparser.init_parser(_muparser_parse_var)

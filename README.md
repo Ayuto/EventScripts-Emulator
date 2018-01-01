@@ -11,9 +11,8 @@ Most of the work is already done. The following is a list of things that need to
 2. Do extensive testings
 
 ## Python
-1. Implemented es.dosql()
+1. Implement es.dosql()
 2. Implement es.forcevalue()
-3. Implement es.mathparse()
 4. Implement es.old_mexec()
 5. Implement es.physics('start', ...)
 6. Implement es.regexec()
