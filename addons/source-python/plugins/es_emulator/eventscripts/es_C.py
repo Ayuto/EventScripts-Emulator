@@ -2119,7 +2119,7 @@ def mathparse(argv):
     try:
         result = muparser.parse_expr(argv[2])
     except RuntimeError as e:
-        dbgmsg(0, 'Exception: {}!'.format(e.message))
+        dbgmsg(0, 'Exception: {}!'.format(e.args[0]))
     else:
         if result - int(result) != 0:
             convar.set_float(result)
