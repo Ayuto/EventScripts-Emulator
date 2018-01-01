@@ -56,6 +56,7 @@ __all__ = (
     '_get_prop_info',
     'atoi',
     'atof',
+    '_can_change',
     '_cexec',
     '_is_dead',
     '_get_send_prop_type_name',
