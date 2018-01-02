@@ -69,6 +69,8 @@ from stringtables import INVALID_STRING_INDEX
 from keyvalues import KeyValues
 #   Physics
 from physics import physics
+#   Plugins
+from plugins.manager import plugin_manager
 
 # ES Emulator
 #   Logic
@@ -2064,7 +2066,13 @@ def load(argv):
     if len(argv) < 2:
         es.printScriptList()
     else:
-        es.loadModuleAddon(argv[1])
+        addon_name = argv[1]
+
+        # We can't load ES addons that have the same name like an SP plugin
+        if plugin_manager.plugin_exists(addon_name):
+            dbgmsg(0, '[EventScripts] ES addon has the same name like an SP plugin.')
+        else:
+            es.loadModuleAddon(argv[1])
 
 @command
 def loadevents(argv):
