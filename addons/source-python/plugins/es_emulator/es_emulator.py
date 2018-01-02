@@ -29,7 +29,7 @@ def load():
     print('Loading ES Emulator...')
 
     if cvar.find_var('eventscripts_addondir') is not None:
-        raise ValueError('EventScripts is already loaded.')
+        raise RuntimeError('EventScripts is already loaded.')
 
     print('Adding "{}" to sys.path.'.format(str(ES_PATH)))
     sys.path.append(str(ES_PATH))
@@ -62,6 +62,11 @@ def load():
 def unload():
     print('Unloading ES Emulator...')
 
+    raise NotImplementedError(
+        'Unloading EventScripts Emulator is not implemented yet. The emulator '
+        'is now in an unsuitable state. You need to restart your server.')
+
+    """
     # TODO: Unload all ES addons
 
     print('Removing "{}" from sys.path.'.format(str(ES_PATH)))
@@ -77,9 +82,11 @@ def unload():
         if isinstance(obj, ConVar):
             cvar.unregister_base(obj)
 
-    # 2. Delete console commands
+    # TODO: Delete console commands
+    # TODO: Restore original keyvalues module in sys.modules
 
     print('Unloading MuParser...')
     muparser.unload_parser()
 
     print('ES Emulator has been unloaded successfully!')
+    """
