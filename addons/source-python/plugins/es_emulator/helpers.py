@@ -103,6 +103,10 @@ RE_MULTI = re.compile('#multi', re.IGNORECASE)
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
+NO_SRV_CHECK_GAMES = [
+    'csgo'
+]
+
 if PLATFORM == 'windows':
     clib = memory.find_binary('msvcrt.dll')
     tier1 = memory.find_binary('bin/tier0')
@@ -112,7 +116,9 @@ else:
         raise ValueError('Unable to find C library.')
 
     clib = memory.find_binary(clib_path, check_extension=False)
-    tier1 = memory.find_binary('bin/libtier0')
+    tier1 = memory.find_binary(
+        'bin/libtier0', 
+        SOURCE_ENGINE_BRANCH not in NO_SRV_CHECK_GAMES)
 
 sv_cheats = cvar.find_var('sv_cheats')
 
