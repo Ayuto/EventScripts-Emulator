@@ -31,6 +31,16 @@ debugfunctions_cvar = ConVar(
     'Adds internal ES function names and line numbers to debug strings for parsing.'
 )
 
+python_cvar = ConVar(
+    'mattie_python',
+    '1',
+    'Enable Python support for EventScripts'
+)
+
+
+# =============================================================================
+# >> IMPLEMENTED CVARS
+# =============================================================================
 serverdll_cvar = ConVar(
     'eventscripts_servergamedll_ver',
     '',
@@ -43,16 +53,6 @@ serverclients_cvar = ConVar(
     'Version of ServerGameClients interface used by EventScripts. (read only)'
 )
 
-python_cvar = ConVar(
-    'mattie_python',
-    '1',
-    'Enable Python support for EventScripts'
-)
-
-
-# =============================================================================
-# >> IMPLEMENTED CVARS
-# =============================================================================
 botcexec_cvar = ConVar(
     'eventscripts_bot-cexec',
     '0',

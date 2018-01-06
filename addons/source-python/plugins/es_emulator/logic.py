@@ -7,6 +7,8 @@ import time
 import muparser
 
 # Source.Python
+#   Core
+from core import get_interface
 #   Cvars
 from cvars import cvar
 from cvars.flags import ConVarFlags
@@ -53,6 +55,8 @@ from .cvars import scriptdir_cvar
 from .cvars import execmd_cvar
 from .cvars import defaultevents_cvar
 from .cvars import mapcommands_cvar
+from .cvars import serverdll_cvar
+from .cvars import serverclients_cvar
 #   Helpers
 from .helpers import _is_dead
 from .helpers import _set_last_error
@@ -462,6 +466,28 @@ def _muparser_parse_var(name):
 
     return var.get_float()
 
+def _get_interface_version(interface, library, start_index):
+    for index in range(start_index, 999):
+        version = interface.format(index)
+        try:
+            get_interface(library, version)
+            return version
+        except ValueError:
+            pass
+
+    return None
+
 def post_initialization():
+    import es
+    v = _get_interface_version('ServerGameDLL{:03d}', 'server', 3)
+    if v is not None:
+        es.dbgmsg(1, 'Using {} for game.'.format(v))
+        serverdll_cvar.set_string(v)
+
+    v = _get_interface_version('ServerGameClients{:03d}', 'server', 3)
+    if v is not None:
+        es.dbgmsg(1, 'Using {} for game.'.format(v))
+        serverclients_cvar.set_string(v)
+
     check_ip_cmdline()
     muparser.init_parser(_muparser_parse_var)
