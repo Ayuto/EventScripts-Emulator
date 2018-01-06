@@ -62,6 +62,8 @@ from listeners.tick import Delay
 #   Mathlib
 from mathlib import QAngle
 from mathlib import Vector
+#   Steam
+from steam import SteamID
 #   Stringtables
 from stringtables import string_tables
 from stringtables import INVALID_STRING_INDEX
@@ -1443,8 +1445,9 @@ def getuserid(argv):
     # Search for SteamID
     dbgmsg(1, 'FindUserIDByString: is it a steamid?')
 
-    # TODO: Fix this to work with SteamID3?
-    if len(target_string) > 6 and target_string.startswith('STEAM_'):
+    # The next line is the original ES behaviour. It doesn't work with SteamID3
+    #if len(target_string) > 6 and target_string.startswith('STEAM_'):
+    if not target_string.isdigit() and SteamID.parse(target_string) is not None:
         dbgmsg(1, 'FindUserIDByString: really looks like a steamid.')
         for player in PlayerIter():
             if player.steamid == target_string:

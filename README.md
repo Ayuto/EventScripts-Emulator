@@ -19,9 +19,8 @@ Most of the work is already done. The following is a list of things that need to
 7. Implement es.sql()
 8. Implement es.keyprecursivekeycopy()
 9. es.dumpserverclasses() - Retrieve m_InstanceBaselineIndex
-10. es.getuserid() - Fix for SteamID3 or leave it like the original one?
-11. es.createentitylist() - Add full server class dump
-12. es.createplayerlist() - Add packetloss and ping
+10. es.createentitylist() - Add full server class dump
+11. es.createplayerlist() - Add packetloss and ping
 
 ## ESS
 1. es_dumpusermessages - Print size of user message
@@ -42,6 +41,10 @@ Most of the work is already done. The following is a list of things that need to
 5. Load the addon via ``es_load <your addon>``.
 
 Funny side note: You can also use the EventScripts API in Source.Python plugins.
+
+# Differences
+
+* es.getuserid() also works with SteamID3. A possible crash has also been fixed when using handles.
 
 # Note
 I took the original EventScripts libraries from the latest release and adapted them to work with Python 3. I have also removed the example addons like ``mugmod`` or ``slingshot`` to keep it simple.
