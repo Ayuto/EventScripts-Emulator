@@ -62,6 +62,7 @@ from .helpers import _is_dead
 from .helpers import _set_last_error
 #   Paths
 from .paths import ES_EVENTS_PATH
+from .paths import SERVER_BINARY
 
 
 # =============================================================================
@@ -479,12 +480,12 @@ def _get_interface_version(interface, library, start_index):
 
 def post_initialization():
     import es
-    v = _get_interface_version('ServerGameDLL{:03d}', 'server', 3)
+    v = _get_interface_version('ServerGameDLL{:03d}', SERVER_BINARY, 3)
     if v is not None:
         es.dbgmsg(1, 'Using {} for game.'.format(v))
         serverdll_cvar.set_string(v)
 
-    v = _get_interface_version('ServerGameClients{:03d}', 'server', 3)
+    v = _get_interface_version('ServerGameClients{:03d}', SERVER_BINARY, 3)
     if v is not None:
         es.dbgmsg(1, 'Using {} for game.'.format(v))
         serverclients_cvar.set_string(v)
