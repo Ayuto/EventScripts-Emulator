@@ -20,7 +20,6 @@ Most of the work is already done. The following is a list of things that need to
 8. Implement es.keyprecursivekeycopy()
 9. es.dumpserverclasses() - Retrieve m_InstanceBaselineIndex
 10. es.createentitylist() - Add full server class dump
-11. es.createplayerlist() - Add packetloss and ping
 
 ## ESS
 1. es_dumpusermessages - Print size of user message

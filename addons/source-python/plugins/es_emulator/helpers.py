@@ -58,6 +58,7 @@ __all__ = (
     'atof',
     '_can_change',
     '_cexec',
+    '_clamp',
     '_is_dead',
     '_get_send_prop_type_name',
     '_get_convar_flag',
@@ -117,7 +118,7 @@ else:
 
     clib = memory.find_binary(clib_path, check_extension=False)
     tier1 = memory.find_binary(
-        'bin/libtier0', 
+        'bin/libtier0',
         SOURCE_ENGINE_BRANCH not in NO_SRV_CHECK_GAMES)
 
 sv_cheats = cvar.find_var('sv_cheats')
@@ -566,3 +567,10 @@ class _UserMessageData(list):
             buffer.write_byte(atoi(value))
         elif type_name == 'long':
             buffer.write_long(atoi(value))
+
+
+# =============================================================================
+# >> es.createplayerlist
+# =============================================================================
+def _clamp(value, min_value, max_value):
+    return max(min(value, max_value), min_value)

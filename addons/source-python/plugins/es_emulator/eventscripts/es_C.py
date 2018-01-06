@@ -62,6 +62,8 @@ from listeners.tick import Delay
 #   Mathlib
 from mathlib import QAngle
 from mathlib import Vector
+#   Net Channel
+from net_channel import NetFlow
 #   Steam
 from steam import SteamID
 #   Stringtables
@@ -446,9 +448,15 @@ def createplayerlist(argv):
 
         info = engine_server.get_player_net_info(player.index)
         if info is not None:
-            # TODO: ES does some calculations for ping and packetloss
-            temp['ping'] = 0
-            temp['packetloss'] = 0
+            latency = info.get_avg_latency(NetFlow.OUTGOING)
+            cmdrate = max(1, atoi(engine_server.get_client_convar_value(
+                player.index, 'cl_cmdrate')))
+
+            latency -= (0.5 / cmdrate) + global_vars.interval_per_tick * 0.5
+
+            temp['ping'] = _clamp(int(latency * 1000), 5, 1000)
+            temp['packetloss'] = _clamp(
+                int(100 * info.get_avg_loss(NetFlow.INCOMING)), 0, 100)
             temp['timeconnected'] = info.time_connected
         else:
             # Bots
