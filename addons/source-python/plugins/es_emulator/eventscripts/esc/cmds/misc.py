@@ -4,6 +4,7 @@ import es
 
 from stringtables import string_tables
 from messages import get_message_name
+from messages import get_message_size
 from es_emulator.cvars import maxmessages_cvar
 
 @Command(syntax='<tablename> <string>', desc='Update an entry in a stringtable')
@@ -25,7 +26,7 @@ def es_dumpstringtables(argv):
 def es_dumpusermessages(argv):
   for index in range(maxmessages_cvar.get_int()):
     name = get_message_name(index)
-    size = 4 # TODO
+    size = get_message_size(index)
     if name is not None:
       es.dbgmsg(0, ' Id: {:02d}, Size: {}, Message: {}'.format(
         index, size, name))

@@ -22,8 +22,7 @@ Most of the work is already done. The following is a list of things that need to
 10. es.createentitylist() - Add full server class dump
 
 ## ESS
-1. es_dumpusermessages - Print size of user message
-2. Implement pycmd_register
+1. Implement pycmd_register
 
 ## Console variables
 1. Implement mattie_eventscripts
