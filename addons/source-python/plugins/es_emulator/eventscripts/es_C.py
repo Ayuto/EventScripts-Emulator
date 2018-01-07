@@ -629,11 +629,8 @@ def dumpserverclasses(argv):
     while current:
         table = current.table
 
-        # TODO: Get m_InstanceBaselineIndex
-        m_InstanceBaselineIndex = 0
-
         print('{} {} ({} properties)'.format(
-            current.name, m_InstanceBaselineIndex, table.length))
+            current.name, current.instance_baseline_index, table.length))
 
         for prop in table:
             print('---------{} : {}'.format(
