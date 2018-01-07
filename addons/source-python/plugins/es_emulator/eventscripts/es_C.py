@@ -72,6 +72,8 @@ from stringtables import string_tables
 from stringtables import INVALID_STRING_INDEX
 #   KeyValues
 from keyvalues import KeyValues
+#   Paths
+from paths import GAME_PATH
 #   Physics
 from physics import physics
 #   Plugins
@@ -104,6 +106,9 @@ from es_emulator.cvars import debuglog_cvar
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
+# For es.sql()
+db_connections = {}
+
 # Helper variable for es.event()
 _current_event = None
 
@@ -185,6 +190,7 @@ def _dict_to_keyvalues(result, key, value):
 # >> CONSTANTS
 # =============================================================================
 KEYGROUP_LOAD_FORMAT = '{}/{}/es_{}_db.txt'
+SQLDB_LOAD_FORMAT = '{}/{}/{}/es_{}.sqldb'
 
 
 # =============================================================================
@@ -571,8 +577,14 @@ def dosql(argv):
         dbgmsg(0, 'Can\'t open database: {}'.format(e[0]))
         return
 
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
     try:
-        conn.execute(argv[2])
+        for row in cursor.execute(argv[2]):
+            for column, value in zip(row.keys(), row):
+                value = str(value) if value is not None else 'NULL'
+                dbgmsg(1, 'SQL query returned: {} = {}'.format(column, value))
+
     except sqlite3.OperationalError as e:
         dbgmsg(0, 'SQL error: {}'.format(e[0]))
     finally:
@@ -2681,9 +2693,133 @@ def splitvectorstring(argv):
 
     return result
 
-def sql(*args):
+@command
+def sql(argv):
     """Local database support"""
-    raise NotImplementedError
+    operation = argv[1].lower()
+    db_name = argv[2]
+
+    if operation == 'query':
+        if len(argv) <= 2: # This should actually be 3, but well...
+            return
+
+        if len(argv) > 4:
+            key = user_groups.find_key(argv[3], True)
+            query = argv[4]
+        else:
+            key = None
+            query = argv[3]
+
+        try:
+            conn = db_connections[db_name]
+        except KeyError:
+            return
+
+        cursor = conn.cursor()
+        try:
+            for row in cursor.execute(query):
+                if key is not None:
+                    tmp_key = key.create_new_key()
+
+                for column, value in zip(row.keys(), row):
+                    value = str(value)
+                    if key is not None:
+                        key.set_string(column, value if value else '')
+
+                    dbgmsg(1, 'SQL query returned: {} = {}'.format(
+                        column, value if value is not None else 'NULL'))
+
+        except sqlite3.OperationalError as e:
+            dbgmsg(0, 'SQL error: {}\nYour query was: {}'.format(e.args[0], query))
+            _set_last_error('SQL error')
+
+    elif operation == 'queryvalue':
+        if len(argv) < 4:
+            return
+
+        try:
+            conn = db_connections[db_name]
+        except KeyError:
+            dbgmsg(0, 'Specified database does not exist. Use es_sql open to open a database.')
+            _set_last_error('Invalid database')
+            return
+
+        cursor = conn.cursor()
+        query = argv[3]
+        try:
+            cursor.execute(query)
+        except sqlite3.OperationalError as e:
+            dbgmsg(0, 'SQL error: {}\nYour query was: {}'.format(
+                e.args[0], query))
+            _set_last_error('SQL error')
+            return ''
+
+        row = cursor.fetchone()
+        if row is None:
+            return ''
+
+        value = row[0]
+        column = row.keys()[0]
+
+        dbgmsg(1, 'SQL query returned: {} = {}'.format(
+            column, value if value is not None else 'NULL'))
+
+        return str(value)
+
+    elif operation == 'open':
+        full_path = ''
+
+        # Get full_path
+        if len(argv) < 4:
+            script_dir = scriptdir_cvar.get_string()
+            if len(script_dir) <= 0:
+                script_dir = '.'
+
+            full_path = SQLDB_LOAD_FORMAT.format(
+                GAME_PATH,
+                datadir_cvar.get_string(),
+                script_dir,
+                db_name)
+            dbgmsg(1, 'es_sql open1 {}'.format(full_path))
+        else:
+            file_pattern = argv[3]
+            if file_pattern.startswith('|'):
+                full_path = SQLDB_LOAD_FORMAT.format(
+                    GAME_PATH,
+                    'addons/source-python/plugins/es_emulator/eventscripts',
+                    file_pattern[1:],
+                    db_name)
+                dbgmsg(1, 'es_sql open2 {}'.format(full_path))
+            elif file_pattern.lower() == ':memory:':
+                full_path = file_pattern
+                dbgmsg(1, 'es_sql open3 {}'.format(full_path))
+            else:
+                full_path = SQLDB_LOAD_FORMAT.format(
+                    GAME_PATH,
+                    datadir_cvar.get_string(),
+                    file_pattern,
+                    db_name
+                )
+                dbgmsg(1, 'es_sql open4 {}'.format(full_path))
+
+        # Open the database
+        try:
+            conn = sqlite3.connect(full_path)
+        except sqlite3.OperationalError as e:
+            dbgmsg(0, 'Can\'t open database {}: {}'.format(full_path, db_name))
+            _set_last_error('Open failed')
+            return
+
+        conn.row_factory = sqlite3.Row
+        dbgmsg(1, 'es_sql open: {} database opened as {}.'.format(
+            full_path, db_name))
+        db_connections[db_name.lower()] = conn
+
+    elif operation == 'close':
+        conn = db_connections.pop(db_name, 0)
+        if conn:
+            conn.close()
+            dbgmsg(1, 'es_sql close: {} database closed.'.format(db_name))
 
 @command
 def stopsound(argv):

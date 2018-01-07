@@ -37,7 +37,10 @@ def es_dumpusermessages(argv):
 # es_xsql query <db> [result-keygroup] "<SQL-string>"
 @Command(syntax='<operation> <db> [var] [sql]', desc='Local database support')
 def sql(argv):
-  es.sql(*argv)
+  if argv[0].lower() == 'queryvalue' and len(argv) >= 4:
+    sv[argv[2]] = es.sql(argv[0], argv[1], argv[3])
+  else:
+    es.sql(*argv)
 
 @Command(syntax='<db> <query>', desc='Does some SQL.')
 def dosql(argv):
