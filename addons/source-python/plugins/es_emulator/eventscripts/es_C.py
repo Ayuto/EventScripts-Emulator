@@ -3,6 +3,7 @@
 # =============================================================================
 # Python
 import muparser
+import sqlite3
 
 # Source.Python
 #   Memory
@@ -561,9 +562,21 @@ def doblock(argv):
     import es
     es.addons.callBlock(argv.arg_string)
 
-def dosql(*args):
+@command
+def dosql(argv):
     """Does some SQL."""
-    raise NotImplementedError
+    try:
+        conn = sqlite3.connect(argv[1])
+    except sqlite3.OperationalError as e:
+        dbgmsg(0, 'Can\'t open database: {}'.format(e[0]))
+        return
+
+    try:
+        conn.execute(argv[2])
+    except sqlite3.OperationalError as e:
+        dbgmsg(0, 'SQL error: {}'.format(e[0]))
+    finally:
+        conn.close()
 
 @command
 def dumpconcommandbase():

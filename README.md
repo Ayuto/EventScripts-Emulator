@@ -11,15 +11,14 @@ Most of the work is already done. The following is a list of things that need to
 2. Do extensive testings
 
 ## Python
-1. Implement es.dosql()
-2. Implement es.forcevalue()
-4. Implement es.old_mexec()
-5. Implement es.physics('start', ...)
-6. Implement es.regexec()
-7. Implement es.sql()
-8. Implement es.keyprecursivekeycopy()
-9. es.dumpserverclasses() - Retrieve m_InstanceBaselineIndex
-10. es.createentitylist() - Add full server class dump
+1. Implement es.forcevalue()
+2. Implement es.old_mexec()
+3. Implement es.physics('start', ...)
+4. Implement es.regexec()
+5. Implement es.sql()
+6. Implement es.keyprecursivekeycopy()
+7. es.dumpserverclasses() - Retrieve m_InstanceBaselineIndex
+8. es.createentitylist() - Add full server class dump
 
 ## ESS
 1. Implement pycmd_register
