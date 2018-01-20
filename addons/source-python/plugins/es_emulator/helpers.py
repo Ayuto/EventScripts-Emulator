@@ -24,6 +24,7 @@ import memory
 
 from memory import Convention
 from memory import DataType
+from memory.manager import TypeManager
 #   Engines
 from engines.server import server_game_dll
 #   Entities
@@ -46,6 +47,8 @@ from .cvars import deadflag_cvar
 from .cvars import lastgive_cvar
 from .cvars import error_cvar
 from .cvars import escape_cvar
+#   Paths
+from .paths import EMU_DATA_PATH
 
 
 # =============================================================================
@@ -75,7 +78,8 @@ __all__ = (
     'Msg',
     '_color_from_string',
     '_print_all_registered_cfg_scripts',
-    'UnsupportedOperation'
+    'UnsupportedOperation',
+    'ConVar_'
 )
 
 
@@ -122,6 +126,15 @@ else:
         SOURCE_ENGINE_BRANCH not in NO_SRV_CHECK_GAMES)
 
 sv_cheats = cvar.find_var('sv_cheats')
+
+
+# =============================================================================
+# >> ConVar structure for es.forcevalue()
+# =============================================================================
+type_manager = TypeManager()
+ConVar_ = type_manager.create_type_from_file(
+    'ConVar_',
+    EMU_DATA_PATH / 'memory' / 'ConVar_.ini')
 
 
 # =============================================================================

@@ -7,6 +7,7 @@ from path import Path
 # Source.Python
 from core import PLATFORM
 from paths import GAME_PATH
+from paths import PLUGIN_DATA_PATH
 
 
 # =============================================================================
@@ -18,6 +19,7 @@ ES_LIBS_PATH = ES_PATH / '_libs' / 'python'
 DATA_PATH = PLUGIN_PATH / 'data'
 ES_EVENTS_PATH = DATA_PATH / 'mattie_eventscripts.res'
 POPUPLIB_POPUP_RES_PATH = ES_PATH / 'popup' / 'popup.res'
+EMU_DATA_PATH = PLUGIN_DATA_PATH / 'es_emulator'
 
 if PLATFORM == 'windows':
     PLAT_EXT = '.dll'

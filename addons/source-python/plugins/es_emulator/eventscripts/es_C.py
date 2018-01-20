@@ -1029,9 +1029,30 @@ def forcecallbacks(argv):
         cvar.call_global_change_callbacks(
             convar, convar.get_string(), convar.get_float())
 
-def forcevalue(*args):
+@command
+def forcevalue(argv):
     """Forces a variable to a particular value"""
-    raise NotImplementedError
+    name = argv[1]
+    var = cvar.find_var(name)
+    if var is None:
+        dbgmsg(0, f'The var "{name}" could not be found')
+        return
+
+    value = argv[2]
+    var_ = memory.make_object(ConVar_, var)
+    var_.m_fValue = atof(value)
+    var_.m_nValue = int(var_.m_fValue)
+
+    if not var.is_flag_set(ConVarFlags.NEVER_AS_STRING):
+        length = len(value) + 1
+        if length > var_.m_StringLength:
+            if var_.m_pszString:
+                var_.m_pszString.dealloc()
+
+            var_.m_pszString = memory.alloc(length, False)
+            var_.m_StringLength = length
+
+        var_.m_pszString.set_string_array(value)
 
 @command
 def foreachkey(argv):
