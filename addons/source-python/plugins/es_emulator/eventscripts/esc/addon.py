@@ -77,7 +77,7 @@ class Addon(object):
     if self.loadblock in self.blocks:
       self.blocks[self.loadblock].run(priority)
       
-    es.dbgmsg('corelib' in self.scriptname, 'Loaded %s' % self.scriptname)
+    es.dbgmsg('corelib' in self.scriptname, '[EventScripts] Loaded %s' % self.scriptname)
     
     return True
 
