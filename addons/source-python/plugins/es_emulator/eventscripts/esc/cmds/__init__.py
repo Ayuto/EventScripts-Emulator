@@ -33,10 +33,10 @@ class Command(object):
   AUTOCREATE = sv.eventscripts_autocreate # TODO: Cache?
 
   _syntax_regex = re.compile(
-    '<(?P<mand>[^>]+)>|' \
-    '\[\[(?P<args>[^\]]+)\]\]|' \
-    '\[(?P<opt>[^\]]+)\]|' \
-    '(?P<lit>[^< \[\]]+)' \
+    r'<(?P<mand>[^>]+)>|' \
+    r'\[\[(?P<args>[^\]]+)\]\]|' \
+    r'\[(?P<opt>[^\]]+)\]|' \
+    r'(?P<lit>[^< \[\]]+)' \
   )
 
   _mandargs_regex = re.compile('<([^>]+)>|[()]')
