@@ -2103,7 +2103,7 @@ def load(argv):
 
         # We can't load ES addons that have the same name like an SP plugin
         if plugin_manager.plugin_exists(addon_name):
-            dbgmsg(0, '[EventScripts] ES addon has the same name like an SP plugin.')
+            dbgmsg(0, f'[EventScripts] Unable to load {addon_name}. ES addon has the same name like an SP plugin.')
         else:
             es.loadModuleAddon(argv[1])
 
