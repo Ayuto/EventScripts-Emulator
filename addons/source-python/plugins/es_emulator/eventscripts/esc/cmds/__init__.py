@@ -74,7 +74,7 @@ class Command(object):
     if self.name[0] == '_': # Necessary for reserved words in python e.g. can't have a function called 'if'
       self.name = self.name[1:]
 
-    params = inspect.getargspec(self.method)[0]
+    params = inspect.getfullargspec(self.method)[0]
 
     self.argv = 'argv' in params
     self.args = 'args' in params
