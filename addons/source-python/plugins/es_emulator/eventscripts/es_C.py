@@ -1147,7 +1147,11 @@ def getFlags(name):
         raise TypeError
 
     base = cvar.find_base(name)
-    return base and base.flags
+    if base is None:
+        dbgmsg(1, f'The command or variable "{name}" could not be found')
+        return None
+
+    return base.flags
 
 # Pure Python function
 def getFloat(name):
@@ -1156,7 +1160,11 @@ def getFloat(name):
         raise TypeError
 
     convar = cvar.find_var(name)
-    return convar and convar.get_float()
+    if convar is None:
+        dbgmsg(1, f'The var "{name}" could not be found')
+        return None
+
+    return convar.get_float()
 
 # Pure Python function
 def getHelpText(name):
@@ -1165,7 +1173,11 @@ def getHelpText(name):
         raise TypeError
 
     base = cvar.find_base(name)
-    return base and base.help_text
+    if convar is None:
+        dbgmsg(1, f'The var "{name}" could not be found')
+        return None
+
+    return base.help_text
 
 # Pure Python function
 def getInt(name):
@@ -1174,7 +1186,11 @@ def getInt(name):
         raise TypeError
 
     convar = cvar.find_var(name)
-    return convar and convar.get_int()
+    if convar is None:
+        dbgmsg(1, f'The var "{name}" could not be found')
+        return None
+
+    return convar.get_int()
 
 # Pure Python function
 def getString(name):
@@ -1183,7 +1199,11 @@ def getString(name):
         raise TypeError
 
     convar = cvar.find_var(name)
-    return '' if convar is None else convar.get_string()
+    if convar is None:
+        dbgmsg(1, f'The var "{name}" could not be found')
+        return ''
+
+    return convar.get_string()
 
 # Pure Python function
 def getUseridList(*args):
@@ -2494,7 +2514,11 @@ def setFloat(name, value):
         raise TypeError
 
     convar = _set_convar(name, value, True)
-    return convar and convar.get_float()
+    if convar is None:
+        dbgmsg(0, f'Couldn\'t create "{name}" and could not be found')
+        return None
+
+    return convar.get_float()
 
 # Pure Python function
 def setInt(name, value):
@@ -2502,8 +2526,13 @@ def setInt(name, value):
     if not isinstance(name, str) or not isinstance(value, int):
         raise TypeError
 
+    dbgmsg(4, f'setint: {name}, {value}')
     convar = _set_convar(name, value, True)
-    return convar and convar.get_int()
+    if convar is None:
+        dbgmsg(0, f'Couldn\'t create "{name}" and could not be found')
+        return None
+
+    return convar.get_int()
 
 # Pure Python function
 def setNumRegistered(num):
@@ -2518,7 +2547,11 @@ def setString(name, value):
         raise TypeError
 
     convar = _set_convar(name, value, True)
-    return convar and convar.get_string()
+    if convar is None:
+        dbgmsg(0, f'Couldn\'t create "{name}" and could not be found')
+        return None
+
+    return convar.get_string()
 
 @command
 def setang(argv):
