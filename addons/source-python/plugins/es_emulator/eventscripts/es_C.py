@@ -1498,12 +1498,17 @@ def getuserid(argv):
 
     # The next line is the original ES behaviour. It doesn't work with SteamID3
     #if len(target_string) > 6 and target_string.startswith('STEAM_'):
-    if not target_string.isdigit() and SteamID.parse(target_string) is not None:
-        dbgmsg(1, 'FindUserIDByString: really looks like a steamid.')
-        for player in PlayerIter():
-            if player.steamid == target_string:
-                dbgmsg(1, 'FindUserIDByString: was a steamid')
-                return player.userid
+    if not target_string.isdigit():
+        try:
+            SteamID.parse(target_string)
+        except ValueError:
+            pass
+        else:
+            dbgmsg(1, 'FindUserIDByString: really looks like a steamid.')
+            for player in PlayerIter():
+                if player.steamid == target_string:
+                    dbgmsg(1, 'FindUserIDByString: was a steamid')
+                    return player.userid
 
     # Search for exact name
     dbgmsg(1, 'FindUserIDByString: Look for exact name?')
