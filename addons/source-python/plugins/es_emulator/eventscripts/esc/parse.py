@@ -13,75 +13,78 @@ BLOCK_TYPES = ('block', 'event')
 _blockname_regex = re.compile('^(%s) +([^ ]+)' % '|'.join(map(re.escape, BLOCK_TYPES)))
 
 def splitblocks(file):
-  
+
   # Container dict for script, in form {blocktype: {blockname: [lines, of, code, and, [subblocks, with, more, code]]}}
   script = dict((blocktype, dict()) for blocktype in BLOCK_TYPES)
-  
+
   blockstack = []       # A hierarchical stack of pointers to locations in the current block e.g. [block, subblock1, subblock2 ...]
   potentialblock = None # The block which is potentially about to be currentblock given a BLOCK_START_CHAR
-  
+
   for n, line in enumerate(file):
-    
+
     n += 1
     line = line.strip()
     if line:
-      
+
       if potentialblock: # We've had a block descriptor and are waiting for BLOCK_START_CHAR to start a new block. Anything else will reset the search.
-        
+
         if line.startswith(BLOCK_START_CHAR):
           currentblock = script[potentialblock[0]][potentialblock[1]] = []
           blockstack.append(currentblock)
           potentialblock = None
           continue
-          
+
         else:
           potentialblock = None
-        
+
       if not blockstack: # We're waiting for a block descriptor, e.g. block rinse_and_repeat
-      
+
         blockmatch = _blockname_regex.match(line) # Does it look like a block?
         if blockmatch:
           potentialblock = blockmatch.groups()  # (blocktype, blockname)
-        
+
       else: # We're in a block
-        
+
         if line.startswith(BLOCK_START_CHAR): # Move up a level and start a new subblock
-        
+
           newsubblock = []
           currentblock.append(newsubblock)
           currentblock = newsubblock
           blockstack.append(newsubblock)
-          
+
         elif line.startswith(BLOCK_END_CHAR): # Move down a level and remove subblock from stack
-        
+
           blockstack.pop()
           if blockstack:
             currentblock = blockstack[-1]
-            
+
         else: # Tokenize line and add it to current subblock
           for command in getcommands(line, n):
             currentblock.append(command)
-            
+
   return script
-  
+
 
 def getcode(line, n): # TODO: reexamine
   return list(getcommands(line, n))
-  
+
 TOKENCHARS = "'():;{}"
 _remcomment_regex = re.compile('"[^"]*"|(//)').finditer
 _tokenize_regex = re.compile('"[^"]*"|[%s]|[^%s ]+' % (TOKENCHARS, TOKENCHARS))
-  
+
 def getcommands(line, n):
-  
+
   if line.count('"') % 2 == 1:
     line += '"'
-    
+
   for match in _remcomment_regex(line):
     if match.group(1):
       line = line[:match.start()].rstrip()
       break
-  
+
+  if not line:
+    return
+
   tokens = _tokenize_regex.finditer(line)
   fin = False
   while tokens:
@@ -103,7 +106,7 @@ def getcommands(line, n):
     yield (n, command, argv, args, exp)
     if fin:
       break
-    
+
 def escompile(commandname, argv, args=None): # TODO: keep as strings until needed to be something else?
   exp = None
   if commandname in commands:
@@ -132,7 +135,7 @@ def escompile(commandname, argv, args=None): # TODO: keep as strings until neede
   else:
     command = commandname
   return command, tuple(argv), args, exp
-  
+
 def coerce(tokens, types, exp):
   for n, (token, newtype) in enumerate(itertools.zip_longest(tokens, types)):
     if token:
@@ -140,18 +143,18 @@ def coerce(tokens, types, exp):
         token.append(newtype or STR)
       elif newtype:
         tokens[n] = newtype(token)
-  
-  
 
-  
+
+
+
 # Split line into tokens a la source console
 
 
-    
+
 def tokenize(line):
   return [match.replace('"', '') for match in _tokenize_regex.findall(line)]
 
-  
+
 # Joins separated tokens into commandstring, complete with quote marks where necessary to avoid future tokenization. Only use where necessary.
 
 
@@ -167,8 +170,8 @@ _args_regex = re.compile('("[^"]*"|[%s]|[^%s ]+) *' % (TOKENCHARS, TOKENCHARS))
 
 def getargs(line):
   return line[_args_regex.match(line).end():]
-  
-  
+
+
 # Get arguments as a string from a given index
 
 
@@ -177,7 +180,7 @@ ARGSFROM_REGEX = '(("[^"]*"|[%s]|[^%s ]+) *){%%s}' % (TOKENCHARS, TOKENCHARS)
 def argsfrom(args, index):
   match = re.match(ARGSFROM_REGEX % index, args)
   return args[match.end():].replace('"', '') if match else ''
-    
+
 SV_OPERATOR = 'server_var'
 EV_OPERATOR = 'event_var'
 VAR_LEFT_DELIM = '('
@@ -205,10 +208,10 @@ def expcompile(tokens):
           tokens[index:index+4] = [var]
           available -= 3
   return tokens
-  
+
 def getexpindices(tokens):
   return tuple(n for n, token in enumerate(tokens) if isinstance(token, list)) or None
-  
+
 def expand(tokens, exp):
   if exp:
     tokens = list(tokens)
@@ -220,13 +223,13 @@ def expand(tokens, exp):
         token = exptype[token]
       tokens[index] = newtype(token)
   return tokens
-  
+
 def splitblock(path):
   if not '/' in path:
     return None
   addon, null, block = cleanpath(path).rpartition('/')
   return (addon, block)
-  
+
 # Cleans up addon paths that look//like\this
 
 def cleanpath(path):
