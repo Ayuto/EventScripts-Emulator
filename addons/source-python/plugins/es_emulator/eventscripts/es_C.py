@@ -154,6 +154,9 @@ def _make_keyvalues(key_ptr):
     return memory.make_object(KeyValues, memory.Pointer(key_ptr))
 
 def _get_keyvalues_ptr(key):
+    if key is None:
+        return 0
+
     return memory.get_object_pointer(key).address
 
 def _store_key_value(kv):
