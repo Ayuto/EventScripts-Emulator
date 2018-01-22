@@ -26,8 +26,6 @@ from .paths import ES_LIBS_PATH
 # >> LOAD & UNLOAD
 # =============================================================================
 def load():
-    print('Loading ES Emulator...')
-
     if cvar.find_var('eventscripts_addondir') is not None:
         raise RuntimeError('EventScripts is already loaded.')
 
@@ -57,11 +55,7 @@ def load():
     es.load('esc')
     es.server.queuecmd('es_load corelib')
 
-    print('ES Emulator has been loaded successfully!')
-
 def unload():
-    print('Unloading ES Emulator...')
-
     raise NotImplementedError(
         'Unloading EventScripts Emulator is not implemented yet. The emulator '
         'is now in an unsuitable state. You need to restart your server.')
