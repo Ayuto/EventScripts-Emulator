@@ -5,7 +5,7 @@ import cmdlib
 import time
 
 import hashlib
-from path import path
+from path import Path
 
 def memoryExecuteCommand(pathToConfigFile):
     """
@@ -22,7 +22,7 @@ def memoryExecuteCommand(pathToConfigFile):
         es.server.cmd('exec "%s"' % pathToConfigFile)
         return
 
-    cfgFolder = path(str(es.ServerVar('eventscripts_gamedir'))).joinpath('cfg')
+    cfgFolder = Path(str(es.ServerVar('eventscripts_gamedir'))).joinpath('cfg')
     individualCFGFile = cfgFolder.joinpath(pathToConfigFile)
 
     uniqueString = hashlib.md5(str(time.time()).encode('utf-8')).hexdigest()

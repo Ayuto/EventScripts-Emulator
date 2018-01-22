@@ -240,7 +240,7 @@ class AddonInstaller(object):
          if filename.endswith('.py'): # Assume every .py file will generate a .pyc
             installinfo.addFile(self.gamepath + filename + 'c')
 
-         newfile = path.path(self.gamepath + filename)
+         newfile = path.Path(self.gamepath + filename)
          newfile.write_bytes(addon_zip.read(filename))
 
       # Stores the version number for update purposes and saves the install info for the addon
