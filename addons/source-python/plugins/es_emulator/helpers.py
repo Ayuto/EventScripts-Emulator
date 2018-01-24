@@ -557,7 +557,10 @@ class _UserMessageData(list):
         except ValueError:
             return
 
-        user_message = UserMessage(RecipientFilter(index), self.name)
+        # We need to save the RecipientFilter instance here. Otherwise it would
+        # get garbage collected before it is send.
+        recipients = RecipientFilter(index)
+        user_message = UserMessage(recipients, self.name)
         buffer = user_message.buffer
 
         for type_name, value in self:
