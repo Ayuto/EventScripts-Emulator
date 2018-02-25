@@ -37,6 +37,10 @@ from messages import TextMsg
 from messages import SayText2
 from messages import HudMsg
 
+# ES Emulator
+from es_emulator.helpers import atoi2
+from es_emulator.helpers import atof2
+
 # Plugin information
 info = es.AddonInfo()
 info['name'] = "Usermsg EventScripts python library"
@@ -49,10 +53,13 @@ def fade(users, type, time, holdTime, red, green, blue, alpha=255):
     '''Fades a players screen.'''
     if UserMessage.is_protobuf():
         Fade(
-            time,
-            holdTime,
-            Color(red, green, blue, alpha),
-            type).send(_get_sp_users(users))
+            # Source.Python converts the given (hold-)time from seconds to
+            # frames, but ES expects the (hold-)time in frames. Thus, we need
+            # to convert the (hold-)time to seconds.
+            int(atoi2(time)/Fade.moved_frac_bits),
+            int(atoi2(holdTime)/Fade.moved_frac_bits),
+            Color(atoi2(red), atoi2(green), atoi2(blue), atoi2(alpha)),
+            atoi2(type)).send(_get_sp_users(users))
     else:
         es.usermsg('create', 'fade', 'Fade')
         es.usermsg('write', 'short', 'fade', time)
@@ -68,7 +75,7 @@ def fade(users, type, time, holdTime, red, green, blue, alpha=255):
 def shake(users, magnitude, time):
     '''Shakes a players screen.'''
     if UserMessage.is_protobuf():
-        Shake(magnitude, time).send(_get_sp_users(users))
+        Shake(atof2(magnitude), atof2(time)).send(_get_sp_users(users))
     else:
         es.usermsg('create', 'shake', 'Shake')
         es.usermsg('write', 'byte', 'shake', 0)
@@ -112,7 +119,13 @@ def showVGUIPanel(users, panelName, visible, data={}):
      * class -- Class selection panel
     '''
     if UserMessage.is_protobuf():
-        VGUIMenu(panelName, data, visible).send(_get_sp_users(users))
+        for key, value in data.items():
+            data[key] = str(value)
+
+        VGUIMenu(
+            str(panelName),
+            data,
+            bool(atoi2(visible))).send(_get_sp_users(users))
     else:
         # Create the usermessage
         es.usermsg('create', 'panel', 'VGUIMenu')
@@ -131,7 +144,7 @@ def showVGUIPanel(users, panelName, visible, data={}):
 def hudhint(users, msg):
     '''Shows a hint message on a player.'''
     if UserMessage.is_protobuf():
-        HintText(msg).send(_get_sp_users(users))
+        HintText(str(msg)).send(_get_sp_users(users))
     else:
         es.usermsg('create', 'hudhint', 'HintText')
         es.usermsg('write', 'bool', 'hudhint', 0)
@@ -142,7 +155,7 @@ def hudhint(users, msg):
 def keyhint(users, msg):
     '''Shows a keyhint message on a player.'''
     if UserMessage.is_protobuf():
-        KeyHintText(msg).send(_get_sp_users(users))
+        KeyHintText(str(msg)).send(_get_sp_users(users))
     else:
         es.usermsg('create', 'keyhint', 'KeyHintText')
         es.usermsg('write', 'byte', 'keyhint', 1)
@@ -153,7 +166,7 @@ def keyhint(users, msg):
 def centermsg(users, msg):
     '''Shows a message in the center of a players screen.'''
     if UserMessage.is_protobuf():
-        TextMsg(msg).send(_get_sp_users(users))
+        TextMsg(str(msg)).send(_get_sp_users(users))
     else:
         es.usermsg('create', 'centermsg', 'TextMsg')
         es.usermsg('write', 'byte', 'centermsg', 4)
@@ -164,7 +177,7 @@ def centermsg(users, msg):
 def echo(users, msg):
     '''Shows a message in a players console.'''
     if UserMessage.is_protobuf():
-        TextMsg(msg, HudDestination.CONSOLE).send(_get_sp_users(users))
+        TextMsg(str(msg), HudDestination.CONSOLE).send(_get_sp_users(users))
     else:
         es.usermsg('create', 'echo', 'TextMsg')
         es.usermsg('write', 'byte', 'echo', 2)
@@ -176,12 +189,12 @@ def saytext2(users, index, msg, arg1=0, arg2=0, arg3=0, arg4=0):
     '''Shows a coloured message in a players chat window.'''
     if UserMessage.is_protobuf():
         SayText2(
-            msg,
-            index,
-            param1=arg1 or '',
-            param2=arg2 or '',
-            param3=arg3 or '',
-            param4=arg4 or '').send(_get_sp_users(users))
+            str(msg),
+            atoi2(index),
+            param1=str(arg1 or ''),
+            param2=str(arg2 or ''),
+            param3=str(arg3 or ''),
+            param4=str(arg4 or '')).send(_get_sp_users(users))
     else:
         es.usermsg('create', 'saytext2','SayText2')
         es.usermsg('write', 'byte', 'saytext2', index)
@@ -214,16 +227,16 @@ def hudmsg(users, msg, channel=0, x=0.5, y=0.5,
     '''
     if UserMessage.is_protobuf():
         HudMsg(
-            msg,
-            x, y,
-            Color(r1, g1, b1, a1),
-            Color(r2, g2, b2, a2),
-            effect,
-            fadein,
-            fadeout,
-            holdtime,
-            fxtime,
-            channel).send(_get_sp_users(users))
+            str(msg),
+            atof2(x), atof2(y),
+            Color(atoi2(r1), atoi2(g1), atoi2(b1), atoi2(a1)),
+            Color(atoi2(r2), atoi2(g2), atoi2(b2), atoi2(a2)),
+            atoi2(effect),
+            atof2(fadein),
+            atof2(fadeout),
+            atof2(holdtime),
+            atof2(fxtime),
+            atoi2(channel)).send(_get_sp_users(users))
     else:
         es.usermsg('create','hudmsg','HudMsg')
         es.usermsg('write','byte','hudmsg', channel & 0xff)

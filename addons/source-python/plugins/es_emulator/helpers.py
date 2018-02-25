@@ -146,11 +146,17 @@ atoi = clib['atoi'].make_function(
     DataType.INT
 )
 
+def atoi2(val):
+    return atoi(str(val))
+
 atof = clib['atof'].make_function(
     Convention.CDECL,
     [DataType.STRING],
     DataType.FLOAT
 )
+
+def atof2(val):
+    return atof(str(val))
 
 Msg = tier1['Msg'].make_function(
     Convention.CDECL,
