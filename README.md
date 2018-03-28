@@ -1,8 +1,6 @@
 # EventScripts-Emulator
 A [Source.Python](http://forums.sourcepython.com/) plugin that is able to run [EventScripts](http://forums.eventscripts.com/index.php) addons.
 
-This is just a fun project and I have actually sworn to not create something like this. However, I got bored the other day and was curious how difficult it will be to create it. The first test addons are already working!
-
 # Development status
 Most of the work is already done. The following is a list of things that need to be done.
 
@@ -41,3 +39,5 @@ Funny side note: You can also use the EventScripts API in Source.Python plugins.
 
 # Note
 I took the original EventScripts libraries from the latest release and adapted them to work with Python 3. I have also removed the example addons like ``mugmod`` or ``slingshot`` to keep it simple.
+
+Unlike EventScripts this emulator also supports CS:GO. Though, es.usermsg()/es_usermsg is not supported. Use the usermsg library directly.
