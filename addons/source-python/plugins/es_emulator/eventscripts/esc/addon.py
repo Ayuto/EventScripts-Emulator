@@ -7,28 +7,28 @@ from .parse import cleanpath, splitblocks
 from .val import sv, ev
 
 class Addon(object):
-  
+
   addondir = sv('eventscripts_addondir')
   loadblock = 'load'
   unloadblock = 'unload'
   enableblock = 'enable'
   disableblock = 'disable'
-  
+
   class Block(object):
-    
+
     def __init__(self, name, code):
       self.name = name
       self.code = code
-      
+
     def __call__(self):
       self.run(priority=True, userargs={'cmdname': getargv(0), 'argv': list(map(getargv, range(1, getargc()))), 'args': getargs(), 'uid': int(getcmduserid())})
       sv.save()
-      
+
     def run(self, priority=False, userargs=None):
       stack.queue(self.code, self.name, priority, userargs)
-      
+
   class Event(Block):
-    
+
     def __call__(self, event_var):
       self.run(priority=True)
       ev.varcache.clear()
@@ -40,28 +40,27 @@ class Addon(object):
     self.scriptdir  = '%s/%s/' % (self.addondir, scriptname)
     self.scriptfile = '%ses_%s.txt' % (self.scriptdir, self.basename)
     self.pyscriptfile = '%s%s.py' % (self.scriptdir, self.basename)
-      
+
     self.blocks = {}
     self.events = {}
-    
+
   def scriptexists(self):
     return os.path.exists(self.scriptfile)
-    
+
   def pyscriptexists(self):
     return os.path.exists(self.pyscriptfile)
-    
+
   def load(self, priority=False):
-    
+
     if self.scriptname in addons:
       raise RuntimeError('[EventScripts] %s already loaded, try to es_unload it first' % self.scriptname)
-      
+
     if not self.scriptexists():
       raise IOError('Could not open script for %s' % self.scriptname)
 
-    script = open(self.scriptfile)
-    code = splitblocks(script.readlines())
-    script.close()
-    
+    with open(self.scriptfile, encoding='utf-8') as f:
+      code = splitblocks(f.readlines())
+
     for blockname, block in code['block'].items():
       newblock = self.blocks[blockname] = self.Block('%s/%s' % (self.scriptname, blockname), block)
       es.addons.registerBlock(self.scriptname, blockname, newblock)
@@ -71,36 +70,36 @@ class Addon(object):
       es.addons.registerForEvent(self, eventname, newevent)
 
     self.disabled = False
-    
+
     addons[self.scriptname] = self
-    
+
     if self.loadblock in self.blocks:
       self.blocks[self.loadblock].run(priority)
-      
+
     es.dbgmsg('corelib' in self.scriptname, '[EventScripts] Loaded %s' % self.scriptname)
-    
+
     return True
 
   def unload(self, priority=False):
-    
+
     es.dbgmsg(0, 'Unloading %s...' % self.scriptname)
-    
+
     if self.unloadblock in self.blocks:
       self.blocks[self.unloadblock].run(priority)
-      
+
     for block in self.blocks:
       es.addons.unregisterBlock(self.scriptname, block)
     for event in self.events:
       es.addons.unregisterForEvent(self, event)
-      
+
     es.dbgmsg(0, '%s has been unloaded' % self.scriptname)
-      
+
     self.blocks.clear()
     self.events.clear()
     del addons[self.scriptname]
-    
+
     return True
-    
+
   def reload(self, priority=False):
     self.unload(priority)
     self.load(priority)
@@ -111,7 +110,7 @@ class Addon(object):
     if self.enableblock in self.blocks:
       self.blocks[self.enableblock].run(priority)
     return True
-    
+
   def disable(self, priority=False):
     es.dbgmsg(0, 'Disabling %s...' % self.scriptname)
     self.disabled = True
