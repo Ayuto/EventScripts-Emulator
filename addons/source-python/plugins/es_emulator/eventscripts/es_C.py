@@ -2076,7 +2076,7 @@ def keypsetname(key_ptr, name):
 def keypsetstring(key_ptr, string, value):
     """Sets the string value in this pointer by name."""
     if (not isinstance(key_ptr, int) or not isinstance(string, str)
-            or not isinstance(value, int)):
+            or not isinstance(value, str)):
         raise TypeError
 
     if key_ptr:
