@@ -25,6 +25,7 @@ from engines.server import engine_server
 from engines.server import global_vars
 from engines.server import server_game_dll
 from engines.server import queue_command_string
+from engines.server import insert_command_string
 from engines.sound import engine_sound
 from engines.sound import Pitch
 #   Events
@@ -217,8 +218,7 @@ def ForceServerCommand(command_str):
         if convar:
             convar.set_string(c.arg_string)
         else:
-            queue_command_string(command_str)
-            #engine_server.insert_server_command()
+            insert_command_string(command_str)
 
     return 1
 
@@ -228,8 +228,7 @@ def InsertServerCommand(command_str):
     if not isinstance(command_str, str):
         raise TypeError
 
-    queue_command_string(command_str)
-    #engine_server.insert_server_command(command_str)
+    insert_command_string(command_str)
     return 1
 
 # Pure Python function
@@ -347,8 +346,7 @@ def commandv(argv):
     name = argv[1]
     convar = cvar.find_var(name)
     if convar:
-        queue_command_string(convar.get_string())
-        #engine_server.insert_server_command(convar.get_string())
+        insert_command_string(convar.get_string())
     else:
         dbgmsg(0,'ERROR: variable {} does not exist.'.format(name))
         _set_last_error('Variable does not exist')
