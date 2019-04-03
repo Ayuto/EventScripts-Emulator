@@ -2028,7 +2028,6 @@ def keyprecursivekeycopy(key_ptr, key_source_ptr):
         raise TypeError
 
     if key_ptr and key_source_ptr:
-        # TODO: Expose RecursiveCopyKeyValues()
         _make_keyvalues(key_ptr).recursive_copy(
             _make_keyvalues(key_source_ptr))
 
