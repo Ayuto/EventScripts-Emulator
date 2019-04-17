@@ -251,7 +251,7 @@ class Setting_base(object):
                 del self.keyvalues['users'][steamid]['data'][option]
             self.save()
         else:
-            raise IndexError('Settinglib: Cannot delete option %s, it does not exists'%key)
+            raise IndexError(f'Settinglib: Cannot delete option {key}, it does not exists')
     def setdefault(self):
         raise NotImplemented #type specific
     def get(self):
@@ -277,7 +277,7 @@ class Setting_base(object):
                 if not steamid in self.keyvalues['users']:
                     self.initUser(int(userid))
             else:
-                raise IndexError('Settinglib: Cannot find userid %s, it does not exists'%userid)
+                raise IndexError(f'Settinglib: Cannot find userid {userid}, it does not exists')
         else:
             steamid = 'global'
         self.keyvalues['variables'][steamid][variable] = value
@@ -289,7 +289,7 @@ class Setting_base(object):
                 if not steamid in self.keyvalues['users']:
                     self.initUser(int(userid))
             else:
-                raise IndexError('Settinglib: Cannot find userid %s, it does not exists'%userid)
+                raise IndexError(f'Settinglib: Cannot find userid {userid}, it does not exists')
         else:
             steamid = 'global'
         return self.keyvalues['variables'][steamid][variable]
@@ -298,7 +298,7 @@ class Setting_base(object):
             for page in self.popup:
                 self.popup[page].submenu(10, backmenu)
             self.backmenuvar = backmenu
-            es.dbgmsg(1, 'Settinglib: Set backmenu of %s to popup %s' % (self.name, self.backmenuvar))
+            es.dbgmsg(1, f'Settinglib: Set backmenu of {self.name} to popup {self.backmenuvar}')
             return True
         elif keymenulib.exists(backmenu):
             keymenu = keymenulib.find(backmenu)
@@ -361,14 +361,14 @@ def free(pSettingid):
             os.remove(gSettings[pSettingid].filename)
         del gSettings[pSettingid]
     else:
-        raise ValueError('Settinglib: Cannot free setting %s, it does not exists'%pSettingid)
+        raise ValueError(f'Settinglib: Cannot free setting {pSettingid}, it does not exists')
 
 def delete(pSettingid):
     #delete a setting
     if (pSettingid in gSettings):
         del gSettings[pSettingid]
     else:
-        raise ValueError('Settinglib: Cannot delete setting %s, it does not exists'%pSettingid)
+        raise ValueError(f'Settinglib: Cannot delete setting {pSettingid}, it does not exists')
 
 def exists(pSettingid):
     #does named setting exist
@@ -385,14 +385,14 @@ def send(pSettingid, pUserid, prio=False):
     if pSettingid in gSettings:
         gSettings[pSettingid].send(pUserid,prio)
     else:
-        raise ValueError('Settinglib: Cannot send setting %s, it does not exists'%pSettingid)
+        raise ValueError(f'Settinglib: Cannot send setting {pSettingid}, it does not exists')
 
 def sendGlobal(pSettingid, pUserid, prio=False):
     #send a named setting to user/users
     if pSettingid in gSettings:
         gSettings[pSettingid].sendGlobal(pUserid,prio)
     else:
-        raise ValueError('Settinglib: Cannot send setting %s, it does not exists'%pSettingid)
+        raise ValueError(f'Settinglib: Cannot send setting {pSettingid}, it does not exists')
 
 ###################
 #Helper functions #
@@ -405,7 +405,7 @@ def _submit(userid, value, popupid):
         if page.settingid in gSettings:
             gSettings[page.settingid].menuUserSubmit(userid, value)
         else:
-            raise ValueError('Settinglib: Invalid setting %s submitted from popup'%page.settingid)
+            raise ValueError(f'Settinglib: Invalid setting {page.settingid} submitted from popup')
 
 def _submitGlobal(userid, value, popupid):
     es.dbgmsg(1, 'Settinglib: _submitGlobal(%s, %s, %s)' % (userid, value, popupid))
@@ -414,7 +414,7 @@ def _submitGlobal(userid, value, popupid):
         if page.settingid in gSettings:
             gSettings[page.settingid].menuUserGlobalSubmit(userid, value)
         else:
-            raise ValueError('Settinglib: Invalid setting %s submitted from popup'%page.settingid)
+            raise ValueError(f'Settinglib: Invalid setting {page.settingid} submitted from popup')
         
 
 def _saveTicker():

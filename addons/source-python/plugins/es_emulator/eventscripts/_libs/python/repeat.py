@@ -154,7 +154,7 @@ def start(repeatName, interval, limit):
             # Begin execution of the repeat
             fire(repeatName)
     else:
-        raise RepeatError('Cannot start repeat: \"%s\" does not exist.' %repeatName)
+        raise RepeatError(f'Cannot start repeat: \"{repeatName}\" does not exist.')
         
 def stop(repeatName):
     # Convert to string
@@ -168,7 +168,7 @@ def stop(repeatName):
         # Set the repeat status to stopped
         dict_repeatInfo[repeatName]['status'] = STATUS_STOPPED
     else:
-        raise RepeatError('Cannot stop repeat: \"%s\" does not exist.' %repeatName)
+        raise RepeatError(f'Cannot stop repeat: \"{repeatName}\" does not exist.')
         
 def resume(repeatName):
     # Convert to string
@@ -190,7 +190,7 @@ def resume(repeatName):
             # Begin the execution of repeat
             fire(repeatName) 
     else:
-        raise RepeatError('Cannot resume repeat: \"%s\" does not exist.' %repeatName)
+        raise RepeatError(f'Cannot resume repeat: \"{repeatName}\" does not exist.')
             
 def pause(repeatName):
     # Convert to string
@@ -208,7 +208,7 @@ def pause(repeatName):
         # Cancel the delay
         gamethread.cancelDelayed(repeatName)
     else:
-        raise RepeatError('Cannot pause repeat: \"%s\" does not exist.' %repeatName)
+        raise RepeatError(f'Cannot pause repeat: \"{repeatName}\" does not exist.')
         
 def delete(repeatName):
     # Convert to string
@@ -220,7 +220,7 @@ def delete(repeatName):
             stop(repeatName)
         del dict_repeatInfo[repeatName]
     else:
-        raise RepeatError('Cannot delete repeat: \"%s\" does not exist.' %repeatName)
+        raise RepeatError(f'Cannot delete repeat: \"{repeatName}\" does not exist.')
 
 def status(repeatName):
     # Convert to string
@@ -273,7 +273,7 @@ def fire(repeatName):
         else:
             stop(repeatName)
     else:
-        raise RepeatError('Cannot fire repeat: \"%s\" does not exist.' %repeatName)
+        raise RepeatError(f'Cannot fire repeat: \"{repeatName}\" does not exist.')
             
 def info(repeatName, infoType):
     # Convert to string
@@ -289,4 +289,4 @@ def info(repeatName, infoType):
             for attributeName in self.attributes:
                 es.dbgmsg(0, '[repeat]    * %s' %attributeName)
     else:
-        raise RepeatError('Cannot retrieve repeat info: \"%s\" does not exist.' %repeatName)
+        raise RepeatError(f'Cannot retrieve repeat info: \"{repeatName}\" does not exist.')

@@ -64,14 +64,14 @@ class AddonCFG(object):
 
             cfgfile.write('\n')
             if description:
-               cfgfile.write('// %s\n' % description)
+               cfgfile.write(f'// {description}\n')
 
             if name in current_cfg:
                cfgfile.write(indention + current_cfg[name][0] + '\n')
                del current_cfg[name]
 
             else:
-               cfgfile.write(indention + name + ' ' + ('"%s"' if isinstance(default, str) else '%s') % default + '\n')
+               cfgfile.write(indention + name + ' ' + ('"{}"' if isinstance(default, str) else '{}').format(default) + '\n')
 
          # Write server command
          elif ltype == self.TYPE_COMMAND:

@@ -63,8 +63,7 @@ Initializes a new Vector instance, see class documentation for info.
             except ValueError:
                 self.vl = [float(x) for x in vl.replace(' ', ',').split(",")]
             except TypeError:
-                raise TypeError("Invalid data type %s (%s) for vector."%(
-                    type(vl).__name__, str(vl)))
+                raise TypeError(f"Invalid data type {type(vl).__name__} ({v1}) for vector.")
         else:
             self.vl = [0,0,0]
         if kw:
@@ -75,12 +74,11 @@ Initializes a new Vector instance, see class documentation for info.
                         self.vl[compval] = float(kw[comp])
                     compval += 1
             except:
-                raise TypeError("Invalid data type %s (%s) in override for vector."%(
-                    type(kw[comp]).__name__, str(kw[comp])))
+                raise TypeError(f"Invalid data type {type(kw[comp]).__name__} ({kw[comp]}) in override for vector.")
     
     def __repr__(self):
         ''' Returns a string representation of itself. '''
-        return "Vector(%s)"%str(self.vl)
+        return f"Vector({self.vl})"
     
     def __list__(self):
         ''' Converts the vector into a list. '''
@@ -515,8 +513,7 @@ def distance_from_line(point, line_coord1, line_coord2):
     a = Vector(line_coord1)
     b = Vector(line_coord2)
     if a==b:
-        raise ValueError('Identical points (%s) cannot form unique line.'%(
-            a.getstr(', ')))
+        raise ValueError(f'Identical points ({a.getstr(', ')}) cannot form unique line.')
     p = c-a
     s = b-a
     t = s * (ip(p,s)/ip(s,s))
@@ -533,23 +530,20 @@ If allow_outside is False, then ValueError is raised if the point is outside the
     a = Vector(start)
     b = Vector(end)
     if a==b:
-        raise ValueError('Identical points (%s) cannot form unique line.'%(
-            a.getstr(', ')))
+        raise ValueError(f'Identical points ({a.getstr(', ')}) cannot form unique line.')
     p = c-a
     s = b-a
     sp = ip(p,s)
     if (sp <= 0):
         # the point is behind start
         if not allow_outside:
-            raise ValueError('Point (%s) is behind the starting point of (%s) - (%s)'%(
-                c.getstr(', '),a.getstr(', '),b.getstr(', ')))
+            raise ValueError(f'Point ({c.getstr(', ')}) is behind the starting point of ({a.getstr(', ')}) - ({b.getstr(', ')})')
         return p.length()
     lp = ip(s,s)
     if (lp <= sp):
         # the point is behind end
         if not allow_outside:
-            raise ValueError('Point (%s) is behind the ending point of (%s) - (%s)'%(
-                c.getstr(', '),a.getstr(', '),b.getstr(', ')))
+            raise ValueError(f'Point ({c.getstr(', ')}) is behind the ending point of ({a.getstr(', ')}) - ({b.getstr(', ')})')
         return distance(c,b)
     # the point is next to the line
     d = p - (s * (sp/lp))
@@ -566,16 +560,14 @@ If allow_outside is False, then ValueError is raised if the point is behind star
     a = Vector(start)
     b = Vector(line_coord)
     if a==b:
-        raise ValueError('Identical points (%s) cannot form unique line.'%(
-            a.getstr(', ')))
+        raise ValueError(f'Identical points ({a.getstr(', ')}) cannot form unique line.')
     p = c-a
     s = b-a
     sp = ip(p,s)
     if (sp <= 0):
         # the point is behind start
         if not allow_outside:
-            raise ValueError('Point (%s) is behind the starting point of the ray from (%s) by (%s)'%(
-                c.getstr(', '),a.getstr(', '),b.getstr(', ')))
+            raise ValueError(f'Point ({c.getstr(', ')}) is behind the starting point of the ray from ({a.getstr(', ')}) by ({b.getstr(', ')})')
         return p.length()
     lp = ip(s,s)
     d = p - (s * (sp/lp))

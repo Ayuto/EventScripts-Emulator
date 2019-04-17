@@ -34,7 +34,7 @@ class CMDManager(object):
       name = str(name)
       if name not in self.ex_server_commands:
          if es.exists('variable', name) or (not skipcheck and es.exists('command', name)):
-            raise NameError("'%s' is in use as a server command or variable" % name)
+            raise NameError(f"'{name}' is in use as a server command or variable")
          es.regcmd(name, '_cmdlib/server', description)
 
       self.server_commands[name] = Command(name, callback)
@@ -59,7 +59,7 @@ class CMDManager(object):
          self._validateCallback(auth_fail_callback)
 
       name = str(name).lower()
-      if es.exists('saycommand', name): raise NameError("'%s' is in use as a say command" % name)
+      if es.exists('saycommand', name): raise NameError(f"'{name}' is in use as a say command")
 
       es.regsaycmd(name, '_cmdlib/say', description)
       cmd = self.say_commands[name] = PlayerCommand(name, callback)
@@ -85,7 +85,7 @@ class CMDManager(object):
          self._validateCallback(auth_fail_callback)
 
       name = str(name).lower()
-      if es.exists('clientcommand', name): raise NameError("'%s' is in use as a client command" % name)
+      if es.exists('clientcommand', name): raise NameError(f"'{name}' is in use as a client command")
 
       es.regclientcmd(name, '_cmdlib/client', description)
       cmd = self.client_commands[name] = PlayerCommand(name, callback)
@@ -131,7 +131,7 @@ class CMDManager(object):
          raise ValueError('auth_recommendedlevel is required when auth_capability is provided')
       elif not auth_capability is None and not auth_recommendedlevel is None:
          if not services.isRegistered('auth'):
-            raise KeyError("Cannot register " + command_type + " command '%s' as no authorization service is loaded" % name)
+            raise KeyError(f"Cannot register {command_type} command '{name}' as no authorization service is loaded")
 
 cmd_manager = CMDManager()
 
@@ -263,7 +263,7 @@ def permissionToInteger(permission):
    value = services.use('auth').__getattribute__(permission)
    if isinstance(value, int):
       return value
-   raise NameError("'%s' is not a valid auth permission" % permission)
+   raise NameError(f"'{permission}' is not a valid auth permission")
 
 
 """ Examples """

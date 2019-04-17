@@ -275,7 +275,7 @@ def delete(pVoteid):
     if (pVoteid in gVotes):
         del gVotes[pVoteid]
     else:
-        raise ValueError("Votelib: Cannot delete vote %s, it does not exists"%pVoteid)
+        raise ValueError(f"Votelib: Cannot delete vote {pVoteid}, it does not exists")
 
 def exists(pVoteid):
     #does named vote exist
@@ -298,7 +298,7 @@ def send(pVoteid, pUserid, force=False, prio=False):
     if pVoteid in gVotes:
         gVotes[pVoteid].send(pUserid,force,prio)
     else:
-        raise ValueError("Votelib: Cannot send vote %s, it does not exists"%pVoteid)
+        raise ValueError(f"Votelib: Cannot send vote {pVoteid}, it does not exists")
 
 def getmenuname(pPopupid):
     if popuplib.exists(pPopupid):

@@ -105,7 +105,7 @@ class Setting_toggle(Setting_base):
                 for steamid in list(self.keyvalues['users'].keys()):
                     self.keyvalues['users'][steamid]['data'][option]['state'] = 1 if state else 0
         else:
-            raise IndexError('Settinglib: Cannot set option %s as default, it does not exists'%key)
+            raise IndexError(f'Settinglib: Cannot set option {key} as default, it does not exists')
     def set(self, key, state=None, userid=None):
         option = self.isValidOption(key)
         if option:
@@ -116,11 +116,11 @@ class Setting_toggle(Setting_base):
                         self.initUser(int(userid))
                     self.keyvalues['users'][steamid]['data'][option]['state'] = 1 if state else 0
                 else:
-                    raise IndexError('Settinglib: Cannot find userid %s'%userid)
+                    raise IndexError(f'Settinglib: Cannot find userid {userid}')
             else:
                 self.keyvalues['options'][option]['globstate'] = 1 if state else 0
         else:
-            raise IndexError('Settinglib: Cannot set option %s, it does not exists'%key)
+            raise IndexError(f'Settinglib: Cannot set option {key}, it does not exists')
     def get(self, key, userid=None):
         option = self.isValidOption(key)
         if option:
@@ -134,14 +134,14 @@ class Setting_toggle(Setting_base):
                     except KeyError:
                         return bool(self.keyvalues['options'][option]['state'])
                 else:
-                    raise IndexError('Settinglib: Cannot find userid %s'%userid)
+                    raise IndexError(f'Settinglib: Cannot find userid {userid}')
             else:
                 return bool(self.keyvalues['options'][option]['globstate'])
         else:
-            raise IndexError('Settinglib: Cannot get option %s, it does not exists'%key)
+            raise IndexError(f'Settinglib: Cannot get option {key}, it does not exists')
     def toggle(self, key, userid=None):
         option = self.isValidOption(key)
         if option:
             self.set(option, not(self.get(option, userid)), userid)
         else:
-            raise IndexError('Settinglib: Cannot toggle option %s, it does not exists'%key)
+            raise IndexError(f'Settinglib: Cannot toggle option {key}, it does not exists')

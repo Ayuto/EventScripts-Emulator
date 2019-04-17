@@ -40,14 +40,14 @@ class WeaponManager(object):
             return self.get(x)
 
          except ValueError:
-            raise AttributeError("Weapon instance has no attribute '%s'" % x)
+            raise AttributeError(f"Weapon instance has no attribute '{x}'")
 
       def __getitem__(self, x):
          try:
             return self.get(x)
 
          except ValueError:
-            raise KeyError("'%s'" % x)
+            raise KeyError(f"'{x}'")
 
       """ Public functions """
 
@@ -80,7 +80,7 @@ class WeaponManager(object):
          elif info == 'indexiter':
             return iter(es.getEntityIndexes(self))
 
-         raise ValueError("No weapon info '%s'" % info)
+         raise ValueError(f"No weapon info '{info}'")
 
    class IndexIter(object):
       """ Unique iterator object to control the creating of weapon index lists """
@@ -192,7 +192,7 @@ class NoWeaponManager(object):
       self.gamename = gamename
 
    def __getattr__(self, item):
-      raise NotImplementedError('weaponlib does not support game "%s"' % self.gamename)
+      raise NotImplementedError(f'weaponlib does not support game "{self.gamename}"')
 
 
 # Path to the weaponlib ini files

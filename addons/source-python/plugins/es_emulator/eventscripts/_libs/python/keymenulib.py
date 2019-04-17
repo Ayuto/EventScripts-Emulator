@@ -73,13 +73,13 @@ class Keymenu_keymenu(object):
                         self.popup.delete()
                         self.popup = None
                         self.keyvalues = None
-                        raise ValueError("Keymenulib: No keys or keyvalues found in %s"%keygroup)
+                        raise ValueError(f"Keymenulib: No keys or keyvalues found in {keygroup}")
                 else:
                     raise ArgumentError("Keymenulib: No titletext")
             else:
                 raise ArgumentError("Keymenulib: No #key or #keyvalue found in the commandstring")
         else:
-            raise ValueError("Keymenulib: The keygroup %s does not exists"%keygroup)
+            raise ValueError(f"Keymenulib: The keygroup {keygroup} does not exists")
     def delete(self):
         delete(self.name)
     def changeblock(self, block):
@@ -103,18 +103,18 @@ class Keymenu_keymenu(object):
                 self.popup.sendPage(pUsers, pPage)
             else:
                 self.popup.send(pUsers)
-            es.dbgmsg(1, "Keymenulib: Send keymenu '%s' to users '%s'"%(self.name, pUsers))
+            es.dbgmsg(1, f"Keymenulib: Send keymenu '{self.name}' to users '{pUsers}'")
         else:
-            es.dbgmsg(0, "keymenu: Could not send keymenu '%s', the popup object was not created!"%self.name)
+            es.dbgmsg(0, f"keymenu: Could not send keymenu '{self.name}', the popup object was not created!")
     def unsend(self, pUsers, pPage=None):
         if self.popup:
             if pPage:
                 self.popup.unsendPage(pUsers, pPage)
             else:
                 self.popup.unsend(pUsers)
-            es.dbgmsg(1, "Keymenulib: Unsend keymenu '%s' from users '%s'"%(self.name, pUsers))
+            es.dbgmsg(1, f"Keymenulib: Unsend keymenu '{self.name}' from users '{pUsers}'"))
         else:
-            es.dbgmsg(0, "keymenu: Could not unsend keymenu '%s', the popup object was not created!"%self.name)
+            es.dbgmsg(0, f"keymenu: Could not unsend keymenu '{self.name}', the popup object was not created!")
     def update(self, keygroup = None):
         if keygroup:
             self.keygroup = keygroup
@@ -123,26 +123,26 @@ class Keymenu_keymenu(object):
         if self.popup:
             self.pagecount = self.popup.getPageCount()
         else:
-            es.dbgmsg(0, "keymenu: Could not get pagecount of keymenu '%s', the popup object was not created!"%self.name)
+            es.dbgmsg(0, f"keymenu: Could not get pagecount of keymenu '{self.name}', the popup object was not created!")
         return self.pagecount
     def backmenu(self, backmenu):
         if popuplib.exists(backmenu):
             self.popup.submenu(10, popuplib.find(backmenu))
             self.backpopup = popuplib.find(backmenu)
-            es.dbgmsg(1, "Keymenulib: Set backmenu of '%s' to popup '%s'"%(self.name, self.backpopup))
+            es.dbgmsg(1, f"Keymenulib: Set backmenu of '{self.name}' to popup '{self.backpopup}'")
             return True
         elif settinglib.exists(backmenu):
             self.popup.submenu(10, settinglib.find(backmenu).popup)
             self.backpopup = settinglib.find(backmenu).popup
-            es.dbgmsg(1, "Keymenulib: Set backmenu of '%s' to setting '%s'"%(self.name, self.backpopup))
+            es.dbgmsg(1, f"Keymenulib: Set backmenu of '{self.name}' to setting '{self.backpopup}'")
             return True
         elif exists(backmenu):
             self.popup.submenu(10, find(backmenu).popup)
             self.backpopup = find(backmenu).popup
-            es.dbgmsg(1, "Keymenulib: Set backmenu of '%s' to keymenu '%s'"%(self.name, self.backpopup))
+            es.dbgmsg(1, f"Keymenulib: Set backmenu of '{self.name}' to keymenu '{self.backpopup}'")
             return True
         else:
-            es.dbgmsg(0, "keymenu: Could not set backmenu of '%s' to '%s'!"%(self.name, backmenu))
+            es.dbgmsg(0, f"keymenu: Could not set backmenu of '{self.name}' to '{backmenu}'!")
             return False
 
 #keymenu commands begin here
@@ -165,7 +165,7 @@ def delete(pKeymenuid):
         k.popup.delete()
         del gKeymenus[pKeymenuid]
     else:
-        raise ValueError("Keymenulib: Cannot delete keymenu %s, it does not exist"%pKeymenuid)
+        raise ValueError(f"Keymenulib: Cannot delete keymenu {pKeymenuid}, it does not exist")
 
 def exists(pKeymenuid):
     return (pKeymenuid in gKeymenus)
@@ -179,13 +179,13 @@ def send(pKeymenuid, pUserid, pPage=None):
     if pKeymenuid in gKeymenus:
         gKeymenus[pKeymenuid].send(int(pUserid), pPage)
     else:
-        raise ValueError("Keymenulib: Cannot send keymenu %s, it does not exist"%pKeymenuid)
+        raise ValueError(f"Keymenulib: Cannot send keymenu {pKeymenuid}, it does not exist")
 
 def unsend(pKeymenuid, pUserid, pPage=None):
     if pKeymenuid in gKeymenus:
         gKeymenus[pKeymenuid].unsend(int(pUserid), pPage)
     else:
-        raise ValueError("Keymenulib: Cannot unsend keymenu %s, it does not exist"%pKeymenuid)
+        raise ValueError(f"Keymenulib: Cannot unsend keymenu {pKeymenuid}, it does not exist")
     
 def getmenuname(pPopupid):
     if popuplib.exists(pPopupid):

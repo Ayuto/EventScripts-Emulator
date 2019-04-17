@@ -96,7 +96,7 @@ class SourceServer(object):
       if result.startswith('\xFF\xFF\xFF\xFF') and result[4] == self.A2A_ACK:
          return time.time() - starttime
 
-      raise SourceServerError("Unexpected server response for ping '%s'" % result[4])
+      raise SourceServerError(f"Unexpected server response for ping '{result[4]}'")
 
    def getChallenge(self):
       """ Internal function: Returns a challenge value for querying the server """
@@ -104,7 +104,7 @@ class SourceServer(object):
       if result.startswith('\xFF\xFF\xFF\xFF') and result[4] == self.S2C_CHALLENGE:
          return result[5:]
 
-      raise SourceServerError("Unexpected server response for getChallenge '%s'" % result[4])
+      raise SourceServerError(f"Unexpected server response for getChallenge '{result[4]}'")
 
    def getRules(self):
       """ Returns a dictionary of server rules """
@@ -118,7 +118,7 @@ class SourceServer(object):
 
          return rules
 
-      raise SourceServerError("Unexpected server response for getRules '%s'" % result[4])
+      raise SourceServerError(f"Unexpected server response for getRules '{result[4]}'")
 
    def getDetails(self):
       """ Returns a dictionary of server details """
@@ -139,7 +139,7 @@ class SourceServer(object):
 
          return details
 
-      raise SourceServerError("Unexpected server response for getDetails '%s'" % result[4])
+      raise SourceServerError(f"Unexpected server response for getDetails '{result[4]}'")
 
    def getPlayers(self):
       """ Returns a dictionary of player information """
@@ -167,7 +167,7 @@ class SourceServer(object):
 
          return players
 
-      raise SourceServerError("Unexpected server response for getPlayers '%s'" % result[4])
+      raise SourceServerError(f"Unexpected server response for getPlayers '{result[4]}'")
 
    """ Data format functions """
 

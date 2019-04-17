@@ -424,7 +424,7 @@ class Popup_popup(Popup_base):
             del self.lines[editlang][lines]
             self.cachere[editlang]=True
         else:
-            raise IndexError("Popuplib: Cannot delete line #%d from %s"%(line,self.name))
+            raise IndexError(f"Popuplib: Cannot delete line #{line} from {self.name}")
     def insline(self, line, text, lang=None):
         '''
         insert a line and make room for it
@@ -440,7 +440,7 @@ class Popup_popup(Popup_base):
                     self.lines[editlang][line] = strutfcode(text[editlang])
                     self.cachere[editlang]=True
                 else:
-                    raise IndexError("Popuplib: Cannot insert line #%d to %s in language %s"%(line,self.name,editlang))
+                    raise IndexError(f"Popuplib: Cannot insert line #{line} to {self.name} in language {editlang}")
         else:
             if not lang:
                 editlang = self.editlang
@@ -454,7 +454,7 @@ class Popup_popup(Popup_base):
                 self.lines[editlang][line] = strutfcode(text)
                 self.cachere[editlang]=True
             else:
-                raise IndexError("Popuplib: Cannot insert line #%d to %s"%(line,self.name))
+                raise IndexError(f"Popuplib: Cannot insert line #{line} to {self.name}")
     def modline(self, line, text, lang=None):
         '''
         modify an existing line
@@ -467,7 +467,7 @@ class Popup_popup(Popup_base):
                     self.lines[editlang][line]=strutfcode(text[editlang])
                     self.cachere[editlang]=True
                 else:
-                    raise IndexError("Popuplib: Cannot modify line #%d in %s in language %s"%(line,self.name,editlang))
+                    raise IndexError(f"Popuplib: Cannot modify line #{line} in {self.name} in language {editlang}")
         else:
             if not lang:
                 editlang = self.editlang
@@ -478,7 +478,7 @@ class Popup_popup(Popup_base):
                 self.lines[editlang][line]=strutfcode(text)
                 self.cachere[editlang]=True
             else:
-                raise IndexError("Popuplib: Cannot modify line #%d in %s"%(line,self.name))
+                raise IndexError(f"Popuplib: Cannot modify line #{line} in {self.name}")
     def addlineAll(self, text):
         for lang in self.lines:
             self.addline(text, lang)
@@ -506,7 +506,7 @@ class Popup_popup(Popup_base):
         '''
         if (self.isValidItem(item)): self.p_select[item]=block
         else:
-            raise IndexError("Popuplib: Invalid menu item %d for select in %s"%(item,self.name))
+            raise IndexError(f"Popuplib: Invalid menu item {item} for select in {self.name}")
     def submenu(self, item, menuname):
         '''
         set a submenu
@@ -517,7 +517,7 @@ class Popup_popup(Popup_base):
             elif item in self.p_submenu:
                 del self.p_submenu[item]
         else:
-            raise IndexError("Popuplib: Invalid menu item %d for submenu in %s"%(item,self.name))
+            raise IndexError(f"Popuplib: Invalid menu item {item} for submenu in {self.name}")
     def menuvalue(self, varn, item, varv):
         '''
         set menuvalue
@@ -530,7 +530,7 @@ class Popup_popup(Popup_base):
             self.menuvar[item]=varn
             self.menuval[item]=varv
         else:
-            raise IndexError("Popuplib: Invalid menu item %d for menuvalue in %s"%(item,self.name))
+            raise IndexError(f"Popuplib: Invalid menu item {item} for menuvalue in {self.name}")
     def recache(self, users=[]):
         '''
         recache the popup
@@ -940,7 +940,7 @@ class Popup_easymenu(Popup_base):
                     opt.state = state
             else:
                 if not ignore_error:
-                    raise IndexError("Popuplib: Option %s does not exist in easymenu %s"%(item,self.name))
+                    raise IndexError(f"Popuplib: Option {item} does not exist in easymenu {self.name}")
                 else:
                     ignore_error -= 1
     
@@ -1679,7 +1679,7 @@ def construct(pPopupid, pList, pFlags, pBlock = None):
             gPopups[pPopupid] = gConstructs[pList](pPopupid, pFlags, pBlock)
             return gPopups[pPopupid]
         else:
-            raise NameError('Construct "%s" not available'%pList)
+            raise NameError(f'Construct "{pList}" not available')
 
 def create(pPopupid):
     '''
@@ -1715,7 +1715,7 @@ def delete(pPopupid):
             else:
                 _delete(pPopupid)
         else:
-            raise ValueError("Popuplib: Cannot delete popup %s, it does not exist"%pPopupid)
+            raise ValueError(f"Popuplib: Cannot delete popup {pPopupid}, it does not exist")
 
 def _delete(pPopupid):
     '''
@@ -1838,7 +1838,7 @@ def send(pPopupid, pUserid, prio=False):
         if pPopupid in gPopups:
             gPopups[pPopupid].send(pUserid,prio)
         else:
-            raise ValueError("Popuplib: Cannot send popup %s, it does not exist"%pPopupid)
+            raise ValueError(f"Popuplib: Cannot send popup {pPopupid}, it does not exist")
 
 def unsend(pIndex, pUserid):
     '''

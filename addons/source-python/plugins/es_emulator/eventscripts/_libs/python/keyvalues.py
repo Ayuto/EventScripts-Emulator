@@ -120,7 +120,7 @@ class KeyValues(object):
         '''
         x = es.keypfindsubkey(self._id_, str(name), False)
         if x is None or x == 0:
-            raise KeyError("%s not found in keyvalues object" % name)
+            raise KeyError(f"{name} not found in keyvalues object")
         else:
             typ = es.keypgetdatatype(x)
             if types[typ] == "TYPE_NONE":
@@ -135,7 +135,7 @@ class KeyValues(object):
 ##          types[6] = "TYPE_COLOR"
 ##          types[7] = "TYPE_NUMTYPES"
             else:
-                raise NotImplemented("KeyValues does not yet support type: %s" % types[typ])
+                raise NotImplemented(f"KeyValues does not yet support type: {types[typ]}")
     def __setitem__(self, name, value):
         '''
         Stores a name/value pair in the keygroup. Only ints, floats, strings,
@@ -158,7 +158,7 @@ class KeyValues(object):
         '''
         x = es.keypfindsubkey(self._id_, str(name), False)
         if x is None or x == 0:
-            raise KeyError("%s not found in keyvalues object" % name)
+            raise KeyError(f"{name} not found in keyvalues object")
         else:
             k = KeyValues(parent=self, existingid=x)
             k.detachParent()

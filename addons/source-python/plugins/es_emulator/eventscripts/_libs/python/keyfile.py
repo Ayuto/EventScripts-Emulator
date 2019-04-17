@@ -45,7 +45,7 @@ class Parse(dict):
                currentlevel = newlevel
                header = ''
             else:
-               self._clearAndError('Header "%s" on line %s not followed by a block' % (header, linenum - 1))
+               self._clearAndError(f'Header "{header}" on line {linenum - 1} not followed by a block')
          # If we have five splits we have an element and a value
          elif splitlen == 5:
             if linesplit[1] in currentlevel:
@@ -64,14 +64,14 @@ class Parse(dict):
             if levels:
                currentlevel = levels[~0]
             else:
-               self._clearAndError('Too many blocks closed at line %s' % linenum)
+               self._clearAndError(f'Too many blocks closed at line {linenum}')
          # Whitespace or commented lines are fine, anything else at this point is an error
          elif splitlen != 1 or (line.strip() and not line.strip().startswith('//')):
-            self._clearAndError('Line %s format not recognized' % linenum)
+            self._clearAndError(f'Line {linenum} format not recognized')
 
       # If we still have open groups when all lines are parsed that's an error
       if len(levels) > 1:
-         self._clearAndError('Not all blocks closed (%s open at EOF)' % (len(levels) - 1))
+         self._clearAndError(f'Not all blocks closed ({len(levels) - 1} open at EOF)')
 
    def _clearAndError(self, message=''):
       """ Internal function: Clears the dictionary and raises a ParseError with the supplied message """

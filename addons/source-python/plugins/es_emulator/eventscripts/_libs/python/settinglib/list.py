@@ -111,7 +111,7 @@ class Setting_list(Setting_base):
                         else:
                             self.keyvalues['users'][steamid]['data'][thisoption]['state'] = 0
         else:
-            raise IndexError('Settinglib: Cannot set option %s as default, it does not exists'%key)
+            raise IndexError(f'Settinglib: Cannot set option {key} as default, it does not exists')
     def set(self, key, userid=None):
         option = self.isValidOption(key)
         if option:
@@ -126,7 +126,7 @@ class Setting_list(Setting_base):
                         else:
                             self.keyvalues['users'][steamid]['data'][thisoption]['state'] = 0
                 else:
-                    raise IndexError('Settinglib: Cannot find userid %s'%userid)
+                    raise IndexError(f'Settinglib: Cannot find userid {userid}')
             else:
                 for thisoption in list(self.keyvalues['options'].keys()):
                     if thisoption == option:
@@ -134,7 +134,7 @@ class Setting_list(Setting_base):
                     else:
                         self.keyvalues['options'][thisoption]['globstate'] = 0
         else:
-            raise IndexError('Settinglib: Cannot set option %s, it does not exists'%key)
+            raise IndexError(f'Settinglib: Cannot set option {key}, it does not exists')
     def get(self, userid=None):
         if userid:
             steamid = playerlib.uniqueid(userid, True)
@@ -145,7 +145,7 @@ class Setting_list(Setting_base):
                     if self.keyvalues['users'][steamid]['data'][thisoption]['state']:
                         return self.keyvalues['options'][thisoption]['keyname']
             else:
-                raise IndexError('Settinglib: Cannot find userid %s'%option)
+                raise IndexError(f'Settinglib: Cannot find userid {option}')
         else:
             for thisoption in list(self.keyvalues['options'].keys()):
                 if self.keyvalues['options'][thisoption]['globstate']:

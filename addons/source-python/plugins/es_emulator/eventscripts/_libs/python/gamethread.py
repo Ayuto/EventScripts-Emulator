@@ -59,7 +59,7 @@ class TimeSortedQueue(object):
   def printQueue(self):
     with self.lock:
       for i in self.nodes:
-        es.dbgmsg(0, "[%8s] in %s seconds from now,\n  %s\n" % (i.name, i.gotime - time.time(), i.cmd))
+        es.dbgmsg(0, f"{i.name.rjust(8)} in {i.gotime - time.time()} seconds from now,\n  {i.cmd}\n")
 
 timeq = TimeSortedQueue()
 

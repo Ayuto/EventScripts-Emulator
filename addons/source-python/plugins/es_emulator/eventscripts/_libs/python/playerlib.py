@@ -345,7 +345,7 @@ class Player(object):
             return self.ReturnValue('0')
         index = self.getWeaponIndex(weapon_name)
         if not index:
-            raise ValueError("Player has no '%s' weapon" % weapon)
+            raise ValueError(f"Player has no '{weapon}' weapon")
         if _gamename == 'left4dead2':
             return es.getindexprop(index, 'CBaseCombatWeapon.m_iClip1')
         else:
@@ -358,7 +358,7 @@ class Player(object):
         """
         weapon_to_find = weaponlib.getWeapon(weapon)
         if weapon_to_find is None:
-            raise ValueError("'%s' is not a valid weapon" % weapon)
+            raise ValueError(f"'{weapon}' is not a valid weapon")
         handle = es.getplayerhandle(self.userid)
         for index in weapon_to_find.indexlist:
             if es.getindexprop(index, "CBaseCombatWeapon.m_hOwner") == handle:
@@ -545,7 +545,7 @@ class Player(object):
 
     def getViewCoord(self):
         """ Returns the coordinates where the player's aiming reticle is pointing. """
-        es.server.cmd('es_xprop_dynamic_create %s props_c17/tv_monitor01_screen.mdl' % self.userid)
+        es.server.cmd(f'es_xprop_dynamic_create {self.userid} props_c17/tv_monitor01_screen.mdl')
         location = es.getindexprop(_lastgive, 'CBaseEntity.m_vecOrigin')
         es.server.cmd('es_xremove ' + _lastgive)
         return location
@@ -791,7 +791,7 @@ class Player(object):
         # GET ATTRIBUTES
         elif param in self.attributes:
             return self.getAttribute(param)
-        raise KeyError("Cannot get '%s' info for player" % param)
+        raise KeyError(f"Cannot get '{param}' info for player")
 
     """ Set functions """
 
@@ -799,7 +799,7 @@ class Player(object):
         """ Sets the ammo for the specified weapon or raises ValueError if the weapon is invalid. """
         weapon = weaponlib.getWeapon(weapon)
         if weapon is None:
-            raise ValueError("'%s' is an invalid weapon" % weapon)
+            raise ValueError(f"'{weapon}' is an invalid weapon")
         es.setplayerprop(self.userid, weapon.prop, int(value)) # Cast to integer to raise a Value error if invalid value
 
     def setPrimaryAmmo(self, value):
@@ -820,7 +820,7 @@ class Player(object):
         """ Sets the clip amount for the specified weapon or raises ValueError if the weapon is invalid. """
         weapon = weaponlib.getWeapon(weapon)
         if weapon is None:
-            raise ValueError("'%s' is an invalid weapon" % weapon)
+            raise ValueError(f"'{weapon}' is an invalid weapon")
         index = self.getWeaponIndex(weapon)
         if index:
             if _gamename == 'left4dead2':
@@ -828,7 +828,7 @@ class Player(object):
             else:
                 es.setindexprop(index, "CBaseCombatWeapon.LocalWeaponData.m_iClip1", value)
         else:
-            raise KeyError("Player has no '%s' weapon" % weapon)
+            raise KeyError(f"Player has no '{weapon}' weapon")
 
     def setPrimaryClip(self, value):
        """ Sets the clip amount for the player's primary weapon or raises KeyError if the player has no primary weapon. """
@@ -1114,7 +1114,7 @@ class Player(object):
             else:
                 myWeapon = weaponlib.getWeapon(value[0])
                 if myWeapon is None:
-                    raise ValueError("Player has no '%s' weapon" % value[0])
+                    raise ValueError(f"Player has no '{value[0]}' weapon")
                 self.setAmmo(myWeapon, value[1])
         # SET CLIP
         elif param == "clip":
@@ -1126,7 +1126,7 @@ class Player(object):
             else:
                 myWeapon = weaponlib.getWeapon(value[0])
                 if myWeapon is None:
-                    raise ValueError("Player has no '%s' weapon" % value[0])
+                    raise ValueError(f"Player has no '{value[0]}' weapon")
                 self.setClip(myWeapon, value[1])
         # SET HEALTH
         elif param == "health":
@@ -1218,7 +1218,7 @@ class Player(object):
         elif param == "extinguish":
             self._extinguish()
         else:
-            raise KeyError("Cannot set '%s' info for player" % param)
+            raise KeyError(f"Cannot set '{param}' info for player")
 
     def add(self, param, value):
         """
@@ -1231,13 +1231,13 @@ class Player(object):
         if param == "ammo":
             myWeapon = weaponlib.getWeapon(value[0])
             if myWeapon is None:
-                raise ValueError("'%s' is an invalid weapon" % value[0])
+                raise ValueError(f"'{value[0]}' is an invalid weapon")
             self.setAmmo(myWeapon, self.getAmmo(myWeapon) + int(value[1]))
         # ADD CLIP
         elif param == "clip":
             myWeapon = weaponlib.getWeapon(value[0])
             if myWeapon is None:
-                raise ValueError("'%s' is an invalid weapon" % value[0])
+                raise ValueError(f"'{value[0]}' is an invalid weapon")
             self.setClip(myWeapon, self.getClip(myWeapon) + int(value[1]))
         # ADD HEALTH
         elif param == "health":
@@ -1252,7 +1252,7 @@ class Player(object):
         elif param == "cash":
             self.setCash(self.getCash() + int(value))
         else:
-            raise KeyError("Adding player %s is not supported" % param)
+            raise KeyError(f"Adding player {param} is not supported")
 
     """ Player online functions """
 

@@ -32,22 +32,22 @@ class Service(object):
     # TODO
     for name in self.required:
       if name not in self.__dict__:
-        raise InvalidServiceException("%s method is not implemented but is required" % name)
+        raise InvalidServiceException(f"{name} method is not implemented but is required")
 
 # //services register auth myauth
 # // services.register("auth", myauth)
 def register(name, service):
   if name in GlobalServices:
-    raise ExistingServiceException("%s already exists as a registered service." % name)
+    raise ExistingServiceException(f"{name} already exists as a registered service.")
   if not isinstance(service, Service):
-    raise InvalidServiceException("%s is not a Service instance" % name)
+    raise InvalidServiceException(f"{name} is not a Service instance")
   GlobalServices[name] = service
 
 # // services register auth myauth
 # // services.unregister("auth")
 def unregister(name):
   if name not in GlobalServices:
-    raise KeyError("%s is not a registered service." % name)
+    raise KeyError(f"{name} is not a registered service.")
   del GlobalServices[name]
 
 def use(name):

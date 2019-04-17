@@ -101,7 +101,7 @@ class ESAMUpload(object):
 
    def kw_post(self, *a, **kw):
       """ Internal function: Sends encoded data to an url """
-      if len(a) != 1: raise TypeError('kw_post takes exactly 1 argument (%s given)' % len(a))
+      if len(a) != 1: raise TypeError(f'kw_post takes exactly 1 argument ({len(a)} given)')
       u = urllib.request.urlopen(a[0], data=urllib.parse.urlencode(kw))
       d = u.read()
       u.close()
@@ -339,7 +339,7 @@ class ESAMAddon(installlib.Addon):
       return_val = self.get(name)
 
       if return_val is None:
-         raise AttributeError("Addon %s has no '%s' attribute" % (self.basename, name))
+         raise AttributeError(f"Addon {self.basename} has no '{name}' attribute")
 
       return return_val
 
@@ -357,7 +357,7 @@ class ESAMAddon(installlib.Addon):
 
       except IOError:
          info = sys.exc_info()
-         self.log.write('ESAMLib: %s - %s' % (info[0].__name__, info[1]), 2)
+         self.log.write(f'ESAMLib: {info[0].__name__} - {info[1]}', 2)
 
       return None
 
@@ -387,7 +387,7 @@ def getAddon(basename, log=dbglog):
 
    except IOError:
       info = sys.exc_info()
-      log.write('ESAMLib: %s - %s' % (info[0].__name__, info[1]), 2)
+      log.write(f'ESAMLib: {info[0].__name__} - {info[1]}', 2)
 
    return None
 
@@ -408,7 +408,7 @@ class ESAMUser(object):
          return_val = self.find(name)
 
          if return_val is None:
-            raise AttributeError('UserAddons instance has no \'%s\' attribute' % name)
+            raise AttributeError(f'UserAddons instance has no \'{name}\' attribute')
 
          return return_val
 
@@ -459,7 +459,7 @@ class ESAMUser(object):
       return_val = self.get(name)
 
       if return_val is None:
-         raise AttributeError("ESAMUser instance with has no '%s' attribute" % name)
+         raise AttributeError(f"ESAMUser instance with has no '{name}' attribute")
 
       return return_val
 
@@ -497,7 +497,7 @@ def getUser(username, log=dbglog):
 
    except IOError:
       info = sys.exc_info()
-      log.write('ESAMLib: %s - %s' % (info[0].__name__, info[1]), 2)
+      log.write(f'ESAMLib: {info[0].__name__} - {info[1]}', 2)
 
    return None
 
