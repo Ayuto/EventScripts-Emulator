@@ -75,6 +75,7 @@ __all__ = (
     '_set_convar',
     'command',
     '_set_last_error',
+    'Error',
     'Msg',
     '_color_from_string',
     '_print_all_registered_cfg_scripts',
@@ -159,6 +160,12 @@ def atof2(val):
     return atof(str(val))
 
 Msg = tier1['Msg'].make_function(
+    Convention.CDECL,
+    [DataType.STRING],
+    DataType.VOID
+)
+
+Error = tier1['Error'].make_function(
     Convention.CDECL,
     [DataType.STRING],
     DataType.VOID

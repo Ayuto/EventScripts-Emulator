@@ -9,8 +9,12 @@ import lib2to3.main
 from commands.typed import TypedServerCommand
 from commands.server import ServerCommand
 from commands.typed import ValidationError
+#   Cvars
+from cvars import cvar
 #   Engines
 from engines.server import engine_server
+#   Entities
+from entities.entity import BaseEntity
 #   Events
 from events.manager import game_event_manager
 
@@ -22,6 +26,7 @@ from .logic import cfg_scripts
 from .cvars import scriptdir_cvar
 #   Helpers
 from .helpers import _print_all_registered_cfg_scripts
+from .helpers import Error
 
 
 # =============================================================================
@@ -154,3 +159,20 @@ unused_internal_commands = (
 
 for command in unused_internal_commands:
     ServerCommand(command, 'Internal ES Command')(lambda x: None)
+
+
+# =============================================================================
+# >> COMPATIBILITY COMMAND FOR CS:GO (used by es_trick)
+# =============================================================================
+def Test_CreateEntity(command):
+    if len(command) < 2:
+        Error('Test_CreateEntity: requires entity classname argument.')
+
+    try:
+        BaseEntity.create(command[1])
+    except:
+        Error(f'Test_CreateEntity( {command[1]} ) failed.')
+
+
+if cvar.find_command('Test_CreateEntity') is None:
+    ServerCommand('Test_CreateEntity')(Test_CreateEntity)
