@@ -1981,7 +1981,7 @@ event es_client_command is fired when the user chooses a menu item
 # Register for es_map_start to be able to use custom events
 es.addons.registerForEvent(selfmodule, 'es_map_start', es_map_start)
 # Declare popup events
-es.loadevents("declare", "addons/eventscripts/popup/popup.res")
+es.loadevents("declare", str(POPUPLIB_POPUP_RES_PATH))
 
 updateGameName()
 
