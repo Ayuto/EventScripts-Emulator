@@ -513,7 +513,7 @@ def distance_from_line(point, line_coord1, line_coord2):
     a = Vector(line_coord1)
     b = Vector(line_coord2)
     if a==b:
-        raise ValueError(f'Identical points ({a.getstr(', ')}) cannot form unique line.')
+        raise ValueError(f'Identical points ({a.getstr(", ")}) cannot form unique line.')
     p = c-a
     s = b-a
     t = s * (ip(p,s)/ip(s,s))
@@ -530,20 +530,20 @@ If allow_outside is False, then ValueError is raised if the point is outside the
     a = Vector(start)
     b = Vector(end)
     if a==b:
-        raise ValueError(f'Identical points ({a.getstr(', ')}) cannot form unique line.')
+        raise ValueError(f'Identical points ({a.getstr(", ")}) cannot form unique line.')
     p = c-a
     s = b-a
     sp = ip(p,s)
     if (sp <= 0):
         # the point is behind start
         if not allow_outside:
-            raise ValueError(f'Point ({c.getstr(', ')}) is behind the starting point of ({a.getstr(', ')}) - ({b.getstr(', ')})')
+            raise ValueError(f'Point ({c.getstr(", ")}) is behind the starting point of ({a.getstr(", ")}) - ({b.getstr(", ")})')
         return p.length()
     lp = ip(s,s)
     if (lp <= sp):
         # the point is behind end
         if not allow_outside:
-            raise ValueError(f'Point ({c.getstr(', ')}) is behind the ending point of ({a.getstr(', ')}) - ({b.getstr(', ')})')
+            raise ValueError(f'Point ({c.getstr(", ")}) is behind the ending point of ({a.getstr(", ")}) - ({b.getstr(", ")})')
         return distance(c,b)
     # the point is next to the line
     d = p - (s * (sp/lp))
@@ -560,14 +560,14 @@ If allow_outside is False, then ValueError is raised if the point is behind star
     a = Vector(start)
     b = Vector(line_coord)
     if a==b:
-        raise ValueError(f'Identical points ({a.getstr(', ')}) cannot form unique line.')
+        raise ValueError(f'Identical points ({a.getstr(", ")}) cannot form unique line.')
     p = c-a
     s = b-a
     sp = ip(p,s)
     if (sp <= 0):
         # the point is behind start
         if not allow_outside:
-            raise ValueError(f'Point ({c.getstr(', ')}) is behind the starting point of the ray from ({a.getstr(', ')}) by ({b.getstr(', ')})')
+            raise ValueError('Point ({c.getstr(", ")}) is behind the starting point of the ray from ({a.getstr(", ")}) by ({b.getstr(", ")})')
         return p.length()
     lp = ip(s,s)
     d = p - (s * (sp/lp))
