@@ -18,6 +18,8 @@ from commands.say import get_say_command
 from commands.client import ClientCommandGenerator
 from commands.client import get_client_command
 from commands.server import get_server_command
+#   Core
+from core import SOURCE_ENGINE
 #   Effects
 from effects.base import TempEntity
 #   Engines
@@ -237,7 +239,10 @@ def ServerCommand(command_str):
     if not isinstance(command_str, str):
         raise TypeError
 
-    queue_command_string('wait;{}'.format(command_str))
+    if SOURCE_ENGINE == 'orangebox':
+        command_str = f'wait;{command_str}'
+
+    queue_command_string(command_str)
     return 1
 
 def _disable(*args):
