@@ -349,6 +349,7 @@ _prop_info_cache = {}
 
 def _get_prop_info(name):
     """Return the offset and the type of the given network property."""
+    name = name.lower()
     result = _prop_info_cache.get(name, None)
     if result is not None:
         return result
@@ -359,7 +360,7 @@ def _get_prop_info(name):
     result = (None, None)
     server_class = server_game_dll.all_server_classes
     while server_class:
-        if server_class.name == classname:
+        if server_class.name.lower() == classname:
             result = _get_prop_info_from_table(
                 server_class.table, splitted_path)
             break
@@ -375,7 +376,7 @@ def _get_prop_info_from_table(table, prop_path, offset=0):
 
     prop_name = prop_path.pop(0)
     for prop in table:
-        if prop.name != prop_name:
+        if prop.name.lower() != prop_name:
             continue
 
         offset += prop.offset
