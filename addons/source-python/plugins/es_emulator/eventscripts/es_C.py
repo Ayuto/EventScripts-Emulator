@@ -307,7 +307,7 @@ def cexec(argv):
     except ValueError:
         return
 
-    _cexec(player, argv.arg_string[len(userid)+1])
+    _cexec(player, argv.arg_string[len(argv[1]):].lstrip())
 
 @command
 def cexec_all(argv):
