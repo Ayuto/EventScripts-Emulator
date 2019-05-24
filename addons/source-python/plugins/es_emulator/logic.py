@@ -374,8 +374,15 @@ def fire_es_player_chat(command, userid, team_only):
 # =============================================================================
 @ClientCommandFilter
 def on_client_command(command, index):
+    try:
+        userid = userid_from_index(index)
+    except ValueError:
+        # Not sure when this happens... But if it happens, we don't want to
+        # continue. See also:
+        # https://forums.sourcepython.com/viewtopic.php?p=12943#p12943
+        return CommandReturn.CONTINUE
+
     import es
-    userid = userid_from_index(index)
     if not es.addons.clientCommand(userid):
         return CommandReturn.BLOCK
 
