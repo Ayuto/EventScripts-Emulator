@@ -18,14 +18,17 @@ def setplayerprop(argv):
 
 @Command(syntax='<operation> [parameters]', desc='Miscellaneous tricky things.')
 def trick(argv):
+  sv.save()
   es.trick(*argv)
 
 @Command(syntax='<userid> <entity>', desc='Gives the player a named item.')
 def give(argv):
+  sv.save()
   es.give(*argv)
 
 @Command(syntax='<userid> <entity>', desc='Creates an entity where a player is looking.')
 def entcreate(argv):
+  sv.save()
   es.entcreate(*argv)
 
 @Command(syntax='<command> [options]', desc='Interface with the Source physics engine (physics gravity, object velocity, etc).')
@@ -136,10 +139,12 @@ def getproptype(argv):
 
 @Command(syntax='<userid> <model>', desc='See prop_dynamic_create for syntax, but requires a userid first')
 def prop_dynamic_create(argv):
+  sv.save()
   es.prop_dynamic_create(*argv)
 
 @Command(syntax='<userid> <model>', desc='See prop_physics_create for syntax, but requires a userid first.')
 def prop_physics_create(argv):
+  sv.save()
   es.prop_physics_create(*argv)
 
 @Command(syntax='<index> <targetname>', desc='Sets the targetname of an entity by index.')
