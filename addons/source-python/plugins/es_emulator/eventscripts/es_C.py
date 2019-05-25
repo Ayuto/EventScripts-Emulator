@@ -1403,7 +1403,7 @@ def getplayercount(argv):
 def getplayerhandle(argv):
     """Gets the handle for a player class property using an entity handle (Untested)"""
     try:
-        return Player.from_userid(atoi(argv[0])).inthandle
+        return Player.from_userid(atoi(argv[1])).inthandle
     except ValueError:
         return 0
 
