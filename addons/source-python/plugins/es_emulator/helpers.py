@@ -424,7 +424,9 @@ def _dump_entity_table(entity, table, path, offset=0):
             value = ptr.get_float(current_offset)
         elif prop.type == SendPropType.VECTOR:
             value = '{},{},{}'.format(
-                ptr.get_float(), ptr.get_float(4), ptr.get_float(8))
+                ptr.get_float(current_offset), 
+                ptr.get_float(current_offset+4),
+                ptr.get_float(current_offset+8))
         elif prop.type == SendPropType.STRING:
             # Not really a TODO for SP, but ES didn't implement it
             value = '(TODO: string)'
