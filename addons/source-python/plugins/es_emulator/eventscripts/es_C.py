@@ -1720,7 +1720,7 @@ def keygroupfilter(argv):
         found = False
         value = key.first_value
         while value:
-            if value.get_string().lower() == value_data.lower() and value.name == value_name:
+            if value.get_string().lower() == value_data.lower() and value_name.lower() in value.name.lower():
                 found = True
                 break
 
