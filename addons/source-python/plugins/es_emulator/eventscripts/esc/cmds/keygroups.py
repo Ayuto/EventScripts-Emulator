@@ -3,6 +3,7 @@ from keyvalues import getKeyGroup
 from .. import stack
 from ..parse import getcode
 from . import Command
+from ..val import sv
 
 from es_C import user_groups
 
@@ -56,7 +57,7 @@ def keysetvalue(argv):
 
 @Command(syntax='<var> [group] <key> <valuename>', desc='Gets a value within a given key (where the key could be free-floating or associated with a group).')
 def keygetvalue(argv):
-  es.keygetvalue(*argv)
+  sv[argv[0]] = es.keygetvalue(*argv[1:])
 
 @Command(pre=False, desc='Lists all in-memory keygroups.')
 def es_keygrouplist(argv):

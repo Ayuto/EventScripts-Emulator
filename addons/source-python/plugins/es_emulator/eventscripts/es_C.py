@@ -1634,19 +1634,19 @@ def keydelete(argv):
 @command
 def keygetvalue(argv):
     """Gets a value within a given key (where the key could be free-floating or associated with a group)."""
-    if len(argv) == 5:
-        group = user_groups.find_key(argv[2])
+    if len(argv) == 4:
+        group = user_groups.find_key(argv[1])
         if group is None:
             dbgmsg(0, 'ERROR: Eventscripts cannot find the {} group!'.format(argv[2]))
             _set_last_error('Keygroup not found')
             return None
 
-        key_name = argv[3]
-        value_name = argv[4]
-    else:
-        group = ungrouped
         key_name = argv[2]
         value_name = argv[3]
+    else:
+        group = ungrouped
+        key_name = argv[1]
+        value_name = argv[2]
 
     new_key = group.find_key(key_name)
     if new_key is None:
