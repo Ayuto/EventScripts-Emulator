@@ -11,6 +11,7 @@ from ctypes.util import find_library
 #   Core
 from core import PLATFORM
 from core import SOURCE_ENGINE_BRANCH
+from core import ignore_unicode_errors
 #   Colors
 from colors import Color
 #   Cvars
@@ -67,6 +68,7 @@ __all__ = (
     '_get_convar_flag',
     '_get_menu_options',
     '_dump_entity_table',
+    '_dump_entity_table_for_createentitylist',
     '_exec_client_cheat_command',
     '_last_give_enabled',
     '_cheats_enabled',
@@ -437,6 +439,41 @@ def _dump_entity_table(entity, table, path, offset=0):
             value = '(Unknown)'
 
         es.dbgmsg(0, '{} = {}'.format(current_path, value))
+
+
+# =============================================================================
+# >> es.createentitylist()
+# =============================================================================
+def _dump_entity_table_for_createentitylist(entity, table, path, result_dict, offset=0):
+    ptr = entity.pointer
+    for prop in table:
+        current_offset = offset + prop.offset
+        current_path = '{}.{}'.format(path, prop.name)
+        if prop.type == SendPropType.DATATABLE:
+            _dump_entity_table_for_createentitylist(
+                entity, prop.data_table, current_path, result_dict, current_offset)
+            continue
+
+        if prop.type == SendPropType.INT:
+            value = ptr.get_int(current_offset)
+        elif prop.type == SendPropType.FLOAT:
+            value = ptr.get_float(current_offset)
+        elif prop.type == SendPropType.VECTOR:
+            value = '{},{},{}'.format(
+                ptr.get_float(current_offset),
+                ptr.get_float(current_offset+4), 
+                ptr.get_float(current_offset+8))
+        elif prop.type == SendPropType.STRING:
+            with ignore_unicode_errors():
+                value = ptr.get_string_array(current_offset)
+        elif prop.type == SendPropType.ARRAY:
+            value = 'array'
+        elif prop.type == SendPropType.VECTORXY and SOURCE_ENGINE_BRANCH == 'l4d2':
+            value = 'vectorXY'
+        else:
+            value = 'Unknown'
+            
+        result_dict[current_path] = value
 
 
 # =============================================================================

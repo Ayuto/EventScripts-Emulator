@@ -426,7 +426,13 @@ def createentitylist(argv):
         temp = result[entity.index] = {}
         temp['classname'] = entity.classname
         temp['handle'] = entity.inthandle
-        # TODO: Add a full server class dump
+
+        server_class = entity.server_class
+        _dump_entity_table_for_createentitylist(
+            entity,
+            server_class.table,
+            server_class.name,
+            temp)
 
     return result
 

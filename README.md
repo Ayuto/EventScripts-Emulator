@@ -13,7 +13,6 @@ Most of the work is already done. The following is a list of things that need to
 2. Implement es.old_mexec()
 3. Implement es.physics('start', ...)
 4. Implement es.regexec()
-5. es.createentitylist() - Add full server class dump
 
 ## ESS
 1. Implement pycmd_register
