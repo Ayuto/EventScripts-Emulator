@@ -247,7 +247,8 @@ class Player(object):
             e = None
             try:
                 return_val = self.get(name)
-            except KeyError as e:
+            except KeyError as ex:
+                e = ex
                 return_val = None
             if name in _callable_attributes: # If the item is also callable we need ReturnValue to make it callable
                 return_val = self.ReturnValue(return_val)
