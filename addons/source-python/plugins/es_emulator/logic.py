@@ -342,7 +342,7 @@ def on_say(command, index, team_only):
 
     # TODO: es.regsaycmd() should be handled here and not with SP's
     #       get_say_command()
-    if es.addons.sayFilter(userid, command.arg_string, team_only):
+    if es.addons.sayFilter(userid, command.command_string, team_only):
         return CommandReturn.CONTINUE
 
     return CommandReturn.BLOCK
@@ -358,7 +358,7 @@ def fire_es_player_chat(command, userid, team_only):
     event.set_int('userid', userid)
     event.set_bool('teamonly', team_only)
 
-    full_text = command.arg_string
+    full_text = command.command_string
     if (userid > 0 and full_text[0] == '"'
             and full_text[-1] == '"'
             and full_text.count('"') <= 2):
