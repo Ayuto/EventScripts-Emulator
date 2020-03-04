@@ -1782,7 +1782,9 @@ def keygroupmsg(argv):
         dbgmsg(0, 'Error: \'message\' subkey was not found inside keygroup {}'.format(key_group_name))
         return
 
-    create_message(edict, atoi(argv[2]), key_msg)
+    type = DialogType(atoi(argv[2]))
+
+    create_message(edict, type, key_msg)
 
 @command
 def keygrouprename(argv):
@@ -2505,6 +2507,8 @@ def sendkeypmsg(userid, type, key_ptr):
 
     if not key_ptr:
         dbgmsg(0, 'Error: Invalid key for sending VGUI message.')
+
+    type = DialogType(type)
 
     create_message(edict, type, _make_keyvalues(key_ptr))
 
