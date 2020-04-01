@@ -77,6 +77,7 @@ from stringtables import INVALID_STRING_INDEX
 from keyvalues import KeyValues
 #   Paths
 from paths import GAME_PATH
+from paths import PLUGIN_PATH
 #   Physics
 from physics import physics
 #   Plugins
@@ -2172,7 +2173,7 @@ def loadevents(argv):
     pos = 1
     if len(argv) > 2:
         pos = 2
-        game_event_manager.load_events_from_file(argv[pos])
+        game_event_manager.load_events_from_file(PLUGIN_PATH / 'es_emulator' + argv[pos].replace('addons', '', 1))
 
     register_for_event_file(argv[pos])
 
