@@ -15,7 +15,7 @@ class Alias(object):
     self.name = 'alias: %s' % name
     es.addons.registerBlock(self.BLOCK_PREFIX, name, self)
     aliases[name] = self
-    regcmd(name, '%s/%s' % (self.BLOCK_PREFIX, name))
+    regcmd(name.lower(), '%s/%s' % (self.BLOCK_PREFIX, name))
 
   def getcode(self, args, n):
     self.code = getcode(args, n)
@@ -102,10 +102,10 @@ class Command(object):
 
   def register(self, name, desc):
     if self.reg:
-      regcmd(name, '%s/%s' % (self.BLOCK_PREFIX, self.name), desc)
+      regcmd(name.lower(), '%s/%s' % (self.BLOCK_PREFIX, self.name), desc)
 
   def concommand(self):
-    command, argv, args, exp = escompile(getargv(0), list(map(getargv, range(1, getargc()))), getargs())
+    command, argv, args, exp = escompile(getargv(0).lower(), list(map(getargv, range(1, getargc()))), getargs())
     line = (None, command, argv, args, exp)
     stack.queue([line], 'console', priority=True)
     sv.save()
