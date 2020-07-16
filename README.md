@@ -22,7 +22,10 @@ Most of the work is already done. The following is a list of things that need to
 2. Implement eventscripts_debug_showfunctions
 3. Implement mattie_python
 
-# Usage
+# Installation/Usage
+On Windows you might need to install the 32bit version of ``Visual C++ Redistributable for Visual Studio 2015`` if it missing on your system:
+https://www.microsoft.com/en-US/download/details.aspx?id=48145
+
 1. Put ``es_emulator`` in ``../addons/source-python/plugins/``
 2. Load the EventScripts Emulator with ``sp plugin load es_emulator``
 3. Put the EventScripts addon you would like to run in ``../addons/source-python/plugins/es_emulator/eventscripts/``.
