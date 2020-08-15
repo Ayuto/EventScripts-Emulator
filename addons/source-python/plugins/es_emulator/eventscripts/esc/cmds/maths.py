@@ -22,7 +22,7 @@ byte, sbyte, word, sword, dword, sdword, qword, sqword = (
 
 def emulate_datatype_overflow(value):
     # int?
-    if int(value) == value:
+    if isinstance(value, int):
         # Emulate a signed int
         return sdword(value)
     
