@@ -1864,6 +1864,9 @@ block csgocreateprimary
   es_xkeycreate _primaryweapons weapon_m4a1
   es_xkeysetvalue _primaryweapons weapon_m4a1 ammo "CBasePlayer.localdata.m_iAmmo.003"
   es_xkeysetvalue _primaryweapons weapon_m4a1 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_m4a1_silencer
+  es_xkeysetvalue _primaryweapons weapon_m4a1_silencer ammo "CBasePlayer.localdata.m_iAmmo.004"
+  es_xkeysetvalue _primaryweapons weapon_m4a1_silencer clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
   es_xkeycreate _primaryweapons weapon_sg556
   es_xkeysetvalue _primaryweapons weapon_sg556 ammo "CBasePlayer.localdata.m_iAmmo.003"
   es_xkeysetvalue _primaryweapons weapon_sg556 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
@@ -1911,9 +1914,6 @@ block csgocreateprimary
 block csgocreatesecondary
 {
   es_xkeygroupcreate _secondaryweapons
-  es_xkeycreate _secondaryweapons weapon_m4a1_silencer
-  es_xkeysetvalue _secondaryweapons weapon_m4a1_silencer ammo "CBasePlayer.localdata.m_iAmmo.004"
-  es_xkeysetvalue _secondaryweapons weapon_m4a1_silencer clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
   es_xkeycreate _secondaryweapons weapon_cz75a
   es_xkeysetvalue _secondaryweapons weapon_cz75a ammo "CBasePlayer.localdata.m_iAmmo.012"
   es_xkeysetvalue _secondaryweapons weapon_cz75a clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
