@@ -197,6 +197,11 @@ block playergetset_register
     es_xdoblock corelib/playergetset/csscreateprimary
     es_xdoblock corelib/playergetset/csscreatesecondary
   }
+  if (server_var(_playergetset_game) == "Counter-Strike: Global Offensive") do
+  {
+    es_xdoblock corelib/playergetset/csgocreateprimary
+    es_xdoblock corelib/playergetset/csgocreatesecondary
+  }
   if ("Day of Defeat" in server_var(_playergetset_game)) do
   {
     es_xdoblock corelib/playergetset/dodcreateprimary
@@ -1829,6 +1834,118 @@ block csscreatesecondary
   es_xkeysetvalue _secondaryweapons weapon_fiveseven clip "CWeaponFiveSeven.baseclass.baseclass.LocalWeaponData.m_iClip1"
 }
 
+block csgocreateprimary
+{
+  es_xkeygroupcreate _primaryweapons
+  es_xkeycreate _primaryweapons weapon_awp
+  es_xkeysetvalue _primaryweapons weapon_awp ammo "CBasePlayer.localdata.m_iAmmo.006"
+  es_xkeysetvalue _primaryweapons weapon_awp clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_g3sg1
+  es_xkeysetvalue _primaryweapons weapon_g3sg1 ammo "CBasePlayer.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_g3sg1 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_scar20
+  es_xkeysetvalue _primaryweapons weapon_scar20 ammo "CBasePlayer.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_scar20 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_ssg08
+  es_xkeysetvalue _primaryweapons weapon_ssg08 ammo "CBasePlayer.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_ssg08 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_ak47
+  es_xkeysetvalue _primaryweapons weapon_ak47 ammo "CBasePlayer.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_ak47 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_aug
+  es_xkeysetvalue _primaryweapons weapon_aug ammo "CBasePlayer.localdata.m_iAmmo.002"
+  es_xkeysetvalue _primaryweapons weapon_aug clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_famas
+  es_xkeysetvalue _primaryweapons weapon_famas ammo "CBasePlayer.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_famas clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_galilar
+  es_xkeysetvalue _primaryweapons weapon_galilar ammo "CBasePlayer.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_galilar clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_m4a1
+  es_xkeysetvalue _primaryweapons weapon_m4a1 ammo "CBasePlayer.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_m4a1 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_sg556
+  es_xkeysetvalue _primaryweapons weapon_sg556 ammo "CBasePlayer.localdata.m_iAmmo.003"
+  es_xkeysetvalue _primaryweapons weapon_sg556 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_bizon
+  es_xkeysetvalue _primaryweapons weapon_bizon ammo "CBasePlayer.localdata.m_iAmmo.007"
+  es_xkeysetvalue _primaryweapons weapon_bizon clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mac10
+  es_xkeysetvalue _primaryweapons weapon_mac10 ammo "CBasePlayer.localdata.m_iAmmo.009"
+  es_xkeysetvalue _primaryweapons weapon_mac10 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mp7
+  es_xkeysetvalue _primaryweapons weapon_mp7 ammo "CBasePlayer.localdata.m_iAmmo.007"
+  es_xkeysetvalue _primaryweapons weapon_mp7 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mp9
+  es_xkeysetvalue _primaryweapons weapon_mp9 ammo "CBasePlayer.localdata.m_iAmmo.007"
+  es_xkeysetvalue _primaryweapons weapon_mp9 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_p90
+  es_xkeysetvalue _primaryweapons weapon_p90 ammo "CBasePlayer.localdata.m_iAmmo.013"
+  es_xkeysetvalue _primaryweapons weapon_p90 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_ump45
+  es_xkeysetvalue _primaryweapons weapon_ump45 ammo "CBasePlayer.localdata.m_iAmmo.009"
+  es_xkeysetvalue _primaryweapons weapon_ump45 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mp5sd
+  es_xkeysetvalue _primaryweapons weapon_mp5sd ammo "CBasePlayer.localdata.m_iAmmo.007"
+  es_xkeysetvalue _primaryweapons weapon_mp5sd clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_mag7
+  es_xkeysetvalue _primaryweapons weapon_mag7 ammo "CBasePlayer.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_mag7 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_nova
+  es_xkeysetvalue _primaryweapons weapon_nova ammo "CBasePlayer.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_nova clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_sawedoff
+  es_xkeysetvalue _primaryweapons weapon_sawedoff ammo "CBasePlayer.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_sawedoff clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_xm1014
+  es_xkeysetvalue _primaryweapons weapon_xm1014 ammo "CBasePlayer.localdata.m_iAmmo.008"
+  es_xkeysetvalue _primaryweapons weapon_xm1014 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_m249
+  es_xkeysetvalue _primaryweapons weapon_m249 ammo "CBasePlayer.localdata.m_iAmmo.005"
+  es_xkeysetvalue _primaryweapons weapon_m249 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _primaryweapons weapon_negev
+  es_xkeysetvalue _primaryweapons weapon_negev ammo "CBasePlayer.localdata.m_iAmmo.005"
+  es_xkeysetvalue _primaryweapons weapon_negev clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+}
+
+block csgocreatesecondary
+{
+  es_xkeygroupcreate _secondaryweapons
+  es_xkeycreate _secondaryweapons weapon_m4a1_silencer
+  es_xkeysetvalue _secondaryweapons weapon_m4a1_silencer ammo "CBasePlayer.localdata.m_iAmmo.004"
+  es_xkeysetvalue _secondaryweapons weapon_m4a1_silencer clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_cz75a
+  es_xkeysetvalue _secondaryweapons weapon_cz75a ammo "CBasePlayer.localdata.m_iAmmo.012"
+  es_xkeysetvalue _secondaryweapons weapon_cz75a clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_deagle
+  es_xkeysetvalue _secondaryweapons weapon_deagle ammo "CBasePlayer.localdata.m_iAmmo.001"
+  es_xkeysetvalue _secondaryweapons weapon_deagle clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_elite
+  es_xkeysetvalue _secondaryweapons weapon_elite ammo "CBasePlayer.localdata.m_iAmmo.007"
+  es_xkeysetvalue _secondaryweapons weapon_elite clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_fiveseven
+  es_xkeysetvalue _secondaryweapons weapon_fiveseven ammo "CBasePlayer.localdata.m_iAmmo.013"
+  es_xkeysetvalue _secondaryweapons weapon_fiveseven clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_glock
+  es_xkeysetvalue _secondaryweapons weapon_glock ammo "CBasePlayer.localdata.m_iAmmo.007"
+  es_xkeysetvalue _secondaryweapons weapon_glock clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_hkp2000
+  es_xkeysetvalue _secondaryweapons weapon_hkp2000 ammo "CBasePlayer.localdata.m_iAmmo.010"
+  es_xkeysetvalue _secondaryweapons weapon_hkp2000 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_p250
+  es_xkeysetvalue _secondaryweapons weapon_p250 ammo "CBasePlayer.localdata.m_iAmmo.020"
+  es_xkeysetvalue _secondaryweapons weapon_p250 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_revolver
+  es_xkeysetvalue _secondaryweapons weapon_revolver ammo "CBasePlayer.localdata.m_iAmmo.001"
+  es_xkeysetvalue _secondaryweapons weapon_revolver clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_tec9
+  es_xkeysetvalue _secondaryweapons weapon_tec9 ammo "CBasePlayer.localdata.m_iAmmo.007"
+  es_xkeysetvalue _secondaryweapons weapon_tec9 clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+  es_xkeycreate _secondaryweapons weapon_usp_silencer
+  es_xkeysetvalue _secondaryweapons weapon_usp_silencer ammo "CBasePlayer.localdata.m_iAmmo.011"
+  es_xkeysetvalue _secondaryweapons weapon_usp_silencer clip "CBaseCombatWeapon.LocalWeaponData.m_iClip1"
+}
+
 block dodcreateprimary
 {
   es_xkeygroupcreate _primaryweapons
@@ -1927,6 +2044,13 @@ block setgamevars
     es_xsetinfo _playerget_commands "primary|secondary|he|sg|fb|c4|ammo|clip|weaponindex|viewangle|health|armor|speed|defuser|viewvector|distance|isdead|noclip|jetpack|freeze|location|flashalpha|flashduration|viewcoord"
     es_xsetinfo _playerset_commands "ammo|clip|health|armor|speed|cash|defuser|nightvision|nightvisionon|viewplayer|viewcoord|push|model|color|noclip|jetpack|freeze|location|moveto|flash|healthadd|armoradd|speedadd|cashadd"
   }
+  if (server_var(_playergetset_game) == "Counter-Strike: Global Offensive") do
+  {
+    es_xsetinfo _playergetset_eyeangle0 "CCSPlayer.m_angEyeAngles[0]"
+    es_xsetinfo _playergetset_eyeangle1 "CCSPlayer.m_angEyeAngles[1]"
+    es_xsetinfo _playerget_commands "primary|secondary|he|sg|fb|c4|ammo|clip|weaponindex|viewangle|health|armor|speed|defuser|viewvector|distance|isdead|noclip|jetpack|freeze|location|flashalpha|flashduration|viewcoord"
+    es_xsetinfo _playerset_commands "ammo|clip|health|armor|speed|cash|defuser|nightvision|nightvisionon|viewplayer|viewcoord|push|model|color|noclip|jetpack|freeze|location|moveto|flash|healthadd|armoradd|speedadd|cashadd"
+  }
   if ("Day of Defeat" in server_var(_playergetset_game)) do
   {
     es_xsetinfo _playergetset_eyeangle0 "CDODPlayer.m_angEyeAngles[0]"
@@ -1942,4 +2066,3 @@ block setgamevars
     es_xsetinfo _playerset_commands "ammo|clip|health|speed|viewplayer|viewcoord|push|location|moveto|model|color"
   }
 }
-
