@@ -1054,17 +1054,23 @@ def forcevalue(argv):
     var_ = memory.make_object(ConVar_, var)
     var_.m_fValue = atof(value)
     var_.m_nValue = int(var_.m_fValue)
+    # var.set_float(value)
+    # var.set_int(value)
 
     if not var.is_flag_set(ConVarFlags.NEVER_AS_STRING):
-        length = len(value) + 1
-        if length > var_.m_StringLength:
-            if var_.m_pszString:
-                var_.m_pszString.dealloc()
-
-            var_.m_pszString = memory.alloc(length, False)
-            var_.m_StringLength = length
-
-        var_.m_pszString.set_string_array(value)
+        var.set_string(value)
+        # length = len(value) + 1
+        # print(type(var), type(var_))
+        # print("dir:", dir(var_))
+        # print("vars:", vars(var_))
+        # if length > var_.m_StringLength:
+        #     if var_.m_pszString:
+        #         var_.m_pszString.dealloc()
+        #
+        #     var_.m_pszString = memory.alloc(length, False)
+        #     var_.m_StringLength = length
+        #
+        # var_.m_pszString.set_string_array(value)
 
 @command
 def foreachkey(argv):
@@ -1385,7 +1391,7 @@ def getplayercount(argv):
         _set_last_error('Not enough arguments.')
         return
 
-    if len(argv) == 0:
+    if len(argv) == 1:
         team = None
     else:
         team = atoi(argv[1])
