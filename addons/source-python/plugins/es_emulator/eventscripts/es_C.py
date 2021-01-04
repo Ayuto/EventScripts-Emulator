@@ -1385,7 +1385,7 @@ def getplayercount(argv):
         _set_last_error('Not enough arguments.')
         return
 
-    if len(argv) == 0:
+    if len(argv) == 1:
         team = None
     else:
         team = atoi(argv[1])
