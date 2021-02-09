@@ -222,12 +222,15 @@ es_event_listener = ESEventListener()
 def register_for_event_file(file_name):
     try:
         events = KeyValues.load_from_file(file_name)
-        assert events is not None, "Should raise ValueError instead of returning None since February 2021."
 
+        # Backwards compatiblity:
+        # https://github.com/Source-Python-Dev-Team/Source.Python/commit/3d1789de24c482dafb10dfb80da4db82efdb5b1d
+        if events is None:
+            raise ValueError
     except ValueError as ex:
-        _set_last_error(f'Couldn\'t load events file \'{file_name}\': {str(ex)}')
+        _set_last_error('Couldn\'t load events file.')
         return False
-        
+
 
     import es
 
