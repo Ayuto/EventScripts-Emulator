@@ -220,10 +220,14 @@ class ESEventListener(GameEventListener):
 es_event_listener = ESEventListener()
 
 def register_for_event_file(file_name):
-    events = KeyValues.load_from_file(file_name)
-    if events is None:
-        _set_last_error('Couldn\'t load events file.')
+    try:
+        events = KeyValues.load_from_file(file_name)
+        assert events is not None, "Should raise ValueError instead of returning None since February 2021."
+
+    except ValueError as ex:
+        _set_last_error(f'Couldn\'t load events file \'{file_name}\': {str(ex)}')
         return False
+        
 
     import es
 
