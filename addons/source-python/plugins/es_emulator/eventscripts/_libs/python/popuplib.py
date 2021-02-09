@@ -24,6 +24,7 @@ gGamename = "unknown"
 # Game support information (game 'none' is my testing environment)
 gameSupport = {
     'cstrike': (True, 4),
+    'csgo': (True, 4),
     'dod': (True, 4),
     'hl2mp': (False, 0),
     'tf': (True, 4),
@@ -54,6 +55,7 @@ langdata['fi'] = {'prev': 'Edellinen', 'next': 'Seuraava', 'quit': 'Sulje', 'pen
 langdata['no'] = {'prev': 'Tilbake', 'next': 'Neste', 'quit': 'Avslutt', 'pending': 'I p\xc3\xa5vente av'}
 teamdata = {}
 teamdata['cstrike'] = {0: "UN", 1: "SPEC", 2: "T", 3: "CT"}
+teamdata['csgo'] = {0: "UN", 1: "SPEC", 2: "T", 3: "CT"}
 teamdata['dod'] = {0: "UN", 1: "SPEC", 2: "AL", 3: "AX"}
 cbotdata = {0: "HUMAN", 1: "BOT"}
 cdeaddata = {0: "", 1: "DEAD"}
