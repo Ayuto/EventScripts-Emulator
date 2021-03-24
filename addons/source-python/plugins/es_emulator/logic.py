@@ -221,7 +221,7 @@ es_event_listener = ESEventListener()
 
 def register_for_event_file(file_name):
     try:
-        events = KeyValues.load_from_file(file_name)
+        events = KeyValues.from_file(file_name)
 
         # Backwards compatiblity:
         # https://github.com/Source-Python-Dev-Team/Source.Python/commit/3d1789de24c482dafb10dfb80da4db82efdb5b1d
