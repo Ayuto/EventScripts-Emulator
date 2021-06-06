@@ -1755,7 +1755,7 @@ def keygroupload(argv):
     """Loads a keygroup from file based on its name."""
     full_path = _get_full_path(argv)
     new_group = user_groups.find_key(argv[1], True)
-    if not new_group.load_from_file2(full_path):
+    if not new_group.from_file_in_place(full_path):
         dbgmsg(0, 'ERROR: Could not load keygroup: {}!'.format(full_path))
         _set_last_error('Keygroup not found')
 
@@ -2032,7 +2032,7 @@ def keyploadfromfile(key_ptr, string):
         raise TypeError
 
     if key_ptr:
-        _make_keyvalues(key_ptr).load_from_file2(string)
+        _make_keyvalues(key_ptr).from_file_in_place(string)
 
 # Pure Python function
 def keyprecursivekeycopy(key_ptr, key_source_ptr):
