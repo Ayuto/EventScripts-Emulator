@@ -4,7 +4,7 @@ import langlib
 import math
 import weaponlib
 
-import collections
+import collections.abc
 import operator
 
 
@@ -107,7 +107,7 @@ class Player(object):
             if hasattr(str, value) and not hasattr(Player.ReturnValue, value):
                 return getattr(str(self), value)
         def __call__(self, *a, **kw):
-            if not isinstance(self.call_func, collections.Callable):
+            if not isinstance(self.call_func, collections.abc.Callable):
                 raise TypeError("'ReturnValue' object is not callable")
             return self.call_func(*a, **kw)
         def __str__(self):

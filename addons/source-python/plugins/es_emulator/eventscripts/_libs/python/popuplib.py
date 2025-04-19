@@ -7,7 +7,7 @@ import gamethread
 import msglib
 import sys
 
-import collections
+import collections.abc
 
 #plugin information
 info = es.AddonInfo()
@@ -677,7 +677,7 @@ class Popup_popup(Popup_base):
             if pselect:
                 es.dbgmsg(1, "Popuplib: Select found")
                 es.dbgmsg(1, "Popuplib: select block='"+str(pselect)+"'"+str(type(pselect)))
-                if isinstance(pselect, collections.Callable):
+                if isinstance(pselect, collections.abc.Callable):
                     _call_func(pselect, userid, choice, self.name, 'select')
                 else:
                     es.doblock(pselect)
@@ -686,7 +686,7 @@ class Popup_popup(Popup_base):
         #check for menuselect block
         if self.menuselect:
             es.dbgmsg(1, "Popuplib: menuselect='"+str(self.menuselect)+"'"+str(type(self.menuselect)))
-            if isinstance(self.menuselect, collections.Callable):
+            if isinstance(self.menuselect, collections.abc.Callable):
                 _call_func(self.menuselect, userid, choice, self.name, 'menuselect')
             else:
                 es.doblock(self.menuselect)
@@ -694,7 +694,7 @@ class Popup_popup(Popup_base):
         #check for menuselectfb block if select block was not used
         if not pselect and self.menuselectfb:
             es.dbgmsg(1, "Popuplib: menuselectfb='"+str(self.menuselectfb)+"'"+str(type(self.menuselectfb)))
-            if isinstance(self.menuselectfb, collections.Callable):
+            if isinstance(self.menuselectfb, collections.abc.Callable):
                 _call_func(self.menuselectfb, userid, choice, self.name, 'menuselectfb')
             else:
                 es.doblock(self.menuselectfb)
@@ -1238,7 +1238,7 @@ class Popup_easymenu(Popup_base):
         #check for menuselect block
         if self.menuselect:
             es.dbgmsg(1, "Popuplib: menuselect='"+str(self.menuselect)+"'"+str(type(self.menuselect)))
-            if isinstance(self.menuselect, collections.Callable):
+            if isinstance(self.menuselect, collections.abc.Callable):
                 _call_func(self.menuselect, userid, choiceval, self.name, 'menuselect')
             else:
                 es.doblock(self.menuselect)
@@ -1246,7 +1246,7 @@ class Popup_easymenu(Popup_base):
         #check for menuselectfb block if valid user
         if validchoice and self.menuselectfb:
             es.dbgmsg(1, "Popuplib: menuselectfb='"+str(self.menuselectfb)+"'"+str(type(self.menuselectfb)))
-            if isinstance(self.menuselectfb, collections.Callable):
+            if isinstance(self.menuselectfb, collections.abc.Callable):
                 _call_func(self.menuselectfb, userid, choiceval, self.name, 'menuselectfb')
             else:
                 es.doblock(self.menuselectfb)
@@ -1405,7 +1405,7 @@ class Popup_user(object):
             es.dbgmsg(1, "Popuplib: queue after="+str(self.queue)+"("+str(len(self.queue))+" items)")
             prepuser = qpopup.prepuser
             es.dbgmsg(1, "Popuplib: prepuser='"+str(prepuser)+"'"+str(type(prepuser)))
-            if isinstance(prepuser, collections.Callable):
+            if isinstance(prepuser, collections.abc.Callable):
                 #python function for prepuser :D
                 prepuser(self.userid, qpopup.name)
             elif prepuser != "":

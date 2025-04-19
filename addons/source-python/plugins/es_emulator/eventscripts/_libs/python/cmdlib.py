@@ -3,7 +3,7 @@
 import es
 import services
 
-import collections
+import collections.abc
 
 
 """ Command manager """
@@ -116,7 +116,7 @@ class CMDManager(object):
       If the callback is not a string or callable function we
       call the callback to raise an error
       """
-      if not isinstance(callback, collections.Callable) and not isinstance(callback, str):
+      if not isinstance(callback, collections.abc.Callable) and not isinstance(callback, str):
          callback()
 
    @staticmethod
@@ -202,7 +202,7 @@ class Command(object):
 
    def execute(self, args):
       """ When told to execute a function we only need to pass the command's arguments """
-      if isinstance(self.callback, collections.Callable):
+      if isinstance(self.callback, collections.abc.Callable):
          self.callback(args)
       else:
          es.doblock(self.callback)
@@ -230,7 +230,7 @@ class PlayerCommand(Command):
          if not is_authed:
             # If a callback has been specified for auth failure then execute that function
             if self.auth_fail_callback:
-               if isinstance(self.auth_fail_callback, collections.Callable):
+               if isinstance(self.auth_fail_callback, collections.abc.Callable):
                   self.auth_fail_callback(userid, args)
                else:
                   es.doblock(self.auth_fail_callback)
@@ -239,7 +239,7 @@ class PlayerCommand(Command):
                es.tell(userid, 'You are not authorized to use the ' + self.name + ' command.')
             return
 
-      if isinstance(self.callback, collections.Callable):
+      if isinstance(self.callback, collections.abc.Callable):
          self.callback(userid, args)
       else:
          es.server.queuecmd('es_xdoblock ' + self.callback)

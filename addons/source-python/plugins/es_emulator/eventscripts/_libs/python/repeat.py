@@ -4,7 +4,7 @@
 import es
 import gamethread
 
-import collections
+import collections.abc
 
 
 # ==============================================================================
@@ -257,7 +257,7 @@ def fire(repeatName):
             dict_repeatInfo[repeatName]['remaining'] -= 1
             dict_repeatInfo[repeatName]['timeleft'] = dict_repeatInfo[repeatName]['remaining'] * dict_repeatInfo[repeatName]['interval']
             
-            if isinstance(command, collections.Callable):
+            if isinstance(command, collections.abc.Callable):
                 # Backwards-compatibility check (is the an extra parameter in the method being called?)
                 if (len(dict_repeatInfo[repeatName]['args']) + 1 == command.__code__.co_argcount) and "self" not in command.__code__.co_varnames:
                     # Add the repeat instance to the end of the parameter list

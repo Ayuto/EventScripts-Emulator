@@ -3,7 +3,7 @@ import keyvalues
 import settinglib
 import playerlib
 import popuplib
-import collections
+import collections.abc
 
 #plugin information
 info = es.AddonInfo()
@@ -205,7 +205,7 @@ def _keymenu_select(userid, choice, popupid):
     if popuplib.exists(popupid):
         k = find(getmenuname(popupid))
         if k.block:
-            if isinstance(k.block, collections.Callable):
+            if isinstance(k.block, collections.abc.Callable):
                 k.block(userid, choice, k.name)
             else:
                 es.doblock(k.block)

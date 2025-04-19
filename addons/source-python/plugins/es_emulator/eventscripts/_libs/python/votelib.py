@@ -2,7 +2,7 @@ import es
 import playerlib
 import popuplib
 import gamethread
-import collections
+import collections.abc
 
 #plugin information
 info = es.AddonInfo()
@@ -95,7 +95,7 @@ class Vote_vote(object):
                             gVariables['vote_percent'].set(int((self.options[option].submits * 100) / self.votes) if self.votes > 0 else 100)
                         elif int(self.options[option]) == int(gVariables['vote_count']) and int(gVariables['vote_count']) > 0: 
                             gVariables['vote_tie'].set(1)
-                if isinstance(self.endblock, collections.Callable):
+                if isinstance(self.endblock, collections.abc.Callable):
                     self.endblock(self.name, int(gVariables['vote_id']), str(gVariables['vote_text']), int(gVariables['vote_count']), int(gVariables['vote_percent']), self.votes, True if int(gVariables['vote_tie']) else False, True if cancel else False)
                 else:
                     es.doblock(self.endblock)
@@ -162,7 +162,7 @@ class Vote_vote(object):
                     gVariables['vote_id'].set(option)
                     gVariables['vote_text'].set(self.options[option].getText())
                     gVariables['vote_userid'].set(userid)
-                    if isinstance(self.subblock, collections.Callable):
+                    if isinstance(self.subblock, collections.abc.Callable):
                         self.subblock(userid, self.name, option, self.options[option].getText())
                     else:
                         es.doblock(self.subblock)
