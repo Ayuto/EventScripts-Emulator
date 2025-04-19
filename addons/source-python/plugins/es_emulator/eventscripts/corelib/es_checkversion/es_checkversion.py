@@ -10,7 +10,7 @@ import os
 HOST = "http://api.eventscripts.com/updatecheck/"
 
 description = "Controls whether EventScripts will automatically check for updates"
-checkForUpdates = es.ServerVar("eventscripts_checkforupdates", 1, description)
+checkForUpdates = es.ServerVar("eventscripts_checkforupdates", 0, description)
 update_notice = es.ServerVar("eventscripts_lastupdatenotice", "unchecked",
             "Last status text returned when checking for eventscripts updates.")
 
@@ -145,12 +145,13 @@ def es_map_start(event_var):
 
     @param event_var es.EventInfo
     """
-    if int(checkForUpdates):
-        reCacheConnection()
-        cache = connection.getCache()
-        if cache is not None:
-            es.dbgmsg(0, cache)
-            es.log(cache)
+    # We don't want to check for updates with the ES emulator
+    #if int(checkForUpdates):
+    #    reCacheConnection()
+    #    cache = connection.getCache()
+    #    if cache is not None:
+    #        es.dbgmsg(0, cache)
+    #        es.log(cache)
 
 def checkUpdateCommand(args):
     """
@@ -159,10 +160,11 @@ def checkUpdateCommand(args):
 
     @param tuple|mixed args Any further arguments which were passed into the cmd
     """
-    reCacheConnection(True)
-    cache = connection.getCache()
-    if cache is not None:
-        es.dbgmsg(0, cache)
+    es.dbgmsg(0, 'Version checks are not implemented in the ES emulator.')
+    #reCacheConnection(True)
+    #cache = connection.getCache()
+    #if cache is not None:
+    #    es.dbgmsg(0, cache)
 
 def reCacheConnection(forceRecache=False):
     """
