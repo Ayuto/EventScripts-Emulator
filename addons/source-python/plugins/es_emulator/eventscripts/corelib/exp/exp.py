@@ -52,7 +52,7 @@ def func_cond(args):
         return temp
     elif args[1] == 'notin':
         temp = '0'
-        exec('if not ' + str(args[0]) + ' in ' + str(args[2]) + '\:\ntemp = \'1\'')
+        exec('if not ' + str(args[0]) + ' in ' + str(args[2]) + '\\:\ntemp = \'1\'')
         return temp
     else:
         return '0'
@@ -262,8 +262,8 @@ def unload():
 
 def exp(args_dummy):
     args = es.getargs()
-    if ('\(' in args) or ('\)' in args):
-        args = args.replace('\(', '%left%').replace('\)', '%right%').replace('\"', '%quote%')
+    if ('\\(' in args) or ('\\)' in args):
+        args = args.replace('\\(', '%left%').replace('\\)', '%right%').replace('\"', '%quote%')
     if args and ('(' in args) and (')' in args):
         global funcs
         global uxpfuncs
