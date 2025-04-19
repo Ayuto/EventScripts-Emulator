@@ -201,7 +201,7 @@ INIPATH = Path(es.ServerVar('eventscripts_addondir')).joinpath('_libs', 'python'
 def getGameWeapons(gamename):
    # If we have no ini to parse, we don't recognize this game
    inifile = INIPATH.joinpath(gamename + '.ini')
-   if not inifile.isfile():
+   if not inifile.is_file():
       return None
 
    # Parse the ini

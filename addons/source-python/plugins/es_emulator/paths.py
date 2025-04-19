@@ -30,10 +30,10 @@ BIN_PATH = GAME_PATH / 'bin'
 
 def get_server_binary():
     binary = BIN_PATH / 'server{}'.format(PLAT_EXT)
-    if not binary.isfile():
+    if not binary.is_file():
         binary = BIN_PATH / 'server_srv{}'.format(PLAT_EXT)
 
-        if not binary.isfile():
+        if not binary.is_file():
             raise NameError('Unable to find server binary.')
 
     return binary
