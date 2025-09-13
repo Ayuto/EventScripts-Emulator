@@ -26,7 +26,7 @@ def memoryExecuteCommand(pathToConfigFile):
     individualCFGFile = cfgFolder.joinpath(pathToConfigFile)
 
     uniqueString = hashlib.md5(str(time.time()).encode('utf-8')).hexdigest()
-    configName = '%s.%s.mexec.cfg' % (individualCFGFile.namebase, uniqueString)
+    configName = '%s.%s.mexec.cfg' % (individualCFGFile.stem, uniqueString)
     newFile = cfgFolder.joinpath(configName)
 
     try:
