@@ -46,7 +46,7 @@ def _convert_addon(info, addon, backup:bool=True):
         args.append('-n')
 
     addon_path = ES_PATH / addon
-    if not addon_path.isdir():
+    if not addon_path.is_dir():
         raise ValidationError('Addon "{}" does not exist.'.format(addon))
 
     args.append(str(addon_path))
